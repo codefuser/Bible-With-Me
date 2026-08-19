@@ -39,21 +39,23 @@ export const ReadingControls: React.FC = () => {
   };
 
   return (
-    <div className="reading-controls">
-      <button className="nav-btn" onClick={handlePrev} disabled={isFirstChapter} title="Previous Chapter">
-        <ChevronLeft size={18} />
-        <span className="nav-btn-label">{language === 'ta' ? 'முந்தைய' : 'Previous'}</span>
-      </button>
+    <div className="reading-controls-wrapper">
+      <div className="reading-controls">
+        <button className="nav-btn" onClick={handlePrev} disabled={isFirstChapter} title="Previous Chapter">
+          <ChevronLeft size={18} />
+          <span className="nav-btn-label">{language === 'ta' ? 'முந்தைய' : 'Previous'}</span>
+        </button>
 
-      <button className="btn-pill header-book-btn" onClick={() => setIsBookSelectorOpen(true)} title="Select Chapter">
-        <BookOpen size={15} />
-        <span>{language === 'ta' ? currentBook.name_ta : currentBook.name_en} {currentChapter}</span>
-      </button>
+        <button className="btn-pill header-book-btn" onClick={() => setIsBookSelectorOpen(true)} title="Select Chapter">
+          <BookOpen size={15} />
+          <span>{language === 'ta' ? currentBook.name_ta : currentBook.name_en} {currentChapter}</span>
+        </button>
 
-      <button className="nav-btn" onClick={handleNext} disabled={isLastChapter} title="Next Chapter">
-        <span className="nav-btn-label">{language === 'ta' ? 'அடுத்த' : 'Next'}</span>
-        <ChevronRight size={18} />
-      </button>
+        <button className="nav-btn" onClick={handleNext} disabled={isLastChapter} title="Next Chapter">
+          <span className="nav-btn-label">{language === 'ta' ? 'அடுத்த' : 'Next'}</span>
+          <ChevronRight size={18} />
+        </button>
+      </div>
     </div>
   );
 };

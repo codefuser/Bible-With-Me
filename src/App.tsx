@@ -90,18 +90,10 @@ const MainLayout: React.FC = () => {
 
         {/* Core Reader Component */}
         <VerseReader />
-
-        {/* Navigation Bar */}
-        <div
-          style={{
-            maxWidth: preferences.maxWidth === 'compact' ? 'var(--width-compact)' : preferences.maxWidth === 'wide' ? 'var(--width-wide)' : 'var(--width-standard)',
-            margin: '0 auto',
-            width: '100%'
-          }}
-        >
-          <ReadingControls />
-        </div>
       </div>
+
+      {/* Sticky Bottom Reading Navigation Bar */}
+      <ReadingControls />
 
       {/* Global Modals */}
       <BookSelectorModal />

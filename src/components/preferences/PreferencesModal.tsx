@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, Sun, Moon, BookOpen, Check } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
-import { FontSizeOption, LineHeightOption, MaxWidthOption, ThemeOption } from '../../types/bible';
+import { FontSizeOption, LineHeightOption, MaxWidthOption } from '../../types/bible';
 
 export const PreferencesModal: React.FC = () => {
   const {
@@ -37,27 +37,29 @@ export const PreferencesModal: React.FC = () => {
               <button
                 className={`btn-card ${preferences.theme === 'light' ? 'selected' : ''}`}
                 onClick={() => updatePreferences({ theme: 'light' })}
+                aria-pressed={preferences.theme === 'light'}
                 style={{
                   padding: '0.625rem',
                   borderRadius: '0.5rem',
                   border: preferences.theme === 'light' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
-                  backgroundColor: '#ffffff',
+                  backgroundColor: preferences.theme === 'light' ? 'var(--accent-soft)' : '#ffffff',
                   color: '#1c1d1f',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '0.375rem',
                   fontSize: '0.875rem',
-                  fontWeight: 500
+                  fontWeight: preferences.theme === 'light' ? 600 : 500
                 }}
               >
-                <Sun size={16} />
+                {preferences.theme === 'light' ? <Check size={16} style={{ color: 'var(--accent-color)' }} /> : <Sun size={16} />}
                 <span>Light</span>
               </button>
 
               <button
                 className={`btn-card ${preferences.theme === 'sepia' ? 'selected' : ''}`}
                 onClick={() => updatePreferences({ theme: 'sepia' })}
+                aria-pressed={preferences.theme === 'sepia'}
                 style={{
                   padding: '0.625rem',
                   borderRadius: '0.5rem',
@@ -69,16 +71,17 @@ export const PreferencesModal: React.FC = () => {
                   justifyContent: 'center',
                   gap: '0.375rem',
                   fontSize: '0.875rem',
-                  fontWeight: 500
+                  fontWeight: preferences.theme === 'sepia' ? 600 : 500
                 }}
               >
-                <BookOpen size={16} />
+                {preferences.theme === 'sepia' ? <Check size={16} style={{ color: 'var(--accent-color)' }} /> : <BookOpen size={16} />}
                 <span>Sepia</span>
               </button>
 
               <button
                 className={`btn-card ${preferences.theme === 'dark' ? 'selected' : ''}`}
                 onClick={() => updatePreferences({ theme: 'dark' })}
+                aria-pressed={preferences.theme === 'dark'}
                 style={{
                   padding: '0.625rem',
                   borderRadius: '0.5rem',
@@ -90,10 +93,10 @@ export const PreferencesModal: React.FC = () => {
                   justifyContent: 'center',
                   gap: '0.375rem',
                   fontSize: '0.875rem',
-                  fontWeight: 500
+                  fontWeight: preferences.theme === 'dark' ? 600 : 500
                 }}
               >
-                <Moon size={16} />
+                {preferences.theme === 'dark' ? <Check size={16} style={{ color: 'var(--accent-color)' }} /> : <Moon size={16} />}
                 <span>Dark</span>
               </button>
             </div>
@@ -112,16 +115,27 @@ export const PreferencesModal: React.FC = () => {
                 <span style={{ fontWeight: 600, textTransform: 'uppercase' }}>{preferences.fontSize}</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
-                {(['sm', 'md', 'lg', 'xl'] as FontSizeOption[]).map((size) => (
-                  <button
-                    key={size}
-                    className={`btn-pill ${preferences.fontSize === size ? 'active' : ''}`}
-                    onClick={() => updatePreferences({ fontSize: size })}
-                    style={{ justifyContent: 'center', textTransform: 'uppercase', fontSize: '0.8125rem' }}
-                  >
-                    {size}
-                  </button>
-                ))}
+                {(['sm', 'md', 'lg', 'xl'] as FontSizeOption[]).map((size) => {
+                  const isSelected = preferences.fontSize === size;
+                  return (
+                    <button
+                      key={size}
+                      className={`btn-pill ${isSelected ? 'active' : ''}`}
+                      onClick={() => updatePreferences({ fontSize: size })}
+                      aria-pressed={isSelected}
+                      style={{
+                        justifyContent: 'center',
+                        textTransform: 'uppercase',
+                        fontSize: '0.8125rem',
+                        border: isSelected ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                        fontWeight: isSelected ? 700 : 500
+                      }}
+                    >
+                      {isSelected && <Check size={13} />}
+                      <span>{size}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -132,16 +146,27 @@ export const PreferencesModal: React.FC = () => {
                 <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{preferences.lineHeight}</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
-                {(['normal', 'relaxed', 'loose'] as LineHeightOption[]).map((line) => (
-                  <button
-                    key={line}
-                    className={`btn-pill ${preferences.lineHeight === line ? 'active' : ''}`}
-                    onClick={() => updatePreferences({ lineHeight: line })}
-                    style={{ justifyContent: 'center', textTransform: 'capitalize', fontSize: '0.8125rem' }}
-                  >
-                    {line}
-                  </button>
-                ))}
+                {(['normal', 'relaxed', 'loose'] as LineHeightOption[]).map((line) => {
+                  const isSelected = preferences.lineHeight === line;
+                  return (
+                    <button
+                      key={line}
+                      className={`btn-pill ${isSelected ? 'active' : ''}`}
+                      onClick={() => updatePreferences({ lineHeight: line })}
+                      aria-pressed={isSelected}
+                      style={{
+                        justifyContent: 'center',
+                        textTransform: 'capitalize',
+                        fontSize: '0.8125rem',
+                        border: isSelected ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                        fontWeight: isSelected ? 700 : 500
+                      }}
+                    >
+                      {isSelected && <Check size={13} />}
+                      <span>{line}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -152,16 +177,27 @@ export const PreferencesModal: React.FC = () => {
                 <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{preferences.maxWidth}</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
-                {(['compact', 'standard', 'wide'] as MaxWidthOption[]).map((width) => (
-                  <button
-                    key={width}
-                    className={`btn-pill ${preferences.maxWidth === width ? 'active' : ''}`}
-                    onClick={() => updatePreferences({ maxWidth: width })}
-                    style={{ justifyContent: 'center', textTransform: 'capitalize', fontSize: '0.8125rem' }}
-                  >
-                    {width}
-                  </button>
-                ))}
+                {(['compact', 'standard', 'wide'] as MaxWidthOption[]).map((width) => {
+                  const isSelected = preferences.maxWidth === width;
+                  return (
+                    <button
+                      key={width}
+                      className={`btn-pill ${isSelected ? 'active' : ''}`}
+                      onClick={() => updatePreferences({ maxWidth: width })}
+                      aria-pressed={isSelected}
+                      style={{
+                        justifyContent: 'center',
+                        textTransform: 'capitalize',
+                        fontSize: '0.8125rem',
+                        border: isSelected ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                        fontWeight: isSelected ? 700 : 500
+                      }}
+                    >
+                      {isSelected && <Check size={13} />}
+                      <span>{width}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -175,7 +211,13 @@ export const PreferencesModal: React.FC = () => {
               <button
                 className={`btn-pill ${language === 'en' ? 'active' : ''}`}
                 onClick={() => setLanguage('en')}
-                style={{ justifyContent: 'center', fontSize: '0.875rem' }}
+                aria-pressed={language === 'en'}
+                style={{
+                  justifyContent: 'center',
+                  fontSize: '0.875rem',
+                  border: language === 'en' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                  fontWeight: language === 'en' ? 700 : 500
+                }}
               >
                 {language === 'en' && <Check size={14} />}
                 <span>English</span>
@@ -183,7 +225,13 @@ export const PreferencesModal: React.FC = () => {
               <button
                 className={`btn-pill ${language === 'ta' ? 'active' : ''}`}
                 onClick={() => setLanguage('ta')}
-                style={{ justifyContent: 'center', fontSize: '0.875rem' }}
+                aria-pressed={language === 'ta'}
+                style={{
+                  justifyContent: 'center',
+                  fontSize: '0.875rem',
+                  border: language === 'ta' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                  fontWeight: language === 'ta' ? 700 : 500
+                }}
               >
                 {language === 'ta' && <Check size={14} />}
                 <span>தமிழ் (Tamil)</span>
