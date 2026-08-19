@@ -26,6 +26,7 @@ interface ReadingContextType {
   isPreferencesOpen: boolean;
   isBookSelectorOpen: boolean;
   isBookmarksOpen: boolean;
+  isSideNavOpen: boolean;
   setBookAndChapter: (book: BibleBook, chapter: number, verse?: number) => void;
   setChapter: (chapter: number) => void;
   setLanguage: (lang: Language) => void;
@@ -36,6 +37,7 @@ interface ReadingContextType {
   setIsPreferencesOpen: (open: boolean) => void;
   setIsBookSelectorOpen: (open: boolean) => void;
   setIsBookmarksOpen: (open: boolean) => void;
+  setIsSideNavOpen: (open: boolean) => void;
 }
 
 const ReadingContext = createContext<ReadingContextType | undefined>(undefined);
@@ -55,6 +57,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isPreferencesOpen, setIsPreferencesOpen] = useState<boolean>(false);
   const [isBookSelectorOpen, setIsBookSelectorOpen] = useState<boolean>(false);
   const [isBookmarksOpen, setIsBookmarksOpen] = useState<boolean>(false);
+  const [isSideNavOpen, setIsSideNavOpen] = useState<boolean>(false);
 
   // Initialize Books, Hash Deep-Links & Saved History on mount
   useEffect(() => {
@@ -151,6 +154,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         isPreferencesOpen,
         isBookSelectorOpen,
         isBookmarksOpen,
+        isSideNavOpen,
         setBookAndChapter,
         setChapter,
         setLanguage,
@@ -160,7 +164,8 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setIsSearchOpen,
         setIsPreferencesOpen,
         setIsBookSelectorOpen,
-        setIsBookmarksOpen
+        setIsBookmarksOpen,
+        setIsSideNavOpen
       }}
     >
       {children}

@@ -1,5 +1,5 @@
 export type Testament = 'OT' | 'NT';
-export type Language = 'en' | 'ta';
+export type Language = 'en' | 'ta' | 'parallel';
 
 export interface BibleBook {
   id: number;          // 1-based unique ID (1..66)

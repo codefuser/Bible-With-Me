@@ -8,6 +8,7 @@ import { SearchModal } from './components/search/SearchModal';
 import { PreferencesModal } from './components/preferences/PreferencesModal';
 import { BookmarksModal } from './components/bookmarks/BookmarksModal';
 import { DailyVerseCard } from './components/daily/DailyVerseCard';
+import { SideNavDrawer } from './components/navigation/SideNavDrawer';
 import { KeyboardShortcuts } from './components/common/KeyboardShortcuts';
 import { Clock, ArrowRight } from 'lucide-react';
 
@@ -95,7 +96,8 @@ const MainLayout: React.FC = () => {
       {/* Sticky Bottom Reading Navigation Bar */}
       <ReadingControls />
 
-      {/* Global Modals */}
+      {/* Global Modals & Navigation Drawers */}
+      <SideNavDrawer />
       <BookSelectorModal />
       <SearchModal />
       <PreferencesModal />

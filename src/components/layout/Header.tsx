@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Search, Settings, Bookmark, Globe } from 'lucide-react';
+import { Menu, BookOpen, Search, Settings, Bookmark, Globe } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 
 export const Header: React.FC = () => {
@@ -12,6 +12,7 @@ export const Header: React.FC = () => {
     setIsPreferencesOpen,
     setIsBookSelectorOpen,
     setIsBookmarksOpen,
+    setIsSideNavOpen,
     bookmarks
   } = useReading();
 
@@ -20,6 +21,10 @@ export const Header: React.FC = () => {
   return (
     <header className="header">
       <div className="header-brand">
+        <button className="btn-icon" onClick={() => setIsSideNavOpen(true)} title="Open Side Navigation Drawer" style={{ marginRight: '0.25rem' }}>
+          <Menu size={20} />
+        </button>
+
         <span className="header-brand-icon">
           <BookOpen size={20} />
         </span>
