@@ -205,36 +205,52 @@ export const PreferencesModal: React.FC = () => {
           {/* Group 3: Language Preference */}
           <div>
             <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.625rem' }}>
-              {language === 'ta' ? 'முதன்மை மொழி' : 'Primary Language'}
+              {language === 'en' ? 'Primary Language' : 'முதன்மை மொழி'}
             </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
-              <button
-                className={`btn-pill ${language === 'en' ? 'active' : ''}`}
-                onClick={() => setLanguage('en')}
-                aria-pressed={language === 'en'}
-                style={{
-                  justifyContent: 'center',
-                  fontSize: '0.875rem',
-                  border: language === 'en' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
-                  fontWeight: language === 'en' ? 700 : 500
-                }}
-              >
-                {language === 'en' && <Check size={14} />}
-                <span>English</span>
-              </button>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
               <button
                 className={`btn-pill ${language === 'ta' ? 'active' : ''}`}
                 onClick={() => setLanguage('ta')}
                 aria-pressed={language === 'ta'}
                 style={{
                   justifyContent: 'center',
-                  fontSize: '0.875rem',
+                  fontSize: '0.8125rem',
                   border: language === 'ta' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
                   fontWeight: language === 'ta' ? 700 : 500
                 }}
               >
-                {language === 'ta' && <Check size={14} />}
-                <span>தமிழ் (Tamil)</span>
+                {language === 'ta' && <Check size={13} />}
+                <span>தமிழ்</span>
+              </button>
+
+              <button
+                className={`btn-pill ${language === 'en' ? 'active' : ''}`}
+                onClick={() => setLanguage('en')}
+                aria-pressed={language === 'en'}
+                style={{
+                  justifyContent: 'center',
+                  fontSize: '0.8125rem',
+                  border: language === 'en' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                  fontWeight: language === 'en' ? 700 : 500
+                }}
+              >
+                {language === 'en' && <Check size={13} />}
+                <span>English</span>
+              </button>
+
+              <button
+                className={`btn-pill ${language === 'parallel' ? 'active' : ''}`}
+                onClick={() => setLanguage('parallel')}
+                aria-pressed={language === 'parallel'}
+                style={{
+                  justifyContent: 'center',
+                  fontSize: '0.8125rem',
+                  border: language === 'parallel' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                  fontWeight: language === 'parallel' ? 700 : 500
+                }}
+              >
+                {language === 'parallel' && <Check size={13} />}
+                <span>தமிழ் + EN</span>
               </button>
             </div>
           </div>

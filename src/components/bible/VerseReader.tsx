@@ -72,35 +72,53 @@ export const VerseReader: React.FC = () => {
     }
   }, [currentBook.id, currentBook.code, currentChapter, selectedVerse, loading]);
 
-  const bookName = language === 'ta' ? currentBook.name_ta : currentBook.name_en;
+  const bookName = language === 'en' ? currentBook.name_en : currentBook.name_ta;
 
   const handleCopyVerse = (v: BibleVerse) => {
-    const text = language === 'ta' ? v.text_ta : v.text_en;
+    const text = language === 'en' ? v.text_en : language === 'ta' ? v.text_ta : `${v.text_ta}\n${v.text_en}`;
     const formatted = `${bookName} ${currentChapter}:${v.verse}\n"${text}"`;
 
     if (navigator.clipboard) {
       navigator.clipboard.writeText(formatted);
-      showToast(language === 'ta' ? 'வசனம் நகலெடுக்கப்பட்டது!' : 'Verse copied to clipboard!');
+      showToast(language === 'en' ? 'Verse copied to clipboard!' : 'வசனம் நகலெடுக்கப்பட்டது!');
     }
   };
 
-  const handleShareVerse = (v: BibleVerse) => {
+  const handleShareVerse = async (v: BibleVerse) => {
+    const text = language === 'en' ? v.text_en : language === 'ta' ? v.text_ta : `${v.text_ta}\n${v.text_en}`;
+    const formattedTitle = `${bookName} ${currentChapter}:${v.verse}`;
     const shareUrl = `${window.location.origin}${window.location.pathname}#${currentBook.code}/${currentChapter}/${v.verse}`;
+
+    // Native Web Share API if supported by mobile/browser
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: formattedTitle,
+          text: `"${text}" - ${formattedTitle}`,
+          url: shareUrl
+        });
+        return;
+      } catch (err) {
+        // User cancelled share dialog or dismissed
+      }
+    }
+
+    // Fallback: Copy link to clipboard
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(shareUrl);
-      showToast(language === 'ta' ? 'இணைப்பு நகலெடுக்கப்பட்டது!' : 'Link copied to clipboard!');
+      await navigator.clipboard.writeText(`${formattedTitle}\n"${text}"\n${shareUrl}`);
+      showToast(language === 'en' ? 'Verse link copied to clipboard!' : 'வசன இணைப்பு நகலெடுக்கப்பட்டது!');
     }
   };
 
   if (loading) {
-    return <LoadingState message={language === 'ta' ? 'வேதாகம வசனங்கள் ஏற்றப்படுகின்றன...' : 'Loading Scripture verses...'} />;
+    return <LoadingState message={language === 'en' ? 'Loading Scripture verses...' : 'வேதாகம வசனங்கள் ஏற்றப்படுகின்றன...'} />;
   }
 
   if (error) {
     return (
       <ErrorState
-        title={language === 'ta' ? 'வசனங்களை ஏற்றுவதில் பிழை' : 'Error Loading Verses'}
-        message={language === 'ta' ? 'தரவுத்தளத்திலிருந்து வசனங்களை எடுக்க முடியவில்லை.' : 'Could not fetch verses.'}
+        title={language === 'en' ? 'Error Loading Verses' : 'வசனங்களை ஏற்றுவதில் பிழை'}
+        message={language === 'en' ? 'Could not fetch verses.' : 'தரவுத்தளத்திலிருந்து வசனங்களை எடுக்க முடியவில்லை.'}
         onRetry={() => {
           setLoading(true);
           fetchChapterVerses(currentBook.id, currentChapter).then(setVerses);
@@ -125,14 +143,13 @@ export const VerseReader: React.FC = () => {
             </h1>
           </div>
           <span className="chapter-subhead">
-            {verses.length} {language === 'ta' ? 'வசனங்கள்' : 'Verses'}
+            {verses.length} {language === 'en' ? 'Verses' : 'வசனங்கள்'}
           </span>
         </div>
 
         {/* Verses Container */}
         <div className="verse-list">
           {verses.map((verseObj) => {
-            const text = language === 'ta' ? verseObj.text_ta : verseObj.text_en;
             const isBookmarked = isVerseBookmarked(bookmarks, currentBook.id, currentChapter, verseObj.verse);
             const isSelected = activeVerseNum === verseObj.verse;
 
@@ -145,9 +162,23 @@ export const VerseReader: React.FC = () => {
               >
                 <div className="verse-content-row">
                   <span className="verse-number">{verseObj.verse}</span>
-                  <p className={`verse-text ${language === 'ta' ? 'lang-ta' : 'lang-en'}`}>
-                    {text}
-                  </p>
+
+                  <div className="verse-text-container" style={{ flex: 1 }}>
+                    {/* Tamil Verse Text */}
+                    {language !== 'en' && (
+                      <p className="verse-text lang-ta" style={{ marginBottom: language === 'parallel' ? '0.375rem' : 0 }}>
+                        {verseObj.text_ta}
+                      </p>
+                    )}
+
+                    {/* English Verse Text */}
+                    {language !== 'ta' && (
+                      <p className="verse-text lang-en" style={{ opacity: language === 'parallel' ? 0.85 : 1, fontSize: language === 'parallel' ? '0.9375em' : undefined }}>
+                        {verseObj.text_en}
+                      </p>
+                    )}
+                  </div>
+
                   {isBookmarked && !isSelected && (
                     <span className="verse-bookmark-badge" title="Bookmarked">
                       <BookmarkIcon size={13} fill="currentColor" style={{ color: 'var(--accent-color)' }} />
@@ -163,17 +194,17 @@ export const VerseReader: React.FC = () => {
                       onClick={() => handleToggleBookmark(verseObj)}
                     >
                       <BookmarkIcon size={14} fill={isBookmarked ? 'currentColor' : 'none'} />
-                      <span>{isBookmarked ? (language === 'ta' ? 'சேமிக்கப்பட்டது' : 'Bookmarked') : (language === 'ta' ? 'சேமி' : 'Bookmark')}</span>
+                      <span>{isBookmarked ? (language === 'en' ? 'Bookmarked' : 'சேமிக்கப்பட்டது') : (language === 'en' ? 'Bookmark' : 'சேமி')}</span>
                     </button>
 
                     <button className="verse-action-btn" onClick={() => handleCopyVerse(verseObj)}>
                       <Copy size={14} />
-                      <span>{language === 'ta' ? 'நகலெடு' : 'Copy'}</span>
+                      <span>{language === 'en' ? 'Copy' : 'நகலெடு'}</span>
                     </button>
 
                     <button className="verse-action-btn" onClick={() => handleShareVerse(verseObj)}>
                       <Share2 size={14} />
-                      <span>{language === 'ta' ? 'பகிர்' : 'Share'}</span>
+                      <span>{language === 'en' ? 'Share' : 'பகிர்'}</span>
                     </button>
                   </div>
                 )}

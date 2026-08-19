@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Search, Bookmark, Settings, Globe, BookOpen, ChevronRight, History, Compass } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { Testament, BibleBook } from '../../types/bible';
@@ -23,7 +23,48 @@ export const SideNavDrawer: React.FC = () => {
   const [expandedBookId, setExpandedBookId] = useState<number | null>(currentBook.id);
   const [searchFilter, setSearchFilter] = useState<string>('');
 
-  if (!isSideNavOpen) return null;
+  // Global Touch Swipe Gesture Handling:
+  // Swiping right from ANYWHERE on screen opens side nav.
+  // Swiping left closes side nav.
+  useEffect(() => {
+    let startX = 0;
+    let startY = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (e.changedTouches.length === 1) {
+        const endX = e.changedTouches[0].clientX;
+        const endY = e.changedTouches[0].clientY;
+        const deltaX = endX - startX;
+        const deltaY = endY - startY;
+
+        // Check if horizontal swipe movement is dominant
+        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40) {
+          if (deltaX > 0 && !isSideNavOpen) {
+            // Swiping right from anywhere on screen -> Open side nav
+            setIsSideNavOpen(true);
+          } else if (deltaX < 0 && isSideNavOpen) {
+            // Swiping left -> Close side nav
+            setIsSideNavOpen(false);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isSideNavOpen, setIsSideNavOpen]);
 
   const handleClose = () => {
     setIsSideNavOpen(false);
@@ -36,24 +77,44 @@ export const SideNavDrawer: React.FC = () => {
 
   const filteredBooks = books.filter((b) => {
     const matchesTestament = b.testament === activeTestament;
-    const name = language === 'ta' ? b.name_ta : b.name_en;
-    const matchesSearch = !searchFilter.trim() || name.toLowerCase().includes(searchFilter.toLowerCase()) || b.code.toLowerCase().includes(searchFilter.toLowerCase());
+    const name = language === 'en' ? b.name_en : b.name_ta;
+    const matchesSearch =
+      !searchFilter.trim() ||
+      name.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      b.code.toLowerCase().includes(searchFilter.toLowerCase());
     return matchesTestament && matchesSearch;
   });
 
+  const getLanguageLabel = () => {
+    if (language === 'ta') return 'தமிழ்';
+    if (language === 'en') return 'English';
+    return 'தமிழ் + EN';
+  };
+
   return (
-    <div className="modal-overlay" onClick={handleClose} style={{ padding: 0, justifyContent: 'flex-start' }}>
+    <div
+      className="modal-overlay"
+      onClick={handleClose}
+      style={{
+        padding: 0,
+        justifyContent: 'flex-start',
+        opacity: isSideNavOpen ? 1 : 0,
+        pointerEvents: isSideNavOpen ? 'auto' : 'none',
+        transition: 'opacity 280ms ease'
+      }}
+    >
       <div
         className="modal-content"
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
-          maxWidth: '340px',
+          maxWidth: '320px',
           height: '100vh',
           maxHeight: '100vh',
           borderRadius: 0,
           boxShadow: 'var(--shadow-lg)',
-          animation: 'slideRight 220ms ease'
+          transform: isSideNavOpen ? 'translateX(0)' : 'translateX(-100%)',
+          transition: 'transform 280ms cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       >
         {/* Drawer Header */}
@@ -61,7 +122,7 @@ export const SideNavDrawer: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <BookOpen size={20} style={{ color: 'var(--accent-color)' }} />
             <h2 className="modal-title" style={{ fontSize: '1.125rem' }}>
-              {language === 'ta' ? 'வேதாகம அட்டவணை' : 'Bible Index'}
+              {language === 'en' ? 'Bible Index' : 'வேதாகம அட்டவணை'}
             </h2>
           </div>
           <button className="btn-icon" onClick={handleClose} title="Close Navigation">
@@ -82,7 +143,7 @@ export const SideNavDrawer: React.FC = () => {
               style={{ justifyContent: 'flex-start', fontSize: '0.8125rem', gap: '0.375rem', padding: '0.4375rem 0.625rem' }}
             >
               <Search size={15} />
-              <span>{language === 'ta' ? 'தேடுதல்' : 'Search'}</span>
+              <span>{language === 'en' ? 'Search' : 'தேடுதல்'}</span>
             </button>
 
             <button
@@ -94,7 +155,7 @@ export const SideNavDrawer: React.FC = () => {
               style={{ justifyContent: 'flex-start', fontSize: '0.8125rem', gap: '0.375rem', padding: '0.4375rem 0.625rem' }}
             >
               <Bookmark size={15} />
-              <span>{language === 'ta' ? 'சேமிப்புகள்' : 'Bookmarks'}</span>
+              <span>{language === 'en' ? 'Bookmarks' : 'சேமிப்புகள்'}</span>
             </button>
 
             <button
@@ -106,7 +167,7 @@ export const SideNavDrawer: React.FC = () => {
               style={{ justifyContent: 'flex-start', fontSize: '0.8125rem', gap: '0.375rem', padding: '0.4375rem 0.625rem' }}
             >
               <Settings size={15} />
-              <span>{language === 'ta' ? 'அமைப்புகள்' : 'Settings'}</span>
+              <span>{language === 'en' ? 'Settings' : 'அமைப்புகள்'}</span>
             </button>
 
             <button
@@ -115,7 +176,7 @@ export const SideNavDrawer: React.FC = () => {
               style={{ justifyContent: 'flex-start', fontSize: '0.8125rem', gap: '0.375rem', padding: '0.4375rem 0.625rem' }}
             >
               <Globe size={15} />
-              <span>{language === 'en' ? 'தமிழ்' : 'English'}</span>
+              <span>{getLanguageLabel()}</span>
             </button>
           </div>
 
@@ -142,10 +203,10 @@ export const SideNavDrawer: React.FC = () => {
                 <History size={16} style={{ color: 'var(--accent-color)' }} />
                 <div>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>
-                    {language === 'ta' ? 'கடைசியாக வாசித்தது' : 'Continue Reading'}
+                    {language === 'en' ? 'Continue Reading' : 'கடைசியாக வாசித்தது'}
                   </span>
                   <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    {language === 'ta' ? historyItem.book_name_ta : historyItem.book_name_en} {historyItem.chapter}
+                    {language === 'en' ? historyItem.book_name_en : historyItem.book_name_ta} {historyItem.chapter}
                   </span>
                 </div>
               </div>
@@ -157,7 +218,7 @@ export const SideNavDrawer: React.FC = () => {
           <div style={{ marginBottom: '0.75rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
               <Compass size={14} />
-              <span>{language === 'ta' ? 'புத்தகங்கள்' : 'Bible Catalog'}</span>
+              <span>{language === 'en' ? 'Bible Catalog' : 'புத்தகங்கள்'}</span>
             </div>
 
             {/* Testament Tabs */}
@@ -167,21 +228,21 @@ export const SideNavDrawer: React.FC = () => {
                 onClick={() => setActiveTestament('OT')}
                 style={{ fontSize: '0.8125rem', padding: '0.375rem' }}
               >
-                {language === 'ta' ? 'பழைய ஏற்பாடு (39)' : 'OT (39)'}
+                {language === 'en' ? 'OT (39)' : 'பழைய ஏற்பாடு (39)'}
               </button>
               <button
                 className={`tab-btn ${activeTestament === 'NT' ? 'active' : ''}`}
                 onClick={() => setActiveTestament('NT')}
                 style={{ fontSize: '0.8125rem', padding: '0.375rem' }}
               >
-                {language === 'ta' ? 'புதிய ஏற்பாடு (27)' : 'NT (27)'}
+                {language === 'en' ? 'NT (27)' : 'புதிய ஏற்பாடு (27)'}
               </button>
             </div>
 
             {/* Search Input */}
             <input
               type="text"
-              placeholder={language === 'ta' ? 'புத்தகத்தை வடிகட்டுக...' : 'Filter book...'}
+              placeholder={language === 'en' ? 'Filter book...' : 'புத்தகத்தை வடிகட்டுக...'}
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
               style={{
@@ -201,7 +262,7 @@ export const SideNavDrawer: React.FC = () => {
             {filteredBooks.map((book) => {
               const isSelectedBook = currentBook.id === book.id;
               const isExpanded = expandedBookId === book.id;
-              const name = language === 'ta' ? book.name_ta : book.name_en;
+              const name = language === 'en' ? book.name_en : book.name_ta;
 
               return (
                 <div key={book.id} style={{ borderRadius: '0.375rem', border: '1px solid var(--border-color)', overflow: 'hidden' }}>

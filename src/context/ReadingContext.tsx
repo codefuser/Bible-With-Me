@@ -121,7 +121,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const toggleLanguage = () => {
-    const nextLang = language === 'en' ? 'ta' : 'en';
+    const nextLang: Language = language === 'ta' ? 'en' : language === 'en' ? 'parallel' : 'ta';
     setLanguage(nextLang);
   };
 
