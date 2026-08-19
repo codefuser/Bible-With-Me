@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Sparkles, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sparkles, ArrowRight, ChevronDown } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { BibleVerse } from '../../types/bible';
 import { getVerseByLocation, loadBibleDatasets } from '../../services/csvBibleService';
@@ -20,7 +20,7 @@ export const DailyVerseCard: React.FC = () => {
 
   useEffect(() => {
     loadBibleDatasets().then(() => {
-      // Retrieve John 3:16 from the actual loaded CSV dataset (John = book_id 43)
+      // Retrieve John 3:16 from loaded CSV dataset (John = book_id 43)
       const realVerse = getVerseByLocation(43, 3, 16);
       if (realVerse) {
         setVerse(realVerse);
@@ -55,14 +55,24 @@ export const DailyVerseCard: React.FC = () => {
         backgroundColor: 'var(--bg-surface)',
         border: '1px solid var(--border-color)',
         borderRadius: '0.75rem',
-        padding: isCollapsed ? '0.625rem 1rem' : '1rem 1.125rem',
+        padding: '0.875rem 1.125rem',
         marginBottom: '1.25rem',
         boxShadow: 'var(--shadow-sm)',
-        transition: 'all 200ms ease'
+        transition: 'padding 280ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 200ms ease'
       }}
     >
       {/* Header Bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+      <div
+        onClick={toggleCollapse}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '0.5rem',
+          cursor: 'pointer',
+          userSelect: 'none'
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--accent-color)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           <Sparkles size={15} />
           <span>{language === 'ta' ? 'இன்றைய வசனம்' : "Today's Verse"}</span>
@@ -73,45 +83,69 @@ export const DailyVerseCard: React.FC = () => {
 
         <button
           className="btn-icon"
-          onClick={toggleCollapse}
-          title={isCollapsed ? 'Expand Today\'s Verse' : 'Collapse Today\'s Verse'}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleCollapse();
+          }}
+          title={isCollapsed ? "Expand Today's Verse" : "Collapse Today's Verse"}
           aria-expanded={!isCollapsed}
           style={{ width: '1.75rem', height: '1.75rem' }}
         >
-          {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+          <ChevronDown
+            size={16}
+            style={{
+              transform: isCollapsed ? 'rotate(0deg)' : 'rotate(180deg)',
+              transition: 'transform 280ms cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+          />
         </button>
       </div>
 
-      {/* Expanded Content */}
-      {!isCollapsed && (
-        <div style={{ marginTop: '0.625rem', animation: 'fadeIn 180ms ease' }}>
-          <p
+      {/* Smooth Auto-Height Collapsible Content */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateRows: isCollapsed ? '0fr' : '1fr',
+          transition: 'grid-template-rows 280ms cubic-bezier(0.4, 0, 0.2, 1)'
+        }}
+      >
+        <div style={{ overflow: 'hidden' }}>
+          <div
             style={{
-              fontFamily: language === 'ta' ? 'var(--font-tamil)' : 'var(--font-serif)',
-              fontSize: '1rem',
-              lineHeight: 1.65,
-              color: 'var(--text-primary)',
-              marginBottom: '0.875rem'
+              paddingTop: '0.75rem',
+              opacity: isCollapsed ? 0 : 1,
+              transition: 'opacity 220ms ease, transform 280ms ease',
+              transform: isCollapsed ? 'translateY(-6px)' : 'translateY(0)'
             }}
           >
-            "{language === 'ta' ? verse.text_ta : verse.text_en}"
-          </p>
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', paddingTop: '0.625rem', borderTop: '1px dashed var(--border-color)' }}>
-            <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-              {language === 'ta' ? 'தினசரி தியானம்' : 'Daily Reading & Reflection'}
-            </span>
-            <button
-              className="btn-pill"
-              onClick={handleReadChapter}
-              style={{ fontSize: '0.8125rem', gap: '0.375rem' }}
+            <p
+              style={{
+                fontFamily: language === 'ta' ? 'var(--font-tamil)' : 'var(--font-serif)',
+                fontSize: '1rem',
+                lineHeight: 1.65,
+                color: 'var(--text-primary)',
+                marginBottom: '0.875rem'
+              }}
             >
-              <span>{language === 'ta' ? 'அதிகாரத்தை வாசிக்க' : 'Read Chapter'}</span>
-              <ArrowRight size={14} />
-            </button>
+              "{language === 'ta' ? verse.text_ta : verse.text_en}"
+            </p>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', paddingTop: '0.625rem', borderTop: '1px dashed var(--border-color)' }}>
+              <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                {language === 'ta' ? 'தினசரி தியானம்' : 'Daily Reading & Reflection'}
+              </span>
+              <button
+                className="btn-pill"
+                onClick={handleReadChapter}
+                style={{ fontSize: '0.8125rem', gap: '0.375rem' }}
+              >
+                <span>{language === 'ta' ? 'அதிகாரத்தை வாசிக்க' : 'Read Chapter'}</span>
+                <ArrowRight size={14} />
+              </button>
+            </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Bookmark as BookmarkIcon, Copy, Share2, Check } from 'lucide-react';
+import { Bookmark as BookmarkIcon, Copy, Share2 } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { BibleVerse } from '../../types/bible';
 import { fetchChapterVerses } from '../../services/bibleService';
@@ -143,46 +143,40 @@ export const VerseReader: React.FC = () => {
                 className={`verse-item ${isSelected ? 'selected' : ''} ${isBookmarked ? 'bookmarked' : ''}`}
                 onClick={() => setActiveVerseNum(isSelected ? null : verseObj.verse)}
               >
-                <span className="verse-number">{verseObj.verse}</span>
-                <p className={`verse-text ${language === 'ta' ? 'lang-ta' : 'lang-en'}`}>
-                  {text}
-                </p>
-
-                {/* Contextual Action Toolbar */}
-                <div className={`verse-actions ${isSelected ? 'visible' : ''}`}>
-                  <button
-                    className={`btn-bookmark ${isBookmarked ? 'active' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleToggleBookmark(verseObj);
-                    }}
-                    title={isBookmarked ? 'Remove Bookmark' : 'Bookmark Verse'}
-                  >
-                    <BookmarkIcon size={16} fill={isBookmarked ? 'currentColor' : 'none'} />
-                  </button>
-
-                  <button
-                    className="btn-bookmark"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCopyVerse(verseObj);
-                    }}
-                    title="Copy Verse Text"
-                  >
-                    <Copy size={16} />
-                  </button>
-
-                  <button
-                    className="btn-bookmark"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleShareVerse(verseObj);
-                    }}
-                    title="Share Verse Deep-Link"
-                  >
-                    <Share2 size={16} />
-                  </button>
+                <div className="verse-content-row">
+                  <span className="verse-number">{verseObj.verse}</span>
+                  <p className={`verse-text ${language === 'ta' ? 'lang-ta' : 'lang-en'}`}>
+                    {text}
+                  </p>
+                  {isBookmarked && !isSelected && (
+                    <span className="verse-bookmark-badge" title="Bookmarked">
+                      <BookmarkIcon size={13} fill="currentColor" style={{ color: 'var(--accent-color)' }} />
+                    </span>
+                  )}
                 </div>
+
+                {/* Contextual Action Toolbar Row (Appears below verse text when selected) */}
+                {isSelected && (
+                  <div className="verse-actions-bar" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      className={`verse-action-btn ${isBookmarked ? 'active' : ''}`}
+                      onClick={() => handleToggleBookmark(verseObj)}
+                    >
+                      <BookmarkIcon size={14} fill={isBookmarked ? 'currentColor' : 'none'} />
+                      <span>{isBookmarked ? (language === 'ta' ? 'சேமிக்கப்பட்டது' : 'Bookmarked') : (language === 'ta' ? 'சேமி' : 'Bookmark')}</span>
+                    </button>
+
+                    <button className="verse-action-btn" onClick={() => handleCopyVerse(verseObj)}>
+                      <Copy size={14} />
+                      <span>{language === 'ta' ? 'நகலெடு' : 'Copy'}</span>
+                    </button>
+
+                    <button className="verse-action-btn" onClick={() => handleShareVerse(verseObj)}>
+                      <Share2 size={14} />
+                      <span>{language === 'ta' ? 'பகிர்' : 'Share'}</span>
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}
