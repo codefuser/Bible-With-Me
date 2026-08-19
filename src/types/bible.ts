@@ -1,0 +1,69 @@
+export type Testament = 'OT' | 'NT';
+export type Language = 'en' | 'ta';
+
+export interface BibleBook {
+  id: number;          // 1-based unique ID (1..66)
+  bookIndex: number;   // 0-based dataset index (0..65)
+  book_number: number; // Canonical biblical order (1..66)
+  testament: Testament;
+  name_en: string;
+  name_ta: string;
+  code: string;
+  total_chapters: number;
+}
+
+export interface BibleVerse {
+  id: number;
+  book_id: number;
+  chapter: number;
+  verse: number;
+  text_en: string;
+  text_ta: string;
+}
+
+export interface SearchResult {
+  id: number;
+  book_id: number;
+  book_name_en: string;
+  book_name_ta: string;
+  chapter: number;
+  verse: number;
+  text_en: string;
+  text_ta: string;
+}
+
+export type FontSizeOption = 'sm' | 'md' | 'lg' | 'xl';
+export type LineHeightOption = 'normal' | 'relaxed' | 'loose';
+export type MaxWidthOption = 'compact' | 'standard' | 'wide';
+export type ThemeOption = 'light' | 'dark' | 'sepia';
+
+export interface ReadingPreferences {
+  fontSize: FontSizeOption;
+  lineHeight: LineHeightOption;
+  maxWidth: MaxWidthOption;
+  theme: ThemeOption;
+  language: Language;
+}
+
+export interface Bookmark {
+  id: string;
+  book_id: number;
+  chapter: number;
+  verse: number;
+  language: Language;
+  book_name_en: string;
+  book_name_ta: string;
+  text_en: string;
+  text_ta: string;
+  created_at: string;
+}
+
+export interface ReadingHistoryItem {
+  book_id: number;
+  chapter: number;
+  verse: number;
+  language: Language;
+  book_name_en: string;
+  book_name_ta: string;
+  updated_at: string;
+}

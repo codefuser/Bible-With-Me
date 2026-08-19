@@ -1,0 +1,123 @@
+import React from 'react';
+import { ReadingProvider, useReading } from './context/ReadingContext';
+import { Header } from './components/layout/Header';
+import { VerseReader } from './components/bible/VerseReader';
+import { ReadingControls } from './components/bible/ReadingControls';
+import { BookSelectorModal } from './components/bible/BookSelector';
+import { SearchModal } from './components/search/SearchModal';
+import { PreferencesModal } from './components/preferences/PreferencesModal';
+import { BookmarksModal } from './components/bookmarks/BookmarksModal';
+import { DailyVerseCard } from './components/daily/DailyVerseCard';
+import { KeyboardShortcuts } from './components/common/KeyboardShortcuts';
+import { Clock, ArrowRight } from 'lucide-react';
+
+const MainLayout: React.FC = () => {
+  const { historyItem, books, language, setBookAndChapter, preferences } = useReading();
+
+  const handleContinueReading = () => {
+    if (historyItem) {
+      const book = books.find((b) => b.id === historyItem.book_id);
+      if (book) {
+        setBookAndChapter(book, historyItem.chapter, historyItem.verse);
+      }
+    }
+  };
+
+  return (
+    <div className="app-container">
+      <KeyboardShortcuts />
+      <Header />
+
+      <div className="main-content">
+        {/* Continue Reading Banner if History exists */}
+        {historyItem && (
+          <div
+            style={{
+              maxWidth: preferences.maxWidth === 'compact' ? 'var(--width-compact)' : preferences.maxWidth === 'wide' ? 'var(--width-wide)' : 'var(--width-standard)',
+              margin: '0 auto 1.25rem',
+              width: '100%'
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.625rem 1rem',
+                backgroundColor: 'var(--bg-secondary)',
+                borderRadius: '0.5rem',
+                border: '1px solid var(--border-color)',
+                fontSize: '0.875rem'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+                <Clock size={16} />
+                <span>
+                  {language === 'ta' ? 'தொடர்ந்து வாசிக்க:' : 'Continue Reading:'}{' '}
+                  <strong>
+                    {language === 'ta' ? historyItem.book_name_ta : historyItem.book_name_en} {historyItem.chapter}
+                  </strong>
+                </span>
+              </div>
+              <button
+                onClick={handleContinueReading}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  color: 'var(--accent-color)'
+                }}
+              >
+                <span>{language === 'ta' ? 'திறக்கவும்' : 'Resume'}</span>
+                <ArrowRight size={14} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Daily Verse Section */}
+        <div
+          style={{
+            maxWidth: preferences.maxWidth === 'compact' ? 'var(--width-compact)' : preferences.maxWidth === 'wide' ? 'var(--width-wide)' : 'var(--width-standard)',
+            margin: '0 auto',
+            width: '100%'
+          }}
+        >
+          <DailyVerseCard />
+        </div>
+
+        {/* Core Reader Component */}
+        <VerseReader />
+
+        {/* Navigation Bar */}
+        <div
+          style={{
+            maxWidth: preferences.maxWidth === 'compact' ? 'var(--width-compact)' : preferences.maxWidth === 'wide' ? 'var(--width-wide)' : 'var(--width-standard)',
+            margin: '0 auto',
+            width: '100%'
+          }}
+        >
+          <ReadingControls />
+        </div>
+      </div>
+
+      {/* Global Modals */}
+      <BookSelectorModal />
+      <SearchModal />
+      <PreferencesModal />
+      <BookmarksModal />
+    </div>
+  );
+};
+
+export function App() {
+  return (
+    <ReadingProvider>
+      <MainLayout />
+    </ReadingProvider>
+  );
+}
+
+export default App;
