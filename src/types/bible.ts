@@ -36,6 +36,8 @@ export type FontSizeOption = 'sm' | 'md' | 'lg' | 'xl';
 export type LineHeightOption = 'normal' | 'relaxed' | 'loose';
 export type MaxWidthOption = 'compact' | 'standard' | 'wide';
 export type ThemeOption = 'light' | 'dark' | 'sepia';
+export type TamilFontOption = 'noto' | 'mukta' | 'catamaran' | 'arima' | 'hind';
+export type EnglishFontOption = 'lora' | 'inter' | 'merriweather' | 'outfit' | 'playfair';
 
 export interface ReadingPreferences {
   fontSize: FontSizeOption;
@@ -43,6 +45,8 @@ export interface ReadingPreferences {
   maxWidth: MaxWidthOption;
   theme: ThemeOption;
   language: Language;
+  fontFamilyTa?: TamilFontOption;
+  fontFamilyEn?: EnglishFontOption;
 }
 
 export interface Bookmark {

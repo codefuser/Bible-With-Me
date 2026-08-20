@@ -7,7 +7,9 @@ export const defaultPreferences: ReadingPreferences = {
   lineHeight: 'relaxed',
   maxWidth: 'standard',
   theme: 'light',
-  language: 'en'
+  language: 'ta',
+  fontFamilyTa: 'noto',
+  fontFamilyEn: 'lora'
 };
 
 export const getStoredPreferences = (): ReadingPreferences => {

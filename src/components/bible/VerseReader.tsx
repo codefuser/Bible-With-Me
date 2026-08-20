@@ -134,6 +134,8 @@ export const VerseReader: React.FC = () => {
         data-width={preferences.maxWidth}
         data-size={preferences.fontSize}
         data-line={preferences.lineHeight}
+        data-font-ta={preferences.fontFamilyTa || 'noto'}
+        data-font-en={preferences.fontFamilyEn || 'lora'}
       >
         {/* Chapter Title Header */}
         <div className="chapter-header">

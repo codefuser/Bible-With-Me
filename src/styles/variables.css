@@ -6,6 +6,20 @@
   --font-serif: 'Lora', Georgia, Cambria, 'Times New Roman', serif;
   --font-tamil: 'Noto Sans Tamil', 'Latha', 'InaiMathi', sans-serif;
 
+  /* Tamil Font Family Options */
+  --font-ta-noto: 'Noto Sans Tamil', sans-serif;
+  --font-ta-mukta: 'Mukta Malar', serif;
+  --font-ta-catamaran: 'Catamaran', sans-serif;
+  --font-ta-arima: 'Arima', cursive;
+  --font-ta-hind: 'Hind Madurai', sans-serif;
+
+  /* English Font Family Options */
+  --font-en-lora: 'Lora', Georgia, serif;
+  --font-en-inter: 'Inter', sans-serif;
+  --font-en-merriweather: 'Merriweather', serif;
+  --font-en-outfit: 'Outfit', sans-serif;
+  --font-en-playfair: 'Playfair Display', serif;
+
   /* Transitions */
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;

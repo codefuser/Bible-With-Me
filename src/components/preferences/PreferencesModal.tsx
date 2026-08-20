@@ -1,7 +1,7 @@
 import React from 'react';
-import { X, Sun, Moon, BookOpen, Check } from 'lucide-react';
+import { X, Sun, Moon, BookOpen, Check, Type } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
-import { FontSizeOption, LineHeightOption, MaxWidthOption } from '../../types/bible';
+import { FontSizeOption, LineHeightOption, MaxWidthOption, TamilFontOption, EnglishFontOption } from '../../types/bible';
 
 export const PreferencesModal: React.FC = () => {
   const {
@@ -15,12 +15,33 @@ export const PreferencesModal: React.FC = () => {
 
   if (!isPreferencesOpen) return null;
 
+  const isEn = language === 'en';
+  const isTa = language === 'ta';
+  const currentTaFont = preferences.fontFamilyTa || 'noto';
+  const currentEnFont = preferences.fontFamilyEn || 'lora';
+
+  const tamilFonts: { id: TamilFontOption; label: string; preview: string; fontVar: string }[] = [
+    { id: 'noto', label: 'Noto Sans', preview: 'நவீன தமிழ்', fontVar: 'var(--font-ta-noto)' },
+    { id: 'mukta', label: 'Mukta Malar', preview: 'மரபுத் தமிழ்', fontVar: 'var(--font-ta-mukta)' },
+    { id: 'catamaran', label: 'Catamaran', preview: 'நேர்த்தியான தமிழ்', fontVar: 'var(--font-ta-catamaran)' },
+    { id: 'arima', label: 'Arima', preview: 'அலங்காரத் தமிழ்', fontVar: 'var(--font-ta-arima)' },
+    { id: 'hind', label: 'Hind Madurai', preview: 'எளிய தமிழ்', fontVar: 'var(--font-ta-hind)' }
+  ];
+
+  const englishFonts: { id: EnglishFontOption; label: string; preview: string; fontVar: string }[] = [
+    { id: 'lora', label: 'Lora', preview: 'Classic Serif', fontVar: 'var(--font-en-lora)' },
+    { id: 'inter', label: 'Inter', preview: 'Modern Sans', fontVar: 'var(--font-en-inter)' },
+    { id: 'merriweather', label: 'Merriweather', preview: 'Editorial Serif', fontVar: 'var(--font-en-merriweather)' },
+    { id: 'outfit', label: 'Outfit', preview: 'Clean Sans', fontVar: 'var(--font-en-outfit)' },
+    { id: 'playfair', label: 'Playfair', preview: 'Heritage Serif', fontVar: 'var(--font-en-playfair)' }
+  ];
+
   return (
     <div className="modal-overlay" onClick={() => setIsPreferencesOpen(false)}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
         <div className="modal-header">
           <h2 className="modal-title">
-            {language === 'ta' ? 'வாசிப்பு விருப்பத்தேர்வுகள்' : 'Reading Preferences'}
+            {isEn ? 'Reading Preferences' : 'வாசிப்பு விருப்பத்தேர்வுகள்'}
           </h2>
           <button className="btn-icon" onClick={() => setIsPreferencesOpen(false)} title="Close Preferences">
             <X size={18} />
@@ -31,7 +52,7 @@ export const PreferencesModal: React.FC = () => {
           {/* Group 1: Appearance & Theme */}
           <div>
             <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.625rem' }}>
-              {language === 'ta' ? 'தோற்றம் (Appearance)' : 'Appearance & Theme'}
+              {isEn ? 'Appearance & Theme' : 'தோற்றம் (Appearance)'}
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
               <button
@@ -102,16 +123,93 @@ export const PreferencesModal: React.FC = () => {
             </div>
           </div>
 
-          {/* Group 2: Typography & Layout */}
+          {/* Group 2: Typography Style & Fonts */}
           <div>
-            <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.625rem' }}>
-              {language === 'ta' ? 'எழுத்து & அமைப்பகம்' : 'Reading Typography'}
-            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.625rem' }}>
+              <Type size={14} />
+              <span>{isEn ? 'Font Family & Typography' : 'எழுத்து பாணி & எழுத்துக்கள்'}</span>
+            </div>
+
+            {/* Tamil Fonts Selection */}
+            {!isEn && (
+              <div style={{ marginBottom: '1.125rem' }}>
+                <label style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '0.375rem' }}>
+                  🇮🇳 {isEn ? 'Tamil Font Style' : 'தமிழ் எழுத்து பாணி'}
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+                  {tamilFonts.map((font) => {
+                    const isSelected = currentTaFont === font.id;
+                    return (
+                      <button
+                        key={font.id}
+                        onClick={() => updatePreferences({ fontFamilyTa: font.id })}
+                        aria-pressed={isSelected}
+                        style={{
+                          padding: '0.5rem 0.625rem',
+                          borderRadius: '0.5rem',
+                          border: isSelected ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                          backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--bg-surface)',
+                          color: isSelected ? 'var(--accent-color)' : 'var(--text-primary)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <div>
+                          <span style={{ fontSize: '0.8125rem', fontWeight: isSelected ? 600 : 500, display: 'block' }}>{font.label}</span>
+                          <span style={{ fontFamily: font.fontVar, fontSize: '0.875rem', opacity: 0.85 }}>{font.preview}</span>
+                        </div>
+                        {isSelected && <Check size={14} style={{ color: 'var(--accent-color)', flexShrink: 0 }} />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* English Fonts Selection */}
+            {!isTa && (
+              <div style={{ marginBottom: '1.125rem' }}>
+                <label style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '0.375rem' }}>
+                  🇬🇧 {isEn ? 'English Font Style' : 'ஆங்கில எழுத்து பாணி'}
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+                  {englishFonts.map((font) => {
+                    const isSelected = currentEnFont === font.id;
+                    return (
+                      <button
+                        key={font.id}
+                        onClick={() => updatePreferences({ fontFamilyEn: font.id })}
+                        aria-pressed={isSelected}
+                        style={{
+                          padding: '0.5rem 0.625rem',
+                          borderRadius: '0.5rem',
+                          border: isSelected ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                          backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--bg-surface)',
+                          color: isSelected ? 'var(--accent-color)' : 'var(--text-primary)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <div>
+                          <span style={{ fontSize: '0.8125rem', fontWeight: isSelected ? 600 : 500, display: 'block' }}>{font.label}</span>
+                          <span style={{ fontFamily: font.fontVar, fontSize: '0.875rem', opacity: 0.85 }}>{font.preview}</span>
+                        </div>
+                        {isSelected && <Check size={14} style={{ color: 'var(--accent-color)', flexShrink: 0 }} />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Font Size Selector */}
             <div style={{ marginBottom: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '0.375rem' }}>
-                <span>{language === 'ta' ? 'எழுத்து அளவு' : 'Font Size'}</span>
+                <span>{isEn ? 'Font Size' : 'எழுத்து அளவு'}</span>
                 <span style={{ fontWeight: 600, textTransform: 'uppercase' }}>{preferences.fontSize}</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
@@ -142,7 +240,7 @@ export const PreferencesModal: React.FC = () => {
             {/* Line Height Selector */}
             <div style={{ marginBottom: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '0.375rem' }}>
-                <span>{language === 'ta' ? 'வரி இடைவெளி' : 'Line Spacing'}</span>
+                <span>{isEn ? 'Line Spacing' : 'வரி இடைவெளி'}</span>
                 <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{preferences.lineHeight}</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
@@ -173,7 +271,7 @@ export const PreferencesModal: React.FC = () => {
             {/* Reading Container Width */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '0.375rem' }}>
-                <span>{language === 'ta' ? 'பக்க அகலம்' : 'Page Width'}</span>
+                <span>{isEn ? 'Page Width' : 'பக்க அகலம்'}</span>
                 <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{preferences.maxWidth}</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
@@ -205,7 +303,7 @@ export const PreferencesModal: React.FC = () => {
           {/* Group 3: Language Preference */}
           <div>
             <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.625rem' }}>
-              {language === 'en' ? 'Primary Language' : 'முதன்மை மொழி'}
+              {isEn ? 'Primary Language' : 'முதன்மை மொழி'}
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
               <button

@@ -51,6 +51,20 @@
   white-space: nowrap;
 }
 
+/* Tamil Font Family Modifiers */
+.reader-wrapper[data-font-ta="noto"] .verse-text.lang-ta { font-family: var(--font-ta-noto); }
+.reader-wrapper[data-font-ta="mukta"] .verse-text.lang-ta { font-family: var(--font-ta-mukta); }
+.reader-wrapper[data-font-ta="catamaran"] .verse-text.lang-ta { font-family: var(--font-ta-catamaran); }
+.reader-wrapper[data-font-ta="arima"] .verse-text.lang-ta { font-family: var(--font-ta-arima); }
+.reader-wrapper[data-font-ta="hind"] .verse-text.lang-ta { font-family: var(--font-ta-hind); }
+
+/* English Font Family Modifiers */
+.reader-wrapper[data-font-en="lora"] .verse-text.lang-en { font-family: var(--font-en-lora); }
+.reader-wrapper[data-font-en="inter"] .verse-text.lang-en { font-family: var(--font-en-inter); }
+.reader-wrapper[data-font-en="merriweather"] .verse-text.lang-en { font-family: var(--font-en-merriweather); }
+.reader-wrapper[data-font-en="outfit"] .verse-text.lang-en { font-family: var(--font-en-outfit); }
+.reader-wrapper[data-font-en="playfair"] .verse-text.lang-en { font-family: var(--font-en-playfair); }
+
 /* Verse List Layout */
 .verse-list {
   display: flex;
