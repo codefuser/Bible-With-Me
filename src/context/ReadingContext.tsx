@@ -5,13 +5,16 @@ import {
   Language,
   ReadingPreferences,
   Bookmark,
-  ReadingHistoryItem
+  ReadingHistoryItem,
+  VerseNote
 } from '../types/bible';
 import { fetchBibleBooks, ALL_BIBLE_BOOKS } from '../services/bibleService';
 import { getStoredPreferences, savePreferences } from '../services/preferencesService';
 import { getStoredBookmarks, toggleBookmark } from '../services/bookmarkService';
 import { getStoredHistory, updateReadingHistory } from '../services/historyService';
+import { getStoredNotes, saveNote as saveNoteService } from '../services/noteService';
 import { parseHashRoute } from '../services/routerService';
+import { useAuth } from './AuthContext';
 
 interface ReadingContextType {
   books: BibleBook[];
@@ -21,6 +24,7 @@ interface ReadingContextType {
   language: Language;
   preferences: ReadingPreferences;
   bookmarks: Bookmark[];
+  notes: VerseNote[];
   historyItem: ReadingHistoryItem | null;
   isSearchOpen: boolean;
   isPreferencesOpen: boolean;
@@ -36,6 +40,7 @@ interface ReadingContextType {
   toggleLanguage: () => void;
   updatePreferences: (newPrefs: Partial<ReadingPreferences>) => void;
   handleToggleBookmark: (verseObj: BibleVerse) => void;
+  handleSaveNote: (bookCode: string, chapter: number, verse: number, content: string) => void;
   setIsSearchOpen: (open: boolean) => void;
   setIsPreferencesOpen: (open: boolean) => void;
   setIsBookSelectorOpen: (open: boolean) => void;
@@ -50,6 +55,9 @@ interface ReadingContextType {
 const ReadingContext = createContext<ReadingContextType | undefined>(undefined);
 
 export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  const userId = user?.id || null;
+
   const [books, setBooks] = useState<BibleBook[]>(ALL_BIBLE_BOOKS);
   const [currentBook, setCurrentBook] = useState<BibleBook>(ALL_BIBLE_BOOKS[0]);
   const [currentChapter, setCurrentChapter] = useState<number>(1);
@@ -58,6 +66,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [preferences, setPreferencesState] = useState<ReadingPreferences>(getStoredPreferences);
   const [language, setLanguageState] = useState<Language>(preferences.language || 'en');
   const [bookmarks, setBookmarks] = useState<Bookmark[]>(getStoredBookmarks);
+  const [notes, setNotes] = useState<VerseNote[]>(getStoredNotes);
   const [historyItem, setHistoryItem] = useState<ReadingHistoryItem | null>(getStoredHistory);
 
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
@@ -114,7 +123,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setSelectedVerse(verse);
     setIsBookSelectorOpen(false);
 
-    updateReadingHistory(book, chapter, verse, language).then((item) => {
+    updateReadingHistory(book, chapter, verse, language, userId).then((item) => {
       setHistoryItem(item);
     });
   };
@@ -128,7 +137,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
     updatePreferences({ language: lang });
-    updateReadingHistory(currentBook, currentChapter, selectedVerse || 1, lang);
+    updateReadingHistory(currentBook, currentChapter, selectedVerse || 1, lang, userId);
   };
 
   const toggleLanguage = () => {
@@ -139,15 +148,20 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const updatePreferences = (newPrefs: Partial<ReadingPreferences>) => {
     setPreferencesState((prev) => {
       const updated = { ...prev, ...newPrefs };
-      savePreferences(updated);
+      savePreferences(updated, userId);
       return updated;
     });
   };
 
   const handleToggleBookmark = (verseObj: BibleVerse) => {
-    toggleBookmark(bookmarks, currentBook, verseObj, language).then((updated) => {
+    toggleBookmark(bookmarks, currentBook, verseObj, language, userId).then((updated) => {
       setBookmarks(updated);
     });
+  };
+
+  const handleSaveNote = (bookCode: string, chapter: number, verse: number, content: string) => {
+    const updated = saveNoteService(bookCode, chapter, verse, content, userId);
+    setNotes(updated);
   };
 
   const openVerseStudy = (bookId: number, chapter: number, verse: number) => {
@@ -175,6 +189,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         language,
         preferences,
         bookmarks,
+        notes,
         historyItem,
         isSearchOpen,
         isPreferencesOpen,
@@ -190,6 +205,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         toggleLanguage,
         updatePreferences,
         handleToggleBookmark,
+        handleSaveNote,
         setIsSearchOpen,
         setIsPreferencesOpen,
         setIsBookSelectorOpen,

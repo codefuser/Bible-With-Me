@@ -71,3 +71,38 @@ export interface ReadingHistoryItem {
   book_name_ta: string;
   updated_at: string;
 }
+
+// User Profile & Role Types (Phase 10)
+export type UserRole = 'user' | 'admin';
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  display_name: string;
+  role: UserRole;
+  created_at: string;
+  updated_at: string;
+}
+
+export type SyncStatus = 'synced' | 'syncing' | 'offline' | 'error';
+
+// Verse Note (Phase 10)
+export interface VerseNote {
+  id?: string;
+  book: string;
+  chapter: number;
+  verse: number;
+  content: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Reading Progress (Phase 10)
+export interface ReadingProgress {
+  id?: string;
+  book: string;
+  chapter: number;
+  verse: number;
+  scroll_position: number;
+  updated_at?: string;
+}

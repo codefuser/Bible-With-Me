@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Search, Bookmark, Settings, Globe, BookOpen, ChevronRight, History, Compass } from 'lucide-react';
+import { X, Search, Bookmark, Settings, Globe, BookOpen, ChevronRight, History, Compass, User } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
+import { useAuth } from '../../context/AuthContext';
 import { Testament, BibleBook } from '../../types/bible';
 
 export const SideNavDrawer: React.FC = () => {
@@ -18,6 +19,8 @@ export const SideNavDrawer: React.FC = () => {
     setBookAndChapter,
     historyItem
   } = useReading();
+
+  const { isAuthenticated, setIsAuthModalOpen } = useAuth();
 
   const [activeTestament, setActiveTestament] = useState<Testament>('OT');
   const [expandedBookId, setExpandedBookId] = useState<number | null>(currentBook.id);
@@ -164,11 +167,14 @@ export const SideNavDrawer: React.FC = () => {
 
             <button
               className="btn-pill"
-              onClick={toggleLanguage}
+              onClick={() => {
+                handleClose();
+                setIsAuthModalOpen(true);
+              }}
               style={{ justifyContent: 'flex-start', fontSize: '0.8125rem', gap: '0.375rem', padding: '0.4375rem 0.625rem' }}
             >
-              <Globe size={15} />
-              <span>{getLanguageLabel()}</span>
+              <User size={15} />
+              <span>{isAuthenticated ? (language === 'en' ? 'Account' : 'கணக்கு') : (language === 'en' ? 'Sign In' : 'உள்நுழைக')}</span>
             </button>
           </div>
 

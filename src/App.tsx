@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { AuthProvider } from './context/AuthContext';
 import { ReadingProvider, useReading } from './context/ReadingContext';
 import { Header } from './components/layout/Header';
 import { VerseReader } from './components/bible/VerseReader';
@@ -13,10 +14,22 @@ import { ChapterStudyModal } from './components/daily/ChapterStudyModal';
 import { DailyHistoryModal } from './components/daily/DailyHistoryModal';
 import { SideNavDrawer } from './components/navigation/SideNavDrawer';
 import { KeyboardShortcuts } from './components/common/KeyboardShortcuts';
+import { AuthModal } from './components/auth/AuthModal';
+import { SyncBanner } from './components/auth/SyncBanner';
+import { AdminRoutePlaceholder } from './components/admin/AdminRoute';
 import { Clock, ArrowRight } from 'lucide-react';
 
 const MainLayout: React.FC = () => {
   const { historyItem, books, language, setBookAndChapter, preferences } = useReading();
+  const [isAdminView, setIsAdminView] = useState<boolean>(window.location.hash.toLowerCase() === '#admin');
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      setIsAdminView(window.location.hash.toLowerCase() === '#admin');
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   const handleContinueReading = () => {
     if (historyItem) {
@@ -26,6 +39,15 @@ const MainLayout: React.FC = () => {
       }
     }
   };
+
+  if (isAdminView) {
+    return (
+      <div className="app-container">
+        <Header />
+        <AdminRoutePlaceholder />
+      </div>
+    );
+  }
 
   return (
     <div className="app-container">
@@ -99,7 +121,7 @@ const MainLayout: React.FC = () => {
       {/* Sticky Bottom Reading Navigation Bar */}
       <ReadingControls />
 
-      {/* Global Modals, Study Views & Navigation Drawers */}
+      {/* Global Modals, Study Views & Auth Modals */}
       <SideNavDrawer />
       <BookSelectorModal />
       <SearchModal />
@@ -108,15 +130,19 @@ const MainLayout: React.FC = () => {
       <VerseStudyModal />
       <ChapterStudyModal />
       <DailyHistoryModal />
+      <AuthModal />
+      <SyncBanner />
     </div>
   );
 };
 
 export function App() {
   return (
-    <ReadingProvider>
-      <MainLayout />
-    </ReadingProvider>
+    <AuthProvider>
+      <ReadingProvider>
+        <MainLayout />
+      </ReadingProvider>
+    </AuthProvider>
   );
 }
 
