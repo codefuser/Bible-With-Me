@@ -8,6 +8,9 @@ import { SearchModal } from './components/search/SearchModal';
 import { PreferencesModal } from './components/preferences/PreferencesModal';
 import { BookmarksModal } from './components/bookmarks/BookmarksModal';
 import { DailyVerseCard } from './components/daily/DailyVerseCard';
+import { VerseStudyModal } from './components/daily/VerseStudyModal';
+import { ChapterStudyModal } from './components/daily/ChapterStudyModal';
+import { DailyHistoryModal } from './components/daily/DailyHistoryModal';
 import { SideNavDrawer } from './components/navigation/SideNavDrawer';
 import { KeyboardShortcuts } from './components/common/KeyboardShortcuts';
 import { Clock, ArrowRight } from 'lucide-react';
@@ -96,12 +99,15 @@ const MainLayout: React.FC = () => {
       {/* Sticky Bottom Reading Navigation Bar */}
       <ReadingControls />
 
-      {/* Global Modals & Navigation Drawers */}
+      {/* Global Modals, Study Views & Navigation Drawers */}
       <SideNavDrawer />
       <BookSelectorModal />
       <SearchModal />
       <PreferencesModal />
       <BookmarksModal />
+      <VerseStudyModal />
+      <ChapterStudyModal />
+      <DailyHistoryModal />
     </div>
   );
 };

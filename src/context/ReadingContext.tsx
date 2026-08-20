@@ -27,6 +27,9 @@ interface ReadingContextType {
   isBookSelectorOpen: boolean;
   isBookmarksOpen: boolean;
   isSideNavOpen: boolean;
+  isDailyHistoryOpen: boolean;
+  activeStudyType: 'none' | 'verse' | 'chapter';
+  studyLocation: { bookId: number; chapter: number; verse?: number } | null;
   setBookAndChapter: (book: BibleBook, chapter: number, verse?: number) => void;
   setChapter: (chapter: number) => void;
   setLanguage: (lang: Language) => void;
@@ -38,6 +41,10 @@ interface ReadingContextType {
   setIsBookSelectorOpen: (open: boolean) => void;
   setIsBookmarksOpen: (open: boolean) => void;
   setIsSideNavOpen: (open: boolean) => void;
+  setIsDailyHistoryOpen: (open: boolean) => void;
+  openVerseStudy: (bookId: number, chapter: number, verse: number) => void;
+  openChapterStudy: (bookId: number, chapter: number) => void;
+  closeStudy: () => void;
 }
 
 const ReadingContext = createContext<ReadingContextType | undefined>(undefined);
@@ -58,6 +65,10 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isBookSelectorOpen, setIsBookSelectorOpen] = useState<boolean>(false);
   const [isBookmarksOpen, setIsBookmarksOpen] = useState<boolean>(false);
   const [isSideNavOpen, setIsSideNavOpen] = useState<boolean>(false);
+  const [isDailyHistoryOpen, setIsDailyHistoryOpen] = useState<boolean>(false);
+
+  const [activeStudyType, setActiveStudyType] = useState<'none' | 'verse' | 'chapter'>('none');
+  const [studyLocation, setStudyLocation] = useState<{ bookId: number; chapter: number; verse?: number } | null>(null);
 
   // Initialize Books, Hash Deep-Links & Saved History on mount
   useEffect(() => {
@@ -139,6 +150,21 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
+  const openVerseStudy = (bookId: number, chapter: number, verse: number) => {
+    setStudyLocation({ bookId, chapter, verse });
+    setActiveStudyType('verse');
+  };
+
+  const openChapterStudy = (bookId: number, chapter: number) => {
+    setStudyLocation({ bookId, chapter });
+    setActiveStudyType('chapter');
+  };
+
+  const closeStudy = () => {
+    setActiveStudyType('none');
+    setStudyLocation(null);
+  };
+
   return (
     <ReadingContext.Provider
       value={{
@@ -155,6 +181,9 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         isBookSelectorOpen,
         isBookmarksOpen,
         isSideNavOpen,
+        isDailyHistoryOpen,
+        activeStudyType,
+        studyLocation,
         setBookAndChapter,
         setChapter,
         setLanguage,
@@ -165,7 +194,11 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setIsPreferencesOpen,
         setIsBookSelectorOpen,
         setIsBookmarksOpen,
-        setIsSideNavOpen
+        setIsSideNavOpen,
+        setIsDailyHistoryOpen,
+        openVerseStudy,
+        openChapterStudy,
+        closeStudy
       }}
     >
       {children}
