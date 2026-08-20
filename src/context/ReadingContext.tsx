@@ -14,6 +14,8 @@ import { getStoredBookmarks, toggleBookmark } from '../services/bookmarkService'
 import { getStoredHistory, updateReadingHistory } from '../services/historyService';
 import { getStoredNotes, saveNote as saveNoteService } from '../services/noteService';
 import { parseHashRoute } from '../services/routerService';
+import { loadCloudBookmarksToLocal, loadCloudDataToLocal } from '../services/syncService';
+import { fetchCloudSettings } from '../services/userDataService';
 import { useAuth } from './AuthContext';
 
 interface ReadingContextType {
@@ -78,6 +80,47 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const [activeStudyType, setActiveStudyType] = useState<'none' | 'verse' | 'chapter'>('none');
   const [studyLocation, setStudyLocation] = useState<{ bookId: number; chapter: number; verse?: number } | null>(null);
+
+  // Synchronize and load user data whenever userId changes (Login, Logout, Session Init)
+  useEffect(() => {
+    let isMounted = true;
+
+    if (userId) {
+      // 1. Fetch Cloud Bookmarks from Supabase
+      loadCloudBookmarksToLocal(userId).then((cloudBms) => {
+        if (isMounted) setBookmarks(cloudBms);
+      });
+
+      // 2. Fetch Cloud Settings
+      fetchCloudSettings(userId).then((cloudPrefs) => {
+        if (isMounted && cloudPrefs) {
+          setPreferencesState((prev) => {
+            const updated = { ...prev, ...cloudPrefs };
+            savePreferences(updated);
+            return updated;
+          });
+        }
+      });
+
+      // 3. Fetch Cloud Highlights, Notes, and History
+      loadCloudDataToLocal(userId).then(() => {
+        if (isMounted) {
+          setNotes(getStoredNotes());
+          setHistoryItem(getStoredHistory());
+        }
+      });
+    } else {
+      // Guest Mode: load from localStorage
+      setBookmarks(getStoredBookmarks());
+      setNotes(getStoredNotes());
+      setHistoryItem(getStoredHistory());
+      setPreferencesState(getStoredPreferences());
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userId]);
 
   // Initialize Books, Hash Deep-Links & Saved History on mount
   useEffect(() => {
