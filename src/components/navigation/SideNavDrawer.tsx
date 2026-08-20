@@ -93,32 +93,24 @@ export const SideNavDrawer: React.FC = () => {
 
   return (
     <div
-      className="modal-overlay"
+      className="sidenav-overlay"
       onClick={handleClose}
       style={{
-        padding: 0,
-        justifyContent: 'flex-start',
         opacity: isSideNavOpen ? 1 : 0,
         pointerEvents: isSideNavOpen ? 'auto' : 'none',
         transition: 'opacity 280ms ease'
       }}
     >
       <div
-        className="modal-content"
+        className="sidenav-drawer"
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: '100%',
-          maxWidth: '320px',
-          height: '100vh',
-          maxHeight: '100vh',
-          borderRadius: 0,
-          boxShadow: 'var(--shadow-lg)',
           transform: isSideNavOpen ? 'translateX(0)' : 'translateX(-100%)',
           transition: 'transform 280ms cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       >
         {/* Drawer Header */}
-        <div className="modal-header" style={{ padding: '0.875rem 1rem' }}>
+        <div className="sidenav-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <BookOpen size={20} style={{ color: 'var(--accent-color)' }} />
             <h2 className="modal-title" style={{ fontSize: '1.125rem' }}>
@@ -131,7 +123,7 @@ export const SideNavDrawer: React.FC = () => {
         </div>
 
         {/* Drawer Body */}
-        <div className="modal-body" style={{ padding: '0.75rem 0.875rem' }}>
+        <div className="sidenav-body">
           {/* Quick Menu Actions */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.375rem', marginBottom: '1rem' }}>
             <button

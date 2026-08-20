@@ -65,6 +65,17 @@
 .reader-wrapper[data-font-en="outfit"] .verse-text.lang-en { font-family: var(--font-en-outfit); }
 .reader-wrapper[data-font-en="playfair"] .verse-text.lang-en { font-family: var(--font-en-playfair); }
 
+/* Font Size Modifiers */
+.reader-wrapper[data-size="sm"] .verse-text { font-size: var(--font-scale-sm); }
+.reader-wrapper[data-size="md"] .verse-text { font-size: var(--font-scale-md); }
+.reader-wrapper[data-size="lg"] .verse-text { font-size: var(--font-scale-lg); }
+.reader-wrapper[data-size="xl"] .verse-text { font-size: var(--font-scale-xl); }
+
+/* Line Height Modifiers */
+.reader-wrapper[data-line="normal"] .verse-text { line-height: var(--line-height-normal); }
+.reader-wrapper[data-line="relaxed"] .verse-text { line-height: var(--line-height-relaxed); }
+.reader-wrapper[data-line="loose"] .verse-text { line-height: var(--line-height-loose); }
+
 /* Verse List Layout */
 .verse-list {
   display: flex;
@@ -113,7 +124,17 @@
   flex: 1;
   color: var(--text-primary);
   word-break: break-word;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
   transition: font-size var(--transition-fast), line-height var(--transition-fast);
+}
+
+.verse-text.lang-ta {
+  letter-spacing: 0.015em;
+}
+
+.verse-text.lang-en {
+  letter-spacing: -0.005em;
 }
 
 .verse-bookmark-badge {

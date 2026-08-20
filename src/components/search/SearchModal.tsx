@@ -85,8 +85,20 @@ export const SearchModal: React.FC = () => {
   // Helper to highlight match substring inside verse text
   const renderHighlightedText = (text: string, searchTerm: string) => {
     if (!searchTerm || searchTerm.length < 2) return text;
-    const escaped = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(`(${escaped})`, 'gi');
+
+    const lowerSearch = searchTerm.toLowerCase().trim();
+    const rawTokens = lowerSearch.split(/\s+/).filter((t) => t.length >= 2);
+    const termsToMatch = new Set<string>();
+    termsToMatch.add(searchTerm.trim());
+    rawTokens.forEach((t) => termsToMatch.add(t));
+
+    const escapedTerms = Array.from(termsToMatch)
+      .map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      .join('|');
+
+    if (!escapedTerms) return text;
+
+    const regex = new RegExp(`(${escapedTerms})`, 'gi');
     const parts = text.split(regex);
 
     return parts.map((part, i) =>
