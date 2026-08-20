@@ -1,5 +1,5 @@
 import { Bookmark, Language, BibleBook, BibleVerse } from '../types/bible';
-import { supabase } from '../lib/supabase';
+import { upsertCloudBookmark, deleteCloudBookmark } from './userDataService';
 
 const BOOKMARKS_KEY = 'bible_app_bookmarks';
 
@@ -37,30 +37,24 @@ export const toggleBookmark = async (
   bookmarks: Bookmark[],
   book: BibleBook,
   verseObj: BibleVerse,
-  language: Language
+  language: Language,
+  userId?: string | null
 ): Promise<Bookmark[]> => {
   const existing = bookmarks.find(
     (b) => b.book_id === book.id && b.chapter === verseObj.chapter && b.verse === verseObj.verse
   );
 
   if (existing) {
-    // Remove bookmark
+    // Remove bookmark locally
     const updated = bookmarks.filter((b) => b.id !== existing.id);
     saveStoredBookmarks(updated);
 
-    if (supabase) {
-      try {
-        await supabase
-          .from('user_bookmarks')
-          .delete()
-          .match({ book_id: book.id, chapter: verseObj.chapter, verse: verseObj.verse });
-      } catch (err) {
-        console.warn('Supabase bookmark delete error:', err);
-      }
+    if (userId) {
+      deleteCloudBookmark(userId, book.code, verseObj.chapter, verseObj.verse);
     }
     return updated;
   } else {
-    // Add bookmark
+    // Add bookmark locally
     const newBookmark: Bookmark = {
       id: crypto.randomUUID ? crypto.randomUUID() : `bm_${Date.now()}_${verseObj.verse}`,
       book_id: book.id,
@@ -77,17 +71,8 @@ export const toggleBookmark = async (
     const updated = [newBookmark, ...bookmarks];
     saveStoredBookmarks(updated);
 
-    if (supabase) {
-      try {
-        await supabase.from('user_bookmarks').insert({
-          book_id: book.id,
-          chapter: verseObj.chapter,
-          verse: verseObj.verse,
-          language
-        });
-      } catch (err) {
-        console.warn('Supabase bookmark insert error:', err);
-      }
+    if (userId) {
+      upsertCloudBookmark(userId, book.code, verseObj.chapter, verseObj.verse);
     }
     return updated;
   }

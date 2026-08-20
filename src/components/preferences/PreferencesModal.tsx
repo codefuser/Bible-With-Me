@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Sun, Moon, BookOpen, Check, Type } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { FontSizeOption, LineHeightOption, MaxWidthOption, TamilFontOption, EnglishFontOption } from '../../types/bible';
+import { AccountPanel } from '../auth/AccountPanel';
 
 export const PreferencesModal: React.FC = () => {
   const {
@@ -337,7 +338,7 @@ export const PreferencesModal: React.FC = () => {
               </button>
 
               <button
-                className={`btn-pill ${language === 'parallel' ? 'active' : ''}`}
+                className={`tab-btn ${language === 'parallel' ? 'active' : ''}`}
                 onClick={() => setLanguage('parallel')}
                 aria-pressed={language === 'parallel'}
                 style={{
@@ -351,6 +352,14 @@ export const PreferencesModal: React.FC = () => {
                 <span>தமிழ் + EN</span>
               </button>
             </div>
+          </div>
+
+          {/* Group 4: Account & Cloud Sync */}
+          <div>
+            <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.625rem' }}>
+              {isEn ? 'Account & Cloud Sync' : 'கணக்கு & மேகக்கணி ஒத்திசைவு'}
+            </label>
+            <AccountPanel />
           </div>
         </div>
       </div>

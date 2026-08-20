@@ -1,3 +1,6 @@
+import { ALL_BIBLE_BOOKS } from './bibleService';
+import { upsertCloudHighlight, deleteCloudHighlight } from './userDataService';
+
 export type HighlightColor = 'yellow' | 'green' | 'blue' | 'pink' | 'orange';
 
 export interface VerseHighlight {
@@ -26,7 +29,8 @@ export const saveHighlight = (
   bookId: number,
   chapter: number,
   verse: number,
-  color: HighlightColor | null
+  color: HighlightColor | null,
+  userId?: string | null
 ): Record<string, HighlightColor> => {
   const current = getStoredHighlights();
   const key = `${bookId}_${chapter}_${verse}`;
@@ -41,6 +45,15 @@ export const saveHighlight = (
     localStorage.setItem(HIGHLIGHTS_KEY, JSON.stringify(current));
   } catch (err) {
     console.error('Error saving local highlights:', err);
+  }
+
+  if (userId) {
+    const bookCode = ALL_BIBLE_BOOKS.find((b) => b.id === bookId)?.code || String(bookId);
+    if (!color) {
+      deleteCloudHighlight(userId, bookCode, chapter, verse);
+    } else {
+      upsertCloudHighlight(userId, bookCode, chapter, verse, color);
+    }
   }
 
   return { ...current };

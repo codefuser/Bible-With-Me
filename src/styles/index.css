@@ -294,6 +294,84 @@ a {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Auth Styling */
+.auth-input {
+  width: 100%;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.625rem 0.5rem 2.25rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 150ms ease;
+}
+
+.auth-input:focus {
+  border-color: var(--accent-color);
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.input-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 0.625rem;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.auth-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  margin-bottom: 0.75rem;
+}
+
+.auth-alert.error {
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.auth-alert.success {
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+.accent-text {
+  color: var(--accent-color);
+}
+
+
 @keyframes slideRight {
   from { opacity: 0; transform: translateX(-100%); }
   to { opacity: 1; transform: translateX(0); }

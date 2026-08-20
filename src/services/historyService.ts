@@ -1,5 +1,5 @@
 import { ReadingHistoryItem, Language, BibleBook } from '../types/bible';
-import { supabase } from '../lib/supabase';
+import { upsertCloudHistory } from './userDataService';
 
 const HISTORY_KEY = 'bible_app_reading_history';
 
@@ -18,7 +18,8 @@ export const updateReadingHistory = async (
   book: BibleBook,
   chapter: number,
   verse: number = 1,
-  language: Language = 'en'
+  language: Language = 'en',
+  userId?: string | null
 ): Promise<ReadingHistoryItem> => {
   const item: ReadingHistoryItem = {
     book_id: book.id,
@@ -36,18 +37,9 @@ export const updateReadingHistory = async (
     console.error('Failed saving local reading history', err);
   }
 
-  // Attempt database sync if Supabase is connected
-  if (supabase) {
-    try {
-      await supabase.from('user_reading_history').insert({
-        book_id: book.id,
-        chapter,
-        verse,
-        language
-      });
-    } catch (err) {
-      console.warn('Supabase history sync skipped:', err);
-    }
+  // Database sync via upsert if user is logged in
+  if (userId) {
+    upsertCloudHistory(userId, book.code, chapter, verse);
   }
 
   return item;
