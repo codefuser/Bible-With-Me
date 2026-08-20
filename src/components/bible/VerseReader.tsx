@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Bookmark as BookmarkIcon, Copy, Share2 } from 'lucide-react';
+import { Bookmark as BookmarkIcon, Copy, Share2, BookOpen, Highlighter } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { BibleVerse } from '../../types/bible';
 import { fetchChapterVerses } from '../../services/bibleService';
 import { isVerseBookmarked } from '../../services/bookmarkService';
 import { updateHashRoute } from '../../services/routerService';
+import { getStoredHighlights, saveHighlight, getVerseHighlightColor, HighlightColor } from '../../services/highlightService';
 import { LoadingState } from '../common/LoadingState';
 import { ErrorState } from '../common/ErrorState';
 import { Toast } from '../common/Toast';
@@ -17,7 +18,8 @@ export const VerseReader: React.FC = () => {
     language,
     preferences,
     bookmarks,
-    handleToggleBookmark
+    handleToggleBookmark,
+    openVerseStudy
   } = useReading();
 
   const [verses, setVerses] = useState<BibleVerse[]>([]);
@@ -25,6 +27,8 @@ export const VerseReader: React.FC = () => {
   const [error, setError] = useState<boolean>(false);
   const [activeVerseNum, setActiveVerseNum] = useState<number | null>(selectedVerse);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [highlights, setHighlights] = useState<Record<string, HighlightColor>>(getStoredHighlights);
+  const [showHighlightPicker, setShowHighlightPicker] = useState<boolean>(false);
 
   const verseRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
@@ -75,8 +79,14 @@ export const VerseReader: React.FC = () => {
   const bookName = language === 'en' ? currentBook.name_en : currentBook.name_ta;
 
   const handleCopyVerse = (v: BibleVerse) => {
-    const text = language === 'en' ? v.text_en : language === 'ta' ? v.text_ta : `${v.text_ta}\n${v.text_en}`;
-    const formatted = `${bookName} ${currentChapter}:${v.verse}\n"${text}"`;
+    let formatted = '';
+    if (language === 'ta') {
+      formatted = `${bookName} ${currentChapter}:${v.verse}\n\n"${v.text_ta}"`;
+    } else if (language === 'en') {
+      formatted = `${bookName} ${currentChapter}:${v.verse}\n\n"${v.text_en}"`;
+    } else {
+      formatted = `${bookName} ${currentChapter}:${v.verse}\n\n"${v.text_ta}"\n\n"${v.text_en}"`;
+    }
 
     if (navigator.clipboard) {
       navigator.clipboard.writeText(formatted);
@@ -89,7 +99,6 @@ export const VerseReader: React.FC = () => {
     const formattedTitle = `${bookName} ${currentChapter}:${v.verse}`;
     const shareUrl = `${window.location.origin}${window.location.pathname}#${currentBook.code}/${currentChapter}/${v.verse}`;
 
-    // Native Web Share API if supported by mobile/browser
     if (navigator.share) {
       try {
         await navigator.share({
@@ -99,14 +108,24 @@ export const VerseReader: React.FC = () => {
         });
         return;
       } catch (err) {
-        // User cancelled share dialog or dismissed
+        // Dismissed share
       }
     }
 
-    // Fallback: Copy link to clipboard
     if (navigator.clipboard) {
       await navigator.clipboard.writeText(`${formattedTitle}\n"${text}"\n${shareUrl}`);
       showToast(language === 'en' ? 'Verse link copied to clipboard!' : 'வசன இணைப்பு நகலெடுக்கப்பட்டது!');
+    }
+  };
+
+  const handleSetHighlight = (v: BibleVerse, color: HighlightColor | null) => {
+    const updated = saveHighlight(currentBook.id, currentChapter, v.verse, color);
+    setHighlights(updated);
+    setShowHighlightPicker(false);
+    if (color) {
+      showToast(language === 'en' ? 'Verse highlighted!' : 'வசனம் சிறப்பிக்கப்பட்டது!');
+    } else {
+      showToast(language === 'en' ? 'Highlight removed' : 'சிறப்பிலக்கணம் நீக்கப்பட்டது');
     }
   };
 
@@ -154,13 +173,19 @@ export const VerseReader: React.FC = () => {
           {verses.map((verseObj) => {
             const isBookmarked = isVerseBookmarked(bookmarks, currentBook.id, currentChapter, verseObj.verse);
             const isSelected = activeVerseNum === verseObj.verse;
+            const highlightColor = getVerseHighlightColor(highlights, currentBook.id, currentChapter, verseObj.verse);
+
+            const highlightClass = highlightColor ? `highlight-${highlightColor}` : '';
 
             return (
               <div
                 key={verseObj.id || verseObj.verse}
                 ref={(el) => (verseRefs.current[verseObj.verse] = el)}
-                className={`verse-item ${isSelected ? 'selected' : ''} ${isBookmarked ? 'bookmarked' : ''}`}
-                onClick={() => setActiveVerseNum(isSelected ? null : verseObj.verse)}
+                className={`verse-item ${isSelected ? 'selected' : ''} ${highlightClass}`}
+                onClick={() => {
+                  setActiveVerseNum(isSelected ? null : verseObj.verse);
+                  setShowHighlightPicker(false);
+                }}
               >
                 <div className="verse-content-row">
                   <span className="verse-number">{verseObj.verse}</span>
@@ -183,31 +208,127 @@ export const VerseReader: React.FC = () => {
 
                   {isBookmarked && !isSelected && (
                     <span className="verse-bookmark-badge" title="Bookmarked">
-                      <BookmarkIcon size={13} fill="currentColor" style={{ color: 'var(--accent-color)' }} />
+                      <BookmarkIcon size={13} fill="currentColor" style={{ color: 'var(--bookmark-active)' }} />
                     </span>
                   )}
                 </div>
 
-                {/* Contextual Action Toolbar Row (Appears below verse text when selected) */}
+                {/* Contextual Action Toolbar Row */}
                 {isSelected && (
-                  <div className="verse-actions-bar" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      className={`verse-action-btn ${isBookmarked ? 'active' : ''}`}
-                      onClick={() => handleToggleBookmark(verseObj)}
-                    >
-                      <BookmarkIcon size={14} fill={isBookmarked ? 'currentColor' : 'none'} />
-                      <span>{isBookmarked ? (language === 'en' ? 'Bookmarked' : 'சேமிக்கப்பட்டது') : (language === 'en' ? 'Bookmark' : 'சேமி')}</span>
-                    </button>
+                  <div
+                    className="verse-actions-bar"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      gap: '0.5rem',
+                      marginTop: '0.625rem',
+                      paddingLeft: '2.125rem'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexWrap: 'wrap' }}>
+                      {/* Bookmark Toggle Action */}
+                      <button
+                        className={`verse-action-btn ${isBookmarked ? 'active' : ''}`}
+                        onClick={() => {
+                          handleToggleBookmark(verseObj);
+                          showToast(
+                            isBookmarked
+                              ? (language === 'en' ? 'Bookmark removed' : 'சேமிப்பு நீக்கப்பட்டது')
+                              : (language === 'en' ? 'Verse bookmarked!' : 'வசனம் சேமிக்கப்பட்டது!')
+                          );
+                        }}
+                      >
+                        <BookmarkIcon size={14} fill={isBookmarked ? 'currentColor' : 'none'} />
+                        <span>{isBookmarked ? (language === 'en' ? 'Bookmarked' : 'சேமிக்கப்பட்டது') : (language === 'en' ? 'Bookmark' : 'சேமி')}</span>
+                      </button>
 
-                    <button className="verse-action-btn" onClick={() => handleCopyVerse(verseObj)}>
-                      <Copy size={14} />
-                      <span>{language === 'en' ? 'Copy' : 'நகலெடு'}</span>
-                    </button>
+                      {/* Copy Action */}
+                      <button className="verse-action-btn" onClick={() => handleCopyVerse(verseObj)}>
+                        <Copy size={14} />
+                        <span>{language === 'en' ? 'Copy' : 'நகலெடு'}</span>
+                      </button>
 
-                    <button className="verse-action-btn" onClick={() => handleShareVerse(verseObj)}>
-                      <Share2 size={14} />
-                      <span>{language === 'en' ? 'Share' : 'பகிர்'}</span>
-                    </button>
+                      {/* Share Action */}
+                      <button className="verse-action-btn" onClick={() => handleShareVerse(verseObj)}>
+                        <Share2 size={14} />
+                        <span>{language === 'en' ? 'Share' : 'பகிர்'}</span>
+                      </button>
+
+                      {/* Verse Study Action */}
+                      <button
+                        className="verse-action-btn"
+                        onClick={() => openVerseStudy(currentBook.id, currentChapter, verseObj.verse)}
+                      >
+                        <BookOpen size={14} />
+                        <span>{language === 'en' ? 'Study' : 'ஆராய்க'}</span>
+                      </button>
+
+                      {/* Highlight Color Palette Trigger */}
+                      <button
+                        className={`verse-action-btn ${highlightColor ? 'active' : ''}`}
+                        onClick={() => setShowHighlightPicker(!showHighlightPicker)}
+                      >
+                        <Highlighter size={14} />
+                        <span>{language === 'en' ? 'Highlight' : 'சிறப்பிக்கு'}</span>
+                      </button>
+                    </div>
+
+                    {/* Highlight Color Picker Popover */}
+                    {showHighlightPicker && (
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '0.375rem 0.625rem',
+                          backgroundColor: 'var(--bg-surface)',
+                          borderRadius: '0.5rem',
+                          border: '1px solid var(--border-color)',
+                          boxShadow: 'var(--shadow-sm)'
+                        }}
+                      >
+                        <button
+                          className="highlight-color-btn"
+                          title="Yellow Highlight"
+                          onClick={() => handleSetHighlight(verseObj, 'yellow')}
+                          style={{ backgroundColor: '#eab308' }}
+                        />
+                        <button
+                          className="highlight-color-btn"
+                          title="Green Highlight"
+                          onClick={() => handleSetHighlight(verseObj, 'green')}
+                          style={{ backgroundColor: '#22c55e' }}
+                        />
+                        <button
+                          className="highlight-color-btn"
+                          title="Blue Highlight"
+                          onClick={() => handleSetHighlight(verseObj, 'blue')}
+                          style={{ backgroundColor: '#3b82f6' }}
+                        />
+                        <button
+                          className="highlight-color-btn"
+                          title="Pink Highlight"
+                          onClick={() => handleSetHighlight(verseObj, 'pink')}
+                          style={{ backgroundColor: '#ec4899' }}
+                        />
+                        <button
+                          className="highlight-color-btn"
+                          title="Orange Highlight"
+                          onClick={() => handleSetHighlight(verseObj, 'orange')}
+                          style={{ backgroundColor: '#f97316' }}
+                        />
+                        {highlightColor && (
+                          <button
+                            onClick={() => handleSetHighlight(verseObj, null)}
+                            style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '0.25rem' }}
+                          >
+                            {language === 'en' ? 'Clear' : 'நீக்குக'}
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
