@@ -23,7 +23,7 @@ export const VerseStudyModal: React.FC = () => {
   const [studyData, setStudyData] = useState<VerseStudy | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Collapsible section toggle state (default all expanded or selectively collapsed)
+  // Collapsible section toggle state
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     simple: true,
     deep: true,
@@ -48,6 +48,15 @@ export const VerseStudyModal: React.FC = () => {
       });
     }
   }, [activeStudyType, studyLocation]);
+
+  useEffect(() => {
+    if (activeStudyType === 'verse') {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [activeStudyType]);
 
   if (activeStudyType !== 'verse' || !studyLocation) return null;
 
@@ -81,7 +90,6 @@ export const VerseStudyModal: React.FC = () => {
           </div>
 
           <div className="study-actions-bar">
-            {/* Quick Language Toggle inside Study View */}
             <button
               className="btn-pill"
               onClick={() => setLanguage(isTa ? 'en' : 'ta')}
@@ -133,26 +141,30 @@ export const VerseStudyModal: React.FC = () => {
                   </div>
                   <ChevronDown
                     size={16}
-                    style={{ transform: openSections.simple ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 200ms' }}
+                    style={{ transform: openSections.simple ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 240ms ease' }}
                   />
                 </button>
-                {openSections.simple && (
-                  <div className="study-section-content">
-                    <p>{isTa ? studyData.simple_explanation_ta : studyData.simple_explanation_en}</p>
-                    <div
-                      style={{
-                        padding: '0.75rem 1rem',
-                        backgroundColor: 'var(--bg-secondary)',
-                        borderRadius: '0.5rem',
-                        borderLeft: '3px solid var(--accent-color)',
-                        fontSize: '0.875rem'
-                      }}
-                    >
-                      <strong>{isTa ? 'முக்கியக் கருத்து:' : 'Key Takeaway:'}</strong>{' '}
-                      {isTa ? studyData.key_takeaway_ta : studyData.key_takeaway_en}
+                <div className={`study-accordion-body ${openSections.simple ? 'open' : ''}`}>
+                  <div className="study-accordion-inner">
+                    <div className="study-accordion-content-wrapper">
+                      <div className="study-section-content">
+                        <p>{isTa ? studyData.simple_explanation_ta : studyData.simple_explanation_en}</p>
+                        <div
+                          style={{
+                            padding: '0.75rem 1rem',
+                            backgroundColor: 'var(--bg-secondary)',
+                            borderRadius: '0.5rem',
+                            borderLeft: '3px solid var(--accent-color)',
+                            fontSize: '0.875rem'
+                          }}
+                        >
+                          <strong>{isTa ? 'முக்கியக் கருத்து:' : 'Key Takeaway:'}</strong>{' '}
+                          {isTa ? studyData.key_takeaway_ta : studyData.key_takeaway_en}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* 3. ஆழமான அர்த்தம் (Deep Meaning) */}
@@ -166,43 +178,46 @@ export const VerseStudyModal: React.FC = () => {
                   </div>
                   <ChevronDown
                     size={16}
-                    style={{ transform: openSections.deep ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 200ms' }}
+                    style={{ transform: openSections.deep ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 240ms ease' }}
                   />
                 </button>
-                {openSections.deep && (
-                  <div className="study-section-content">
-                    <p>{isTa ? studyData.deep_meaning_ta : studyData.deep_meaning_en}</p>
+                <div className={`study-accordion-body ${openSections.deep ? 'open' : ''}`}>
+                  <div className="study-accordion-inner">
+                    <div className="study-accordion-content-wrapper">
+                      <div className="study-section-content">
+                        <p>{isTa ? studyData.deep_meaning_ta : studyData.deep_meaning_en}</p>
 
-                    {/* Key terms list */}
-                    <div style={{ marginTop: '0.5rem' }}>
-                      <h4 style={{ fontSize: '0.875rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-                        {isTa ? 'முக்கிய வார்த்தைகள்:' : 'Key Terms & Concepts:'}
-                      </h4>
-                      <ul style={{ paddingLeft: '1.25rem', margin: 0, fontSize: '0.875rem', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-                        {(isTa ? studyData.key_terms_ta : studyData.key_terms_en).map((kt, i) => (
-                          <li key={i}>
-                            <strong>{kt.term}:</strong> {kt.meaning}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                        <div style={{ marginTop: '0.5rem' }}>
+                          <h4 style={{ fontSize: '0.875rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+                            {isTa ? 'முக்கிய வார்த்தைகள்:' : 'Key Terms & Concepts:'}
+                          </h4>
+                          <ul style={{ paddingLeft: '1.25rem', margin: 0, fontSize: '0.875rem', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                            {(isTa ? studyData.key_terms_ta : studyData.key_terms_en).map((kt, i) => (
+                              <li key={i}>
+                                <strong>{kt.term}:</strong> {kt.meaning}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem', marginTop: '0.5rem' }}>
-                      <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
-                        <span style={{ color: 'var(--accent-color)', fontWeight: 700 }}>
-                          ✓ {isTa ? 'வசனம் வலியுறுத்துவது:' : 'What it Emphasizes:'}
-                        </span>{' '}
-                        {isTa ? studyData.what_it_emphasizes_ta : studyData.what_it_emphasizes_en}
-                      </div>
-                      <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
-                        <span style={{ color: '#ef4444', fontWeight: 700 }}>
-                          ✗ {isTa ? 'வசனம் எதை உணர்த்தவில்லை:' : 'What it Does NOT Mean:'}
-                        </span>{' '}
-                        {isTa ? studyData.what_it_does_not_mean_ta : studyData.what_it_does_not_mean_en}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem', marginTop: '0.5rem' }}>
+                          <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
+                            <span style={{ color: 'var(--accent-color)', fontWeight: 700 }}>
+                              ✓ {isTa ? 'வசனம் வலியுறுத்துவது:' : 'What it Emphasizes:'}
+                            </span>{' '}
+                            {isTa ? studyData.what_it_emphasizes_ta : studyData.what_it_emphasizes_en}
+                          </div>
+                          <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
+                            <span style={{ color: '#ef4444', fontWeight: 700 }}>
+                              ✗ {isTa ? 'வசனம் எதை உணர்த்தவில்லை:' : 'What it Does NOT Mean:'}
+                            </span>{' '}
+                            {isTa ? studyData.what_it_does_not_mean_ta : studyData.what_it_does_not_mean_en}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* 4. சூழ்நிலை (Context) */}
@@ -216,32 +231,36 @@ export const VerseStudyModal: React.FC = () => {
                   </div>
                   <ChevronDown
                     size={16}
-                    style={{ transform: openSections.context ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 200ms' }}
+                    style={{ transform: openSections.context ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 240ms ease' }}
                   />
                 </button>
-                {openSections.context && (
-                  <div className="study-section-content">
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
-                      <div className="scenario-card">
-                        <span className="scenario-title">{isTa ? 'யாருக்காக:' : 'To Whom:'}</span>
-                        <span className="scenario-desc">{isTa ? studyData.context_audience_ta : studyData.context_audience_en}</span>
-                      </div>
-                      <div className="scenario-card">
-                        <span className="scenario-title">{isTa ? 'சூழ்நிலை:' : 'Situation:'}</span>
-                        <span className="scenario-desc">{isTa ? studyData.context_situation_ta : studyData.context_situation_en}</span>
+                <div className={`study-accordion-body ${openSections.context ? 'open' : ''}`}>
+                  <div className="study-accordion-inner">
+                    <div className="study-accordion-content-wrapper">
+                      <div className="study-section-content">
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+                          <div className="scenario-card">
+                            <span className="scenario-title">{isTa ? 'யாருக்காக:' : 'To Whom:'}</span>
+                            <span className="scenario-desc">{isTa ? studyData.context_audience_ta : studyData.context_audience_en}</span>
+                          </div>
+                          <div className="scenario-card">
+                            <span className="scenario-title">{isTa ? 'சூழ்நிலை:' : 'Situation:'}</span>
+                            <span className="scenario-desc">{isTa ? studyData.context_situation_ta : studyData.context_situation_en}</span>
+                          </div>
+                        </div>
+
+                        {studyData.surrounding_verses_summary_ta && (
+                          <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', whiteSpace: 'pre-line', color: 'var(--text-secondary)' }}>
+                            <strong>{isTa ? 'சுற்றியுள்ள வசனங்களின் சுருக்கம் (CSV):' : 'Surrounding Scripture Text:'}</strong>
+                            <div style={{ fontStyle: 'italic', marginTop: '0.25rem', padding: '0.5rem 0.75rem', background: 'var(--bg-secondary)', borderRadius: '0.375rem' }}>
+                              {isTa ? studyData.surrounding_verses_summary_ta : studyData.surrounding_verses_summary_en}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-
-                    {studyData.surrounding_verses_summary_ta && (
-                      <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', whiteSpace: 'pre-line', color: 'var(--text-secondary)' }}>
-                        <strong>{isTa ? 'சுற்றியுள்ள வசனங்களின் சுருக்கம் (CSV):' : 'Surrounding Scripture Text:'}</strong>
-                        <div style={{ fontStyle: 'italic', marginTop: '0.25rem', padding: '0.5rem 0.75rem', background: 'var(--bg-secondary)', borderRadius: '0.375rem' }}>
-                          {isTa ? studyData.surrounding_verses_summary_ta : studyData.surrounding_verses_summary_en}
-                        </div>
-                      </div>
-                    )}
                   </div>
-                )}
+                </div>
               </div>
 
               {/* 5. நிஜ வாழ்க்கையில் (Real-world Examples) */}
@@ -255,19 +274,23 @@ export const VerseStudyModal: React.FC = () => {
                   </div>
                   <ChevronDown
                     size={16}
-                    style={{ transform: openSections.scenarios ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 200ms' }}
+                    style={{ transform: openSections.scenarios ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 240ms ease' }}
                   />
                 </button>
-                {openSections.scenarios && (
-                  <div className="study-section-content">
-                    {(isTa ? studyData.real_world_scenarios_ta : studyData.real_world_scenarios_en).map((sc, i) => (
-                      <div key={i} className="scenario-card">
-                        <div className="scenario-title">{sc.scenario_title}</div>
-                        <div className="scenario-desc">{sc.example}</div>
+                <div className={`study-accordion-body ${openSections.scenarios ? 'open' : ''}`}>
+                  <div className="study-accordion-inner">
+                    <div className="study-accordion-content-wrapper">
+                      <div className="study-section-content">
+                        {(isTa ? studyData.real_world_scenarios_ta : studyData.real_world_scenarios_en).map((sc, i) => (
+                          <div key={i} className="scenario-card">
+                            <div className="scenario-title">{sc.scenario_title}</div>
+                            <div className="scenario-desc">{sc.example}</div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* 6. இந்த வசனத்தை எப்படி பார்க்கலாம்? (Multiple Perspectives) */}
@@ -281,27 +304,31 @@ export const VerseStudyModal: React.FC = () => {
                   </div>
                   <ChevronDown
                     size={16}
-                    style={{ transform: openSections.perspectives ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 200ms' }}
+                    style={{ transform: openSections.perspectives ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 240ms ease' }}
                   />
                 </button>
-                {openSections.perspectives && (
-                  <div className="study-section-content">
-                    <div className="perspective-grid">
-                      {studyData.perspectives.map((p) => {
-                        const isWarning = p.id === 'selfish';
-                        return (
-                          <div key={p.id} className="perspective-card">
-                            <span className={`perspective-tag ${isWarning ? 'warning' : ''}`}>
-                              {isTa ? p.badge_ta : p.badge_en}
-                            </span>
-                            <h4 className="perspective-title">{isTa ? p.title_ta : p.title_en}</h4>
-                            <p className="perspective-desc">{isTa ? p.description_ta : p.description_en}</p>
-                          </div>
-                        );
-                      })}
+                <div className={`study-accordion-body ${openSections.perspectives ? 'open' : ''}`}>
+                  <div className="study-accordion-inner">
+                    <div className="study-accordion-content-wrapper">
+                      <div className="study-section-content">
+                        <div className="perspective-grid">
+                          {studyData.perspectives.map((p) => {
+                            const isWarning = p.id === 'selfish';
+                            return (
+                              <div key={p.id} className="perspective-card">
+                                <span className={`perspective-tag ${isWarning ? 'warning' : ''}`}>
+                                  {isTa ? p.badge_ta : p.badge_en}
+                                </span>
+                                <h4 className="perspective-title">{isTa ? p.title_ta : p.title_en}</h4>
+                                <p className="perspective-desc">{isTa ? p.description_ta : p.description_en}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* 7. நான் இதிலிருந்து என்ன கற்றுக்கொள்ளலாம்? (Personal Takeaways) */}
@@ -315,36 +342,40 @@ export const VerseStudyModal: React.FC = () => {
                   </div>
                   <ChevronDown
                     size={16}
-                    style={{ transform: openSections.learnings ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 200ms' }}
+                    style={{ transform: openSections.learnings ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 240ms ease' }}
                   />
                 </button>
-                {openSections.learnings && (
-                  <div className="study-section-content">
-                    {(() => {
-                      const L = isTa ? studyData.learnings_ta : studyData.learnings_en;
-                      return (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
-                          <div className="scenario-card">
-                            <span className="scenario-title">{isTa ? 'நான் புரிந்துகொள்ள வேண்டியது:' : 'To Understand:'}</span>
-                            <span className="scenario-desc">{L.what_to_understand}</span>
-                          </div>
-                          <div className="scenario-card">
-                            <span className="scenario-title">{isTa ? 'நான் மாற்ற வேண்டியது:' : 'To Change:'}</span>
-                            <span className="scenario-desc">{L.what_to_change}</span>
-                          </div>
-                          <div className="scenario-card">
-                            <span className="scenario-title">{isTa ? 'நான் வளர்க்க வேண்டிய மனப்பான்மை:' : 'Attitude to Build:'}</span>
-                            <span className="scenario-desc">{L.attitude_to_build}</span>
-                          </div>
-                          <div className="scenario-card">
-                            <span className="scenario-title">{isTa ? 'இன்றைய பயிற்சி:' : "Today's Practice:"}</span>
-                            <span className="scenario-desc">{L.today_practice}</span>
-                          </div>
-                        </div>
-                      );
-                    })()}
+                <div className={`study-accordion-body ${openSections.learnings ? 'open' : ''}`}>
+                  <div className="study-accordion-inner">
+                    <div className="study-accordion-content-wrapper">
+                      <div className="study-section-content">
+                        {(() => {
+                          const L = isTa ? studyData.learnings_ta : studyData.learnings_en;
+                          return (
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
+                              <div className="scenario-card">
+                                <span className="scenario-title">{isTa ? 'நான் புரிந்துகொள்ள வேண்டியது:' : 'To Understand:'}</span>
+                                <span className="scenario-desc">{L.what_to_understand}</span>
+                              </div>
+                              <div className="scenario-card">
+                                <span className="scenario-title">{isTa ? 'நான் மாற்ற வேண்டியது:' : 'To Change:'}</span>
+                                <span className="scenario-desc">{L.what_to_change}</span>
+                              </div>
+                              <div className="scenario-card">
+                                <span className="scenario-title">{isTa ? 'நான் வளர்க்க வேண்டிய மனப்பான்மை:' : 'Attitude to Build:'}</span>
+                                <span className="scenario-desc">{L.attitude_to_build}</span>
+                              </div>
+                              <div className="scenario-card">
+                                <span className="scenario-title">{isTa ? 'இன்றைய பயிற்சி:' : "Today's Practice:"}</span>
+                                <span className="scenario-desc">{L.today_practice}</span>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* 8. என்னை நான் கேட்க வேண்டிய கேள்விகள் (Self-Reflection Questions) */}
@@ -358,20 +389,24 @@ export const VerseStudyModal: React.FC = () => {
                   </div>
                   <ChevronDown
                     size={16}
-                    style={{ transform: openSections.reflection ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 200ms' }}
+                    style={{ transform: openSections.reflection ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 240ms ease' }}
                   />
                 </button>
-                {openSections.reflection && (
-                  <div className="study-section-content">
-                    <ol style={{ paddingLeft: '1.25rem', margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      {(isTa ? studyData.reflection_questions_ta : studyData.reflection_questions_en).map((q, i) => (
-                        <li key={i} style={{ fontSize: '0.9375rem', color: 'var(--text-primary)' }}>
-                          {q}
-                        </li>
-                      ))}
-                    </ol>
+                <div className={`study-accordion-body ${openSections.reflection ? 'open' : ''}`}>
+                  <div className="study-accordion-inner">
+                    <div className="study-accordion-content-wrapper">
+                      <div className="study-section-content">
+                        <ol style={{ paddingLeft: '1.25rem', margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          {(isTa ? studyData.reflection_questions_ta : studyData.reflection_questions_en).map((q, i) => (
+                            <li key={i} style={{ fontSize: '0.9375rem', color: 'var(--text-primary)' }}>
+                              {q}
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* 9. தியானிக்க / ஜெபிக்க (Meditation & Prayer) */}
@@ -385,21 +420,25 @@ export const VerseStudyModal: React.FC = () => {
                   </div>
                   <ChevronDown
                     size={16}
-                    style={{ transform: openSections.prayer ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 200ms' }}
+                    style={{ transform: openSections.prayer ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 240ms ease' }}
                   />
                 </button>
-                {openSections.prayer && (
-                  <div className="study-section-content">
-                    <div style={{ padding: '0.875rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '0.5rem', fontStyle: 'italic', fontSize: '0.9375rem' }}>
-                      <strong>{isTa ? 'தியான வழிகாட்டுதல்:' : 'Meditation Direction:'}</strong>{' '}
-                      {isTa ? studyData.meditation_direction_ta : studyData.meditation_direction_en}
-                    </div>
+                <div className={`study-accordion-body ${openSections.prayer ? 'open' : ''}`}>
+                  <div className="study-accordion-inner">
+                    <div className="study-accordion-content-wrapper">
+                      <div className="study-section-content">
+                        <div style={{ padding: '0.875rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '0.5rem', fontStyle: 'italic', fontSize: '0.9375rem' }}>
+                          <strong>{isTa ? 'தியான வழிகாட்டுதல்:' : 'Meditation Direction:'}</strong>{' '}
+                          {isTa ? studyData.meditation_direction_ta : studyData.meditation_direction_en}
+                        </div>
 
-                    <div style={{ padding: '0.875rem', backgroundColor: 'rgba(var(--accent-rgb, 99, 102, 241), 0.08)', borderRadius: '0.5rem', fontSize: '0.9375rem', borderLeft: '3px solid var(--accent-color)' }}>
-                      <strong>{isTa ? 'ஜெபம்:' : 'Prayer:'}</strong> "{isTa ? studyData.prayer_ta : studyData.prayer_en}"
+                        <div style={{ padding: '0.875rem', backgroundColor: 'rgba(var(--accent-rgb, 99, 102, 241), 0.08)', borderRadius: '0.5rem', fontSize: '0.9375rem', borderLeft: '3px solid var(--accent-color)' }}>
+                          <strong>{isTa ? 'ஜெபம்:' : 'Prayer:'}</strong> "{isTa ? studyData.prayer_ta : studyData.prayer_en}"
+                        </div>
+                      </div>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Bottom Navigation Links inside Modal */}

@@ -11,6 +11,10 @@ export const DailyHistoryModal: React.FC = () => {
   useEffect(() => {
     if (isDailyHistoryOpen) {
       setHistoryItems(getDailyVerseHistory());
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
     }
   }, [isDailyHistoryOpen]);
 
