@@ -101,6 +101,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setProfile(null);
     setSyncStatus('synced');
+    
+    // Clear user cached items in localStorage to protect user data isolation on shared devices
+    try {
+      localStorage.removeItem('bible_app_bookmarks');
+      localStorage.removeItem('bible_app_highlights');
+      localStorage.removeItem('bible_app_user_notes');
+      localStorage.removeItem('bible_app_reading_history');
+      localStorage.removeItem('bible_app_preferences');
+    } catch (err) {
+      console.warn('Error clearing local storage on logout:', err);
+    }
   };
 
   const triggerSync = async (): Promise<boolean> => {

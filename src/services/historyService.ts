@@ -39,7 +39,7 @@ export const updateReadingHistory = async (
 
   // Database sync via upsert if user is logged in
   if (userId) {
-    upsertCloudHistory(userId, book.code, chapter, verse);
+    await upsertCloudHistory(userId, book.code, chapter, verse);
   }
 
   return item;

@@ -1,11 +1,14 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Bookmark as BookmarkIcon, Copy, Share2, BookOpen, Highlighter } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
+import { useAuth } from '../../context/AuthContext';
 import { BibleVerse } from '../../types/bible';
 import { fetchChapterVerses } from '../../services/bibleService';
 import { isVerseBookmarked } from '../../services/bookmarkService';
 import { updateHashRoute } from '../../services/routerService';
 import { getStoredHighlights, saveHighlight, getVerseHighlightColor, HighlightColor } from '../../services/highlightService';
+import { trackActivity } from '../../services/activityService';
+import { upsertCloudProgress } from '../../services/userDataService';
 import { LoadingState } from '../common/LoadingState';
 import { ErrorState } from '../common/ErrorState';
 import { Toast } from '../common/Toast';
@@ -21,6 +24,9 @@ export const VerseReader: React.FC = () => {
     handleToggleBookmark,
     openVerseStudy
   } = useReading();
+
+  const { user } = useAuth();
+  const userId = user?.id || null;
 
   const [verses, setVerses] = useState<BibleVerse[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -47,6 +53,10 @@ export const VerseReader: React.FC = () => {
         if (isMounted) {
           setVerses(data);
           setLoading(false);
+          // Track activity: Chapter read
+          if (userId) {
+            trackActivity(userId, 'CHAPTER_READ', currentBook.code, currentChapter);
+          }
         }
       })
       .catch((err) => {
@@ -60,7 +70,7 @@ export const VerseReader: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [currentBook.id, currentChapter]);
+  }, [currentBook.id, currentBook.code, currentChapter, userId]);
 
   // Sync route hash and auto-scroll to selected verse
   useEffect(() => {
@@ -75,6 +85,30 @@ export const VerseReader: React.FC = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [currentBook.id, currentBook.code, currentChapter, selectedVerse, loading]);
+
+  // Scroll position tracking for reading progress & cloud sync
+  useEffect(() => {
+    if (!userId || loading) return;
+
+    let timer: any = null;
+
+    const handleScroll = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        const scrollPos = Math.round(window.scrollY);
+        if (scrollPos > 50) {
+          upsertCloudProgress(userId, currentBook.code, currentChapter, activeVerseNum || 1, scrollPos);
+          trackActivity(userId, 'READING_PROGRESS_UPDATED', currentBook.code, currentChapter, activeVerseNum || 1, { scrollPos });
+        }
+      }, 2500);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      if (timer) clearTimeout(timer);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [userId, currentBook.code, currentChapter, activeVerseNum, loading]);
 
   const bookName = language === 'en' ? currentBook.name_en : currentBook.name_ta;
 
@@ -118,14 +152,20 @@ export const VerseReader: React.FC = () => {
     }
   };
 
-  const handleSetHighlight = (v: BibleVerse, color: HighlightColor | null) => {
-    const updated = saveHighlight(currentBook.id, currentChapter, v.verse, color);
+  const handleSetHighlight = async (v: BibleVerse, color: HighlightColor | null) => {
+    const updated = await saveHighlight(currentBook.id, currentChapter, v.verse, color, userId);
     setHighlights(updated);
     setShowHighlightPicker(false);
     if (color) {
       showToast(language === 'en' ? 'Verse highlighted!' : 'வசனம் சிறப்பிக்கப்பட்டது!');
+      if (userId) {
+        trackActivity(userId, 'HIGHLIGHT_ADDED', currentBook.code, currentChapter, v.verse, { color });
+      }
     } else {
       showToast(language === 'en' ? 'Highlight removed' : 'சிறப்பிலக்கணம் நீக்கப்பட்டது');
+      if (userId) {
+        trackActivity(userId, 'HIGHLIGHT_REMOVED', currentBook.code, currentChapter, v.verse);
+      }
     }
   };
 

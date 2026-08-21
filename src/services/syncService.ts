@@ -142,13 +142,13 @@ export const loadCloudDataToLocal = async (userId: string): Promise<void> => {
     for (const hl of cloudHighlights) {
       const matchedBook = ALL_BIBLE_BOOKS.find((b) => b.code.toUpperCase() === hl.book.toUpperCase() || String(b.id) === hl.book);
       const bookId = matchedBook ? matchedBook.id : parseInt(hl.book, 10) || 1;
-      saveHighlight(bookId, hl.chapter, hl.verse, hl.color as HighlightColor);
+      await saveHighlight(bookId, hl.chapter, hl.verse, hl.color as HighlightColor);
     }
 
     // 4. Load Cloud Notes into Local Storage
     const cloudNotes = await fetchCloudNotes(userId);
     for (const note of cloudNotes) {
-      saveNote(note.book, note.chapter, note.verse, note.content);
+      await saveNote(note.book, note.chapter, note.verse, note.content);
     }
 
     // 5. Load Cloud History into Local Storage
@@ -156,7 +156,7 @@ export const loadCloudDataToLocal = async (userId: string): Promise<void> => {
     if (cloudHistory) {
       const matchedBook = ALL_BIBLE_BOOKS.find((b) => b.code.toUpperCase() === cloudHistory.book.toUpperCase() || String(b.id) === cloudHistory.book);
       if (matchedBook) {
-        updateReadingHistory(matchedBook, cloudHistory.chapter, cloudHistory.verse);
+        await updateReadingHistory(matchedBook, cloudHistory.chapter, cloudHistory.verse);
       }
     }
 

@@ -1,5 +1,5 @@
 -- ============================================================
--- BIBLE APPLICATION DATABASE SCHEMA - PHASE 10
+-- BIBLE APPLICATION DATABASE SCHEMA - PHASE 11
 -- Compatible with Supabase PostgreSQL & Row Level Security (RLS)
 -- ============================================================
 
@@ -46,6 +46,8 @@ CREATE TABLE IF NOT EXISTS public.user_settings (
   line_height TEXT DEFAULT 'relaxed',
   reading_width TEXT DEFAULT 'standard',
   language TEXT DEFAULT 'ta',
+  font_family_ta TEXT DEFAULT 'noto',
+  font_family_en TEXT DEFAULT 'lora',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -110,6 +112,18 @@ CREATE TABLE IF NOT EXISTS public.reading_progress (
   CONSTRAINT unique_user_progress UNIQUE (user_id, book, chapter)
 );
 
+-- 8. USER ACTIVITY TABLE
+CREATE TABLE IF NOT EXISTS public.user_activity (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  activity_type TEXT NOT NULL,
+  book TEXT,
+  chapter INTEGER,
+  verse INTEGER,
+  metadata JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- INDEXES FOR OPTIMAL QUERY PERFORMANCE
 CREATE INDEX IF NOT EXISTS idx_bookmarks_user_id ON public.bookmarks(user_id);
 CREATE INDEX IF NOT EXISTS idx_bookmarks_lookup ON public.bookmarks(user_id, book, chapter, verse);
@@ -125,6 +139,9 @@ CREATE INDEX IF NOT EXISTS idx_history_updated ON public.reading_history(user_id
 
 CREATE INDEX IF NOT EXISTS idx_progress_user_id ON public.reading_progress(user_id);
 
+CREATE INDEX IF NOT EXISTS idx_user_activity_user_time ON public.user_activity(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_user_activity_type ON public.user_activity(user_id, activity_type);
+
 -- ============================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- ============================================================
@@ -136,6 +153,7 @@ ALTER TABLE public.highlights ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reading_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reading_progress ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_activity ENABLE ROW LEVEL SECURITY;
 
 -- 1. Profiles Policies
 CREATE POLICY "Users can read own profile"
@@ -247,3 +265,12 @@ CREATE POLICY "Users can update own progress"
 CREATE POLICY "Users can delete own progress"
   ON public.reading_progress FOR DELETE
   USING (auth.uid() = user_id);
+
+-- 8. User Activity Policies
+CREATE POLICY "Users can read own activity"
+  ON public.user_activity FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own activity"
+  ON public.user_activity FOR INSERT
+  WITH CHECK (auth.uid() = user_id);

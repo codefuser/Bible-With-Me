@@ -25,13 +25,13 @@ export const getStoredHighlights = (): Record<string, HighlightColor> => {
   }
 };
 
-export const saveHighlight = (
+export const saveHighlight = async (
   bookId: number,
   chapter: number,
   verse: number,
   color: HighlightColor | null,
   userId?: string | null
-): Record<string, HighlightColor> => {
+): Promise<Record<string, HighlightColor>> => {
   const current = getStoredHighlights();
   const key = `${bookId}_${chapter}_${verse}`;
 
@@ -50,9 +50,9 @@ export const saveHighlight = (
   if (userId) {
     const bookCode = ALL_BIBLE_BOOKS.find((b) => b.id === bookId)?.code || String(bookId);
     if (!color) {
-      deleteCloudHighlight(userId, bookCode, chapter, verse);
+      await deleteCloudHighlight(userId, bookCode, chapter, verse);
     } else {
-      upsertCloudHighlight(userId, bookCode, chapter, verse, color);
+      await upsertCloudHighlight(userId, bookCode, chapter, verse, color);
     }
   }
 

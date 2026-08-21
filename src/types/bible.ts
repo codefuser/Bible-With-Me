@@ -106,3 +106,32 @@ export interface ReadingProgress {
   scroll_position: number;
   updated_at?: string;
 }
+
+// User Activity Types (Phase 11)
+export type ActivityType =
+  | 'BOOKMARK_ADDED'
+  | 'BOOKMARK_REMOVED'
+  | 'HIGHLIGHT_ADDED'
+  | 'HIGHLIGHT_REMOVED'
+  | 'NOTE_CREATED'
+  | 'NOTE_UPDATED'
+  | 'NOTE_DELETED'
+  | 'CHAPTER_READ'
+  | 'READING_PROGRESS_UPDATED'
+  | 'SEARCH_PERFORMED'
+  | 'DAILY_VERSE_VIEWED'
+  | 'VERSE_EXPLORATION_OPENED'
+  | 'CHAPTER_EXPLORATION_OPENED'
+  | 'SETTINGS_CHANGED'
+  | 'LANGUAGE_CHANGED';
+
+export interface UserActivity {
+  id?: string;
+  user_id: string;
+  activity_type: ActivityType;
+  book?: string;
+  chapter?: number;
+  verse?: number;
+  metadata?: Record<string, any>;
+  created_at?: string;
+}

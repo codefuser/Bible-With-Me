@@ -19,7 +19,9 @@ export const fetchCloudSettings = async (userId: string): Promise<Partial<Readin
       lineHeight: data.line_height,
       maxWidth: data.reading_width,
       theme: data.theme,
-      language: data.language
+      language: data.language,
+      fontFamilyTa: data.font_family_ta,
+      fontFamilyEn: data.font_family_en
     };
   } catch (err) {
     console.error('Error fetching cloud settings:', err);
@@ -38,11 +40,17 @@ export const upsertCloudSettings = async (userId: string, prefs: ReadingPreferen
         line_height: prefs.lineHeight,
         reading_width: prefs.maxWidth,
         language: prefs.language,
+        font_family_ta: prefs.fontFamilyTa || 'noto',
+        font_family_en: prefs.fontFamilyEn || 'lora',
         updated_at: new Date().toISOString()
       },
       { onConflict: 'user_id' }
     );
-    return !error;
+    if (error) {
+      console.error('[Supabase Error] upsertCloudSettings failed:', error.message, error.details);
+      return false;
+    }
+    return true;
   } catch (err) {
     console.error('Error saving settings to cloud:', err);
     return false;

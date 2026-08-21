@@ -16,6 +16,7 @@ import { getStoredNotes, saveNote as saveNoteService } from '../services/noteSer
 import { parseHashRoute } from '../services/routerService';
 import { loadCloudBookmarksToLocal, loadCloudDataToLocal } from '../services/syncService';
 import { fetchCloudSettings } from '../services/userDataService';
+import { trackActivity } from '../services/activityService';
 import { useAuth } from './AuthContext';
 
 interface ReadingContextType {
@@ -181,6 +182,9 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setLanguageState(lang);
     updatePreferences({ language: lang });
     updateReadingHistory(currentBook, currentChapter, selectedVerse || 1, lang, userId);
+    if (userId) {
+      trackActivity(userId, 'LANGUAGE_CHANGED', currentBook.code, currentChapter, selectedVerse || 1, { language: lang });
+    }
   };
 
   const toggleLanguage = () => {
@@ -194,27 +198,59 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       savePreferences(updated, userId);
       return updated;
     });
+    if (userId) {
+      trackActivity(userId, 'SETTINGS_CHANGED', currentBook.code, currentChapter, selectedVerse || 1, newPrefs);
+    }
   };
 
   const handleToggleBookmark = (verseObj: BibleVerse) => {
+    const isExisting = bookmarks.some(
+      (b) => b.book_id === currentBook.id && b.chapter === verseObj.chapter && b.verse === verseObj.verse
+    );
     toggleBookmark(bookmarks, currentBook, verseObj, language, userId).then((updated) => {
       setBookmarks(updated);
+      if (userId) {
+        trackActivity(
+          userId,
+          isExisting ? 'BOOKMARK_REMOVED' : 'BOOKMARK_ADDED',
+          currentBook.code,
+          verseObj.chapter,
+          verseObj.verse
+        );
+      }
     });
   };
 
-  const handleSaveNote = (bookCode: string, chapter: number, verse: number, content: string) => {
-    const updated = saveNoteService(bookCode, chapter, verse, content, userId);
+  const handleSaveNote = async (bookCode: string, chapter: number, verse: number, content: string) => {
+    const existingNote = notes.find(
+      (n) => n.book.toUpperCase() === bookCode.toUpperCase() && n.chapter === chapter && n.verse === verse
+    );
+    const updated = await saveNoteService(bookCode, chapter, verse, content, userId);
     setNotes(updated);
+    if (userId) {
+      let actType: 'NOTE_CREATED' | 'NOTE_UPDATED' | 'NOTE_DELETED' = 'NOTE_CREATED';
+      if (!content.trim()) actType = 'NOTE_DELETED';
+      else if (existingNote) actType = 'NOTE_UPDATED';
+      trackActivity(userId, actType, bookCode, chapter, verse);
+    }
   };
 
   const openVerseStudy = (bookId: number, chapter: number, verse: number) => {
+    const matchedBook = books.find((b) => b.id === bookId);
     setStudyLocation({ bookId, chapter, verse });
     setActiveStudyType('verse');
+    if (userId && matchedBook) {
+      trackActivity(userId, 'VERSE_EXPLORATION_OPENED', matchedBook.code, chapter, verse);
+    }
   };
 
   const openChapterStudy = (bookId: number, chapter: number) => {
+    const matchedBook = books.find((b) => b.id === bookId);
     setStudyLocation({ bookId, chapter });
     setActiveStudyType('chapter');
+    if (userId && matchedBook) {
+      trackActivity(userId, 'CHAPTER_EXPLORATION_OPENED', matchedBook.code, chapter);
+    }
   };
 
   const closeStudy = () => {
