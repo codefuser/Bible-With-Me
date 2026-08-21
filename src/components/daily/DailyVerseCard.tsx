@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { Sparkles, BookOpen, Compass, Calendar, ChevronDown, History } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
+import { useAuth } from '../../context/AuthContext';
 import { getDailyVerse, LoadedDailyVerse } from '../../services/dailyVerseService';
+import { ALL_BIBLE_BOOKS } from '../../services/bibleService';
+import { trackActivity } from '../../services/activityService';
 
 const COLLAPSE_STORAGE_KEY = 'bible_daily_verse_collapsed';
 
 export const DailyVerseCard: React.FC = () => {
   const { language, openVerseStudy, openChapterStudy, setIsDailyHistoryOpen } = useReading();
+  const { user } = useAuth();
+  const userId = user?.id || null;
+
   const [dailyData, setDailyData] = useState<LoadedDailyVerse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -24,12 +30,16 @@ export const DailyVerseCard: React.FC = () => {
       if (isMounted) {
         setDailyData(res);
         setLoading(false);
+        if (userId && res?.verse) {
+          const bookCode = ALL_BIBLE_BOOKS.find((b) => b.id === res.verse.book_id)?.code || String(res.verse.book_id);
+          trackActivity(userId, 'DAILY_VERSE_VIEWED', bookCode, res.verse.chapter, res.verse.verse);
+        }
       }
     });
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [userId]);
 
   const toggleCollapse = () => {
     setIsCollapsed((prev) => {

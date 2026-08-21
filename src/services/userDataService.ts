@@ -19,7 +19,9 @@ export const fetchCloudSettings = async (userId: string): Promise<Partial<Readin
       lineHeight: data.line_height,
       maxWidth: data.reading_width,
       theme: data.theme,
-      language: data.language
+      language: data.language,
+      fontFamilyTa: data.font_family_ta,
+      fontFamilyEn: data.font_family_en
     };
   } catch (err) {
     console.error('Error fetching cloud settings:', err);
@@ -38,11 +40,17 @@ export const upsertCloudSettings = async (userId: string, prefs: ReadingPreferen
         line_height: prefs.lineHeight,
         reading_width: prefs.maxWidth,
         language: prefs.language,
+        font_family_ta: prefs.fontFamilyTa || 'noto',
+        font_family_en: prefs.fontFamilyEn || 'lora',
         updated_at: new Date().toISOString()
       },
       { onConflict: 'user_id' }
     );
-    return !error;
+    if (error) {
+      console.error('[Supabase Error] upsertCloudSettings failed:', error.message, error.details);
+      return false;
+    }
+    return true;
   } catch (err) {
     console.error('Error saving settings to cloud:', err);
     return false;
@@ -60,55 +68,80 @@ export interface CloudBookmark {
 }
 
 export const fetchCloudBookmarks = async (userId: string): Promise<CloudBookmark[]> => {
-  if (!supabase) return [];
+  if (!supabase) {
+    console.warn('[Supabase] Client not configured. Cannot fetch cloud bookmarks.');
+    return [];
+  }
   try {
     const { data, error } = await supabase
       .from('bookmarks')
       .select('*')
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
 
-    if (error || !data) return [];
-    return data;
+    if (error) {
+      console.error('[Supabase Error] fetchCloudBookmarks failed:', error.message, error.details, error.hint, error.code);
+      return [];
+    }
+    return data || [];
   } catch (err) {
-    console.error('Error fetching bookmarks:', err);
+    console.error('[Supabase Exception] Error fetching bookmarks:', err);
     return [];
   }
 };
 
 export const upsertCloudBookmark = async (userId: string, book: string, chapter: number, verse: number): Promise<boolean> => {
-  if (!supabase) return false;
+  if (!supabase) {
+    console.warn('[Supabase] Client not configured. Cannot upsert cloud bookmark.');
+    return false;
+  }
   try {
+    const normalizedBook = book.toUpperCase();
     const { error } = await supabase.from('bookmarks').upsert(
       {
         user_id: userId,
-        book,
+        book: normalizedBook,
         chapter,
         verse,
         created_at: new Date().toISOString()
       },
       { onConflict: 'user_id,book,chapter,verse' }
     );
-    return !error;
+    if (error) {
+      console.error('[Supabase Error] upsertCloudBookmark failed:', error.message, error.details, error.hint, error.code);
+      return false;
+    }
+    console.log(`[Cloud Sync Success] Saved bookmark to Supabase: ${normalizedBook} ${chapter}:${verse} (user: ${userId})`);
+    return true;
   } catch (err) {
-    console.error('Error saving bookmark to cloud:', err);
+    console.error('[Supabase Exception] Error saving bookmark to cloud:', err);
     return false;
   }
 };
 
 export const deleteCloudBookmark = async (userId: string, book: string, chapter: number, verse: number): Promise<boolean> => {
-  if (!supabase) return false;
+  if (!supabase) {
+    console.warn('[Supabase] Client not configured. Cannot delete cloud bookmark.');
+    return false;
+  }
   try {
+    const normalizedBook = book.toUpperCase();
     const { error } = await supabase
       .from('bookmarks')
       .delete()
       .eq('user_id', userId)
-      .eq('book', book)
+      .eq('book', normalizedBook)
       .eq('chapter', chapter)
       .eq('verse', verse);
 
-    return !error;
+    if (error) {
+      console.error('[Supabase Error] deleteCloudBookmark failed:', error.message, error.details, error.hint, error.code);
+      return false;
+    }
+    console.log(`[Cloud Sync Success] Deleted bookmark from Supabase: ${normalizedBook} ${chapter}:${verse} (user: ${userId})`);
+    return true;
   } catch (err) {
-    console.error('Error deleting bookmark from cloud:', err);
+    console.error('[Supabase Exception] Error deleting bookmark from cloud:', err);
     return false;
   }
 };

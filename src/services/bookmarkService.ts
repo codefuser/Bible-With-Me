@@ -50,7 +50,10 @@ export const toggleBookmark = async (
     saveStoredBookmarks(updated);
 
     if (userId) {
-      deleteCloudBookmark(userId, book.code, verseObj.chapter, verseObj.verse);
+      const cloudSuccess = await deleteCloudBookmark(userId, book.code, verseObj.chapter, verseObj.verse);
+      if (!cloudSuccess) {
+        console.error(`[Bookmark Sync Failed] Could not remove bookmark from Supabase for ${book.code} ${verseObj.chapter}:${verseObj.verse}`);
+      }
     }
     return updated;
   } else {
@@ -72,7 +75,10 @@ export const toggleBookmark = async (
     saveStoredBookmarks(updated);
 
     if (userId) {
-      upsertCloudBookmark(userId, book.code, verseObj.chapter, verseObj.verse);
+      const cloudSuccess = await upsertCloudBookmark(userId, book.code, verseObj.chapter, verseObj.verse);
+      if (!cloudSuccess) {
+        console.error(`[Bookmark Sync Failed] Could not insert bookmark into Supabase for ${book.code} ${verseObj.chapter}:${verseObj.verse}`);
+      }
     }
     return updated;
   }

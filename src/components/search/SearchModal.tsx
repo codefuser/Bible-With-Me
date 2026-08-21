@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, BookOpen, ArrowRight } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
+import { useAuth } from '../../context/AuthContext';
 import { SearchResult, Testament } from '../../types/bible';
 import { searchBibleVerses } from '../../services/searchService';
+import { trackActivity } from '../../services/activityService';
 import { LoadingState } from '../common/LoadingState';
 
 export const SearchModal: React.FC = () => {
@@ -13,6 +15,9 @@ export const SearchModal: React.FC = () => {
     setIsSearchOpen,
     setBookAndChapter
   } = useReading();
+
+  const { user } = useAuth();
+  const userId = user?.id || null;
 
   const [query, setQuery] = useState<string>('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -43,11 +48,14 @@ export const SearchModal: React.FC = () => {
         setResults(res);
         setLoading(false);
         setHighlightedIndex(0);
+        if (userId) {
+          trackActivity(userId, 'SEARCH_PERFORMED', undefined, undefined, undefined, { query, count: res.length });
+        }
       });
     }, 250);
 
     return () => clearTimeout(timer);
-  }, [query, language, testamentFilter]);
+  }, [query, language, testamentFilter, userId]);
 
   if (!isSearchOpen) return null;
 

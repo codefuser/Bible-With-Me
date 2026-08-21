@@ -15,13 +15,13 @@ export const getStoredNotes = (): VerseNote[] => {
   }
 };
 
-export const saveNote = (
+export const saveNote = async (
   book: string,
   chapter: number,
   verse: number,
   content: string,
   userId?: string | null
-): VerseNote[] => {
+): Promise<VerseNote[]> => {
   const notes = getStoredNotes();
   const existingIndex = notes.findIndex(
     (n) => n.book.toUpperCase() === book.toUpperCase() && n.chapter === chapter && n.verse === verse
@@ -41,7 +41,7 @@ export const saveNote = (
     }
 
     if (userId) {
-      deleteCloudNote(userId, book, chapter, verse);
+      await deleteCloudNote(userId, book, chapter, verse);
     }
     return notes;
   }
@@ -70,7 +70,7 @@ export const saveNote = (
   }
 
   if (userId) {
-    upsertCloudNote(userId, book, chapter, verse, content);
+    await upsertCloudNote(userId, book, chapter, verse, content);
   }
 
   return notes;
