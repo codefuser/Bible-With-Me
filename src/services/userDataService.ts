@@ -2,7 +2,8 @@ import { supabase } from '../lib/supabase';
 import { ReadingPreferences, VerseNote, ReadingProgress } from '../types/bible';
 import { HighlightColor } from './highlightService';
 
-// Settings Sync
+// ─── Settings ────────────────────────────────────────────────────────────────
+
 export const fetchCloudSettings = async (userId: string): Promise<Partial<ReadingPreferences> | null> => {
   if (!supabase) return null;
   try {
@@ -12,7 +13,11 @@ export const fetchCloudSettings = async (userId: string): Promise<Partial<Readin
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (error || !data) return null;
+    if (error) {
+      console.error('[Supabase Error] fetchCloudSettings failed:', error.message, error.details, error.code);
+      return null;
+    }
+    if (!data) return null;
 
     return {
       fontSize: data.font_size,
@@ -24,13 +29,16 @@ export const fetchCloudSettings = async (userId: string): Promise<Partial<Readin
       fontFamilyEn: data.font_family_en
     };
   } catch (err) {
-    console.error('Error fetching cloud settings:', err);
+    console.error('[Supabase Exception] fetchCloudSettings threw:', err);
     return null;
   }
 };
 
 export const upsertCloudSettings = async (userId: string, prefs: ReadingPreferences): Promise<boolean> => {
-  if (!supabase) return false;
+  if (!supabase) {
+    console.warn('[Supabase] Client not configured. Cannot upsert cloud settings.');
+    return false;
+  }
   try {
     const { error } = await supabase.from('user_settings').upsert(
       {
@@ -47,12 +55,13 @@ export const upsertCloudSettings = async (userId: string, prefs: ReadingPreferen
       { onConflict: 'user_id' }
     );
     if (error) {
-      console.error('[Supabase Error] upsertCloudSettings failed:', error.message, error.details);
+      console.error('[Supabase Error] upsertCloudSettings failed:', error.message, error.details, error.hint, error.code);
       return false;
     }
+    console.log('[Cloud Sync Success] Settings saved to Supabase for user:', userId);
     return true;
   } catch (err) {
-    console.error('Error saving settings to cloud:', err);
+    console.error('[Supabase Exception] upsertCloudSettings threw:', err);
     return false;
   }
 };
@@ -159,17 +168,23 @@ export interface CloudHighlight {
 }
 
 export const fetchCloudHighlights = async (userId: string): Promise<CloudHighlight[]> => {
-  if (!supabase) return [];
+  if (!supabase) {
+    console.warn('[Supabase] Client not configured. Cannot fetch cloud highlights.');
+    return [];
+  }
   try {
     const { data, error } = await supabase
       .from('highlights')
       .select('*')
       .eq('user_id', userId);
 
-    if (error || !data) return [];
-    return data;
+    if (error) {
+      console.error('[Supabase Error] fetchCloudHighlights failed:', error.message, error.details, error.hint, error.code);
+      return [];
+    }
+    return data || [];
   } catch (err) {
-    console.error('Error fetching highlights:', err);
+    console.error('[Supabase Exception] fetchCloudHighlights threw:', err);
     return [];
   }
 };
@@ -181,7 +196,10 @@ export const upsertCloudHighlight = async (
   verse: number,
   color: HighlightColor
 ): Promise<boolean> => {
-  if (!supabase) return false;
+  if (!supabase) {
+    console.warn('[Supabase] Client not configured. Cannot upsert cloud highlight.');
+    return false;
+  }
   try {
     const { error } = await supabase.from('highlights').upsert(
       {
@@ -194,15 +212,23 @@ export const upsertCloudHighlight = async (
       },
       { onConflict: 'user_id,book,chapter,verse' }
     );
-    return !error;
+    if (error) {
+      console.error('[Supabase Error] upsertCloudHighlight failed:', error.message, error.details, error.hint, error.code);
+      return false;
+    }
+    console.log(`[Cloud Sync Success] Saved highlight to Supabase: ${book} ${chapter}:${verse} color=${color} (user: ${userId})`);
+    return true;
   } catch (err) {
-    console.error('Error saving highlight to cloud:', err);
+    console.error('[Supabase Exception] upsertCloudHighlight threw:', err);
     return false;
   }
 };
 
 export const deleteCloudHighlight = async (userId: string, book: string, chapter: number, verse: number): Promise<boolean> => {
-  if (!supabase) return false;
+  if (!supabase) {
+    console.warn('[Supabase] Client not configured. Cannot delete cloud highlight.');
+    return false;
+  }
   try {
     const { error } = await supabase
       .from('highlights')
@@ -212,26 +238,37 @@ export const deleteCloudHighlight = async (userId: string, book: string, chapter
       .eq('chapter', chapter)
       .eq('verse', verse);
 
-    return !error;
+    if (error) {
+      console.error('[Supabase Error] deleteCloudHighlight failed:', error.message, error.details, error.hint, error.code);
+      return false;
+    }
+    console.log(`[Cloud Sync Success] Deleted highlight from Supabase: ${book} ${chapter}:${verse} (user: ${userId})`);
+    return true;
   } catch (err) {
-    console.error('Error deleting highlight from cloud:', err);
+    console.error('[Supabase Exception] deleteCloudHighlight threw:', err);
     return false;
   }
 };
 
 // Notes Sync
 export const fetchCloudNotes = async (userId: string): Promise<VerseNote[]> => {
-  if (!supabase) return [];
+  if (!supabase) {
+    console.warn('[Supabase] Client not configured. Cannot fetch cloud notes.');
+    return [];
+  }
   try {
     const { data, error } = await supabase
       .from('notes')
       .select('*')
       .eq('user_id', userId);
 
-    if (error || !data) return [];
-    return data;
+    if (error) {
+      console.error('[Supabase Error] fetchCloudNotes failed:', error.message, error.details, error.hint, error.code);
+      return [];
+    }
+    return data || [];
   } catch (err) {
-    console.error('Error fetching cloud notes:', err);
+    console.error('[Supabase Exception] fetchCloudNotes threw:', err);
     return [];
   }
 };
@@ -243,7 +280,10 @@ export const upsertCloudNote = async (
   verse: number,
   content: string
 ): Promise<boolean> => {
-  if (!supabase) return false;
+  if (!supabase) {
+    console.warn('[Supabase] Client not configured. Cannot upsert cloud note.');
+    return false;
+  }
   try {
     const { error } = await supabase.from('notes').upsert(
       {
@@ -256,15 +296,23 @@ export const upsertCloudNote = async (
       },
       { onConflict: 'user_id,book,chapter,verse' }
     );
-    return !error;
+    if (error) {
+      console.error('[Supabase Error] upsertCloudNote failed:', error.message, error.details, error.hint, error.code);
+      return false;
+    }
+    console.log(`[Cloud Sync Success] Saved note to Supabase: ${book} ${chapter}:${verse} (user: ${userId})`);
+    return true;
   } catch (err) {
-    console.error('Error saving note to cloud:', err);
+    console.error('[Supabase Exception] upsertCloudNote threw:', err);
     return false;
   }
 };
 
 export const deleteCloudNote = async (userId: string, book: string, chapter: number, verse: number): Promise<boolean> => {
-  if (!supabase) return false;
+  if (!supabase) {
+    console.warn('[Supabase] Client not configured. Cannot delete cloud note.');
+    return false;
+  }
   try {
     const { error } = await supabase
       .from('notes')
@@ -274,9 +322,14 @@ export const deleteCloudNote = async (userId: string, book: string, chapter: num
       .eq('chapter', chapter)
       .eq('verse', verse);
 
-    return !error;
+    if (error) {
+      console.error('[Supabase Error] deleteCloudNote failed:', error.message, error.details, error.hint, error.code);
+      return false;
+    }
+    console.log(`[Cloud Sync Success] Deleted note from Supabase: ${book} ${chapter}:${verse} (user: ${userId})`);
+    return true;
   } catch (err) {
-    console.error('Error deleting note from cloud:', err);
+    console.error('[Supabase Exception] deleteCloudNote threw:', err);
     return false;
   }
 };
@@ -292,7 +345,10 @@ export interface CloudHistoryItem {
 }
 
 export const fetchCloudHistory = async (userId: string): Promise<CloudHistoryItem | null> => {
-  if (!supabase) return null;
+  if (!supabase) {
+    console.warn('[Supabase] Client not configured. Cannot fetch cloud history.');
+    return null;
+  }
   try {
     const { data, error } = await supabase
       .from('reading_history')
@@ -302,10 +358,13 @@ export const fetchCloudHistory = async (userId: string): Promise<CloudHistoryIte
       .limit(1)
       .maybeSingle();
 
-    if (error || !data) return null;
-    return data;
+    if (error) {
+      console.error('[Supabase Error] fetchCloudHistory failed:', error.message, error.details, error.hint, error.code);
+      return null;
+    }
+    return data || null;
   } catch (err) {
-    console.error('Error fetching cloud reading history:', err);
+    console.error('[Supabase Exception] fetchCloudHistory threw:', err);
     return null;
   }
 };
@@ -316,7 +375,10 @@ export const upsertCloudHistory = async (
   chapter: number,
   verse: number = 1
 ): Promise<boolean> => {
-  if (!supabase) return false;
+  if (!supabase) {
+    console.warn('[Supabase] Client not configured. Cannot upsert cloud history.');
+    return false;
+  }
   try {
     const { error } = await supabase.from('reading_history').upsert(
       {
@@ -328,16 +390,25 @@ export const upsertCloudHistory = async (
       },
       { onConflict: 'user_id,book,chapter,verse' }
     );
-    return !error;
+    if (error) {
+      console.error('[Supabase Error] upsertCloudHistory failed:', error.message, error.details, error.hint, error.code);
+      return false;
+    }
+    console.log(`[Cloud Sync Success] Saved reading history to Supabase: ${book} ${chapter}:${verse} (user: ${userId})`);
+    return true;
   } catch (err) {
-    console.error('Error updating reading history in cloud:', err);
+    console.error('[Supabase Exception] upsertCloudHistory threw:', err);
     return false;
   }
 };
 
-// Progress Sync
+// ─── Reading Progress ─────────────────────────────────────────────────────────
+
 export const fetchCloudProgress = async (userId: string): Promise<ReadingProgress | null> => {
-  if (!supabase) return null;
+  if (!supabase) {
+    console.warn('[Supabase] Client not configured. Cannot fetch cloud progress.');
+    return null;
+  }
   try {
     const { data, error } = await supabase
       .from('reading_progress')
@@ -347,10 +418,13 @@ export const fetchCloudProgress = async (userId: string): Promise<ReadingProgres
       .limit(1)
       .maybeSingle();
 
-    if (error || !data) return null;
-    return data;
+    if (error) {
+      console.error('[Supabase Error] fetchCloudProgress failed:', error.message, error.details, error.hint, error.code);
+      return null;
+    }
+    return data || null;
   } catch (err) {
-    console.error('Error fetching reading progress:', err);
+    console.error('[Supabase Exception] fetchCloudProgress threw:', err);
     return null;
   }
 };
@@ -362,7 +436,10 @@ export const upsertCloudProgress = async (
   verse: number,
   scrollPosition: number
 ): Promise<boolean> => {
-  if (!supabase) return false;
+  if (!supabase) {
+    console.warn('[Supabase] Client not configured. Cannot upsert cloud progress.');
+    return false;
+  }
   try {
     const { error } = await supabase.from('reading_progress').upsert(
       {
@@ -375,9 +452,13 @@ export const upsertCloudProgress = async (
       },
       { onConflict: 'user_id,book,chapter' }
     );
-    return !error;
+    if (error) {
+      console.error('[Supabase Error] upsertCloudProgress failed:', error.message, error.details, error.hint, error.code);
+      return false;
+    }
+    return true;
   } catch (err) {
-    console.error('Error updating reading progress in cloud:', err);
+    console.error('[Supabase Exception] upsertCloudProgress threw:', err);
     return false;
   }
 };

@@ -6,7 +6,7 @@ import { BibleVerse } from '../../types/bible';
 import { fetchChapterVerses } from '../../services/bibleService';
 import { isVerseBookmarked } from '../../services/bookmarkService';
 import { updateHashRoute } from '../../services/routerService';
-import { getStoredHighlights, saveHighlight, getVerseHighlightColor, HighlightColor } from '../../services/highlightService';
+import { getVerseHighlightColor, HighlightColor } from '../../services/highlightService';
 import { trackActivity } from '../../services/activityService';
 import { upsertCloudProgress } from '../../services/userDataService';
 import { LoadingState } from '../common/LoadingState';
@@ -21,7 +21,9 @@ export const VerseReader: React.FC = () => {
     language,
     preferences,
     bookmarks,
+    highlights,
     handleToggleBookmark,
+    handleSetHighlight: contextHandleSetHighlight,
     openVerseStudy
   } = useReading();
 
@@ -33,7 +35,6 @@ export const VerseReader: React.FC = () => {
   const [error, setError] = useState<boolean>(false);
   const [activeVerseNum, setActiveVerseNum] = useState<number | null>(selectedVerse);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [highlights, setHighlights] = useState<Record<string, HighlightColor>>(getStoredHighlights);
   const [showHighlightPicker, setShowHighlightPicker] = useState<boolean>(false);
 
   const verseRefs = useRef<Record<number, HTMLDivElement | null>>({});
@@ -153,19 +154,13 @@ export const VerseReader: React.FC = () => {
   };
 
   const handleSetHighlight = async (v: BibleVerse, color: HighlightColor | null) => {
-    const updated = await saveHighlight(currentBook.id, currentChapter, v.verse, color, userId);
-    setHighlights(updated);
+    // Delegate to ReadingContext which handles both Supabase and local state update
+    await contextHandleSetHighlight(currentBook.id, currentChapter, v.verse, color);
     setShowHighlightPicker(false);
     if (color) {
       showToast(language === 'en' ? 'Verse highlighted!' : 'வசனம் சிறப்பிக்கப்பட்டது!');
-      if (userId) {
-        trackActivity(userId, 'HIGHLIGHT_ADDED', currentBook.code, currentChapter, v.verse, { color });
-      }
     } else {
       showToast(language === 'en' ? 'Highlight removed' : 'சிறப்பிலக்கணம் நீக்கப்பட்டது');
-      if (userId) {
-        trackActivity(userId, 'HIGHLIGHT_REMOVED', currentBook.code, currentChapter, v.verse);
-      }
     }
   };
 
