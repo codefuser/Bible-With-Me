@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
   BibleBook,
   BibleVerse,
@@ -13,9 +13,15 @@ import { getStoredPreferences, savePreferences } from '../services/preferencesSe
 import { getStoredBookmarks, toggleBookmark } from '../services/bookmarkService';
 import { getStoredHistory, updateReadingHistory } from '../services/historyService';
 import { getStoredNotes, saveNote as saveNoteService } from '../services/noteService';
+import { getStoredHighlights, saveHighlight, HighlightColor } from '../services/highlightService';
 import { parseHashRoute } from '../services/routerService';
-import { loadCloudBookmarksToLocal, loadCloudDataToLocal } from '../services/syncService';
-import { fetchCloudSettings } from '../services/userDataService';
+import { loadCloudBookmarksToLocal } from '../services/syncService';
+import {
+  fetchCloudSettings,
+  fetchCloudHighlights,
+  fetchCloudNotes,
+  fetchCloudHistory
+} from '../services/userDataService';
 import { trackActivity } from '../services/activityService';
 import { useAuth } from './AuthContext';
 
@@ -28,6 +34,7 @@ interface ReadingContextType {
   preferences: ReadingPreferences;
   bookmarks: Bookmark[];
   notes: VerseNote[];
+  highlights: Record<string, HighlightColor>;
   historyItem: ReadingHistoryItem | null;
   isSearchOpen: boolean;
   isPreferencesOpen: boolean;
@@ -44,6 +51,7 @@ interface ReadingContextType {
   updatePreferences: (newPrefs: Partial<ReadingPreferences>) => void;
   handleToggleBookmark: (verseObj: BibleVerse) => void;
   handleSaveNote: (bookCode: string, chapter: number, verse: number, content: string) => void;
+  handleSetHighlight: (bookId: number, chapter: number, verse: number, color: HighlightColor | null) => void;
   setIsSearchOpen: (open: boolean) => void;
   setIsPreferencesOpen: (open: boolean) => void;
   setIsBookSelectorOpen: (open: boolean) => void;
@@ -58,7 +66,7 @@ interface ReadingContextType {
 const ReadingContext = createContext<ReadingContextType | undefined>(undefined);
 
 export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
+  const { user, registerCloudDataRefresh } = useAuth();
   const userId = user?.id || null;
 
   const [books, setBooks] = useState<BibleBook[]>(ALL_BIBLE_BOOKS);
@@ -68,9 +76,10 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const [preferences, setPreferencesState] = useState<ReadingPreferences>(getStoredPreferences);
   const [language, setLanguageState] = useState<Language>(preferences.language || 'en');
-  const [bookmarks, setBookmarks] = useState<Bookmark[]>(getStoredBookmarks);
-  const [notes, setNotes] = useState<VerseNote[]>(getStoredNotes);
-  const [historyItem, setHistoryItem] = useState<ReadingHistoryItem | null>(getStoredHistory);
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [notes, setNotes] = useState<VerseNote[]>([]);
+  const [highlights, setHighlights] = useState<Record<string, HighlightColor>>({});
+  const [historyItem, setHistoryItem] = useState<ReadingHistoryItem | null>(null);
 
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [isPreferencesOpen, setIsPreferencesOpen] = useState<boolean>(false);
@@ -82,48 +91,107 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [activeStudyType, setActiveStudyType] = useState<'none' | 'verse' | 'chapter'>('none');
   const [studyLocation, setStudyLocation] = useState<{ bookId: number; chapter: number; verse?: number } | null>(null);
 
-  // Synchronize and load user data whenever userId changes (Login, Logout, Session Init)
-  useEffect(() => {
-    let isMounted = true;
+  /**
+   * Loads ALL cloud data for an authenticated user directly into React state.
+   * This bypasses the localStorage round-trip (the old pattern that caused race conditions).
+   * Called by AuthContext immediately after login/session restore.
+   */
+  const loadAllCloudData = useCallback(async (uid: string): Promise<void> => {
+    console.log('[ReadingContext] Loading all cloud data for user:', uid);
 
-    if (userId) {
-      // 1. Fetch Cloud Bookmarks from Supabase
-      loadCloudBookmarksToLocal(userId).then((cloudBms) => {
-        if (isMounted) setBookmarks(cloudBms);
-      });
+    // 1. Load Bookmarks from cloud directly into state
+    const cloudBookmarks = await loadCloudBookmarksToLocal(uid);
+    setBookmarks(cloudBookmarks);
+    console.log(`[ReadingContext] Set ${cloudBookmarks.length} bookmarks from cloud.`);
 
-      // 2. Fetch Cloud Settings
-      fetchCloudSettings(userId).then((cloudPrefs) => {
-        if (isMounted && cloudPrefs) {
-          setPreferencesState((prev) => {
-            const updated = { ...prev, ...cloudPrefs };
-            savePreferences(updated);
-            return updated;
-          });
-        }
+    // 2. Load Settings from cloud
+    const cloudPrefs = await fetchCloudSettings(uid);
+    if (cloudPrefs) {
+      setPreferencesState((prev) => {
+        const updated = { ...prev, ...cloudPrefs };
+        // Keep localStorage cache in sync
+        savePreferences(updated);
+        return updated;
       });
-
-      // 3. Fetch Cloud Highlights, Notes, and History
-      loadCloudDataToLocal(userId).then(() => {
-        if (isMounted) {
-          setNotes(getStoredNotes());
-          setHistoryItem(getStoredHistory());
-        }
-      });
-    } else {
-      // Guest Mode: load from localStorage
-      setBookmarks(getStoredBookmarks());
-      setNotes(getStoredNotes());
-      setHistoryItem(getStoredHistory());
-      setPreferencesState(getStoredPreferences());
+      if (cloudPrefs.language) {
+        setLanguageState(cloudPrefs.language as Language);
+      }
+      console.log('[ReadingContext] Applied cloud settings.');
     }
 
-    return () => {
-      isMounted = false;
-    };
-  }, [userId]);
+    // 3. Load Highlights from cloud directly into state
+    const cloudHighlights = await fetchCloudHighlights(uid);
+    const newHighlights: Record<string, HighlightColor> = {};
+    for (const hl of cloudHighlights) {
+      const matchedBook = ALL_BIBLE_BOOKS.find(
+        (b) => b.code.toUpperCase() === hl.book.toUpperCase() || String(b.id) === hl.book
+      );
+      const bookId = matchedBook ? matchedBook.id : parseInt(hl.book, 10) || 1;
+      const key = `${bookId}_${hl.chapter}_${hl.verse}`;
+      newHighlights[key] = hl.color as HighlightColor;
+    }
+    setHighlights(newHighlights);
+    console.log(`[ReadingContext] Set ${Object.keys(newHighlights).length} highlights from cloud.`);
 
-  // Initialize Books, Hash Deep-Links & Saved History on mount
+    // 4. Load Notes from cloud directly into state
+    const cloudNotes = await fetchCloudNotes(uid);
+    setNotes(cloudNotes);
+    console.log(`[ReadingContext] Set ${cloudNotes.length} notes from cloud.`);
+
+    // 5. Load Reading History from cloud
+    const cloudHistory = await fetchCloudHistory(uid);
+    if (cloudHistory) {
+      const matchedBook = ALL_BIBLE_BOOKS.find(
+        (b) => b.code.toUpperCase() === cloudHistory.book.toUpperCase() || String(b.id) === cloudHistory.book
+      );
+      if (matchedBook) {
+        const histItem: ReadingHistoryItem = {
+          book_id: matchedBook.id,
+          chapter: cloudHistory.chapter,
+          verse: cloudHistory.verse,
+          language: 'ta',
+          book_name_en: matchedBook.name_en,
+          book_name_ta: matchedBook.name_ta,
+          updated_at: cloudHistory.last_read_at || new Date().toISOString()
+        };
+        setHistoryItem(histItem);
+        console.log('[ReadingContext] Set reading history from cloud:', matchedBook.name_en, cloudHistory.chapter);
+      }
+    }
+  }, []);
+
+  /**
+   * Clears all user-specific React state back to empty/defaults for guest mode.
+   * Called on logout (userId → null).
+   */
+  const resetToGuestState = useCallback(() => {
+    setBookmarks(getStoredBookmarks());
+    setNotes(getStoredNotes());
+    setHighlights(getStoredHighlights());
+    setHistoryItem(getStoredHistory());
+    setPreferencesState(getStoredPreferences());
+    console.log('[ReadingContext] Reset to guest state (localStorage).');
+  }, []);
+
+  // Register the loadAllCloudData callback with AuthContext
+  // so AuthContext can call it immediately after login/session-restore
+  useEffect(() => {
+    registerCloudDataRefresh(loadAllCloudData);
+  }, [registerCloudDataRefresh, loadAllCloudData]);
+
+  // React to userId changes:
+  // - userId set (login/session restore): AuthContext already calls loadAllCloudData via the callback
+  // - userId unset (logout): reset state to guest defaults
+  useEffect(() => {
+    if (!userId) {
+      // User logged out — reset to guest/localStorage state
+      resetToGuestState();
+    }
+    // When userId is truthy, AuthContext has already triggered loadAllCloudData via registerCloudDataRefresh.
+    // We don't load again here to avoid double-fetching.
+  }, [userId, resetToGuestState]);
+
+  // Initialize Books, Hash Deep-Links & Saved History on mount (runs once)
   useEffect(() => {
     fetchBibleBooks().then((data) => {
       if (data && data.length > 0) {
@@ -141,7 +209,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
           }
         }
 
-        // 2. Fallback to Stored History
+        // 2. Fallback to stored history (guest or pre-login)
         const stored = getStoredHistory();
         if (stored) {
           const foundBook = data.find((b) => b.id === stored.book_id);
@@ -235,6 +303,20 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  const handleSetHighlight = async (bookId: number, chapter: number, verse: number, color: HighlightColor | null) => {
+    const updated = await saveHighlight(bookId, chapter, verse, color, userId);
+    setHighlights(updated);
+    if (userId) {
+      trackActivity(
+        userId,
+        color ? 'HIGHLIGHT_ADDED' : 'HIGHLIGHT_REMOVED',
+        ALL_BIBLE_BOOKS.find((b) => b.id === bookId)?.code || String(bookId),
+        chapter,
+        verse
+      );
+    }
+  };
+
   const openVerseStudy = (bookId: number, chapter: number, verse: number) => {
     const matchedBook = books.find((b) => b.id === bookId);
     setStudyLocation({ bookId, chapter, verse });
@@ -269,6 +351,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         preferences,
         bookmarks,
         notes,
+        highlights,
         historyItem,
         isSearchOpen,
         isPreferencesOpen,
@@ -285,6 +368,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updatePreferences,
         handleToggleBookmark,
         handleSaveNote,
+        handleSetHighlight,
         setIsSearchOpen,
         setIsPreferencesOpen,
         setIsBookSelectorOpen,
@@ -308,3 +392,4 @@ export const useReading = (): ReadingContextType => {
   }
   return context;
 };
+

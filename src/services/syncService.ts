@@ -65,15 +65,20 @@ export const syncGuestDataToCloud = async (userId: string): Promise<boolean> => 
 
 /**
  * Loads cloud bookmarks from Supabase, maps them to local Bible metadata & CSV text,
- * saves to local storage cache, and returns the array of Bookmark objects.
+ * and returns the array of Bookmark objects.
+ *
+ * IMPORTANT: For authenticated users, NEVER falls back to localStorage.
+ * Returning stale localStorage data would mix data between users on shared devices.
+ * Returns an empty array on error instead.
  */
 export const loadCloudBookmarksToLocal = async (userId: string): Promise<Bookmark[]> => {
+  // Guest: use localStorage
   if (!userId) return getStoredBookmarks();
 
   try {
     const cloudBms = await fetchCloudBookmarks(userId);
-    if (!cloudBms) return getStoredBookmarks();
 
+    // cloudBms is always an array (empty on error). Map it — never fall back to localStorage.
     const mappedBookmarks: Bookmark[] = [];
     const books = ALL_BIBLE_BOOKS;
 
@@ -114,11 +119,14 @@ export const loadCloudBookmarksToLocal = async (userId: string): Promise<Bookmar
       });
     }
 
+    // Persist to localStorage so offline reads still work, but this is a cache — not the source of truth
     saveStoredBookmarks(mappedBookmarks);
+    console.log(`[Cloud Load] Loaded ${mappedBookmarks.length} bookmarks from Supabase for user: ${userId}`);
     return mappedBookmarks;
   } catch (err) {
-    console.error('Error loading cloud bookmarks to local:', err);
-    return getStoredBookmarks();
+    // Return empty array for authenticated users — do NOT return another user's localStorage data
+    console.error('[Cloud Load Error] loadCloudBookmarksToLocal failed. Returning empty array to prevent data contamination:', err);
+    return [];
   }
 };
 
