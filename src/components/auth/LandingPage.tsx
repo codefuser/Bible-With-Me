@@ -1,43 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   BookOpen,
-  Star,
-  ArrowRight,
-  Users,
-  Shield,
-  Wifi,
   Mail,
   Lock,
   User as UserIcon,
   Eye,
   EyeOff,
-  Sparkles,
-  CheckCircle2,
   AlertCircle,
-  Search,
-  Bookmark,
-  History
+  CheckCircle2,
+  Users,
+  ArrowRight
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-
-// ─── Rotating Verses ──────────────────────────────────────────────────────────
-const LANDING_VERSES = [
-  {
-    ta: '"உங்கள் வார்த்தை என் கால்களுக்கு தீபமும், என் பாதைக்கு வெளிச்சமுமாயிருக்கிறது."',
-    en: '"Your word is a lamp for my feet, a light on my path."',
-    ref: 'சங்கீதம் 119:105 | Psalm 119:105'
-  },
-  {
-    ta: '"கர்த்தர் என் மேய்ப்பன்; எனக்கு குறைவு உண்டாவதில்லை."',
-    en: '"The Lord is my shepherd, I lack nothing."',
-    ref: 'சங்கீதம் 23:1 | Psalm 23:1'
-  },
-  {
-    ta: '"என்னிடத்தில் வருகிறவனை நான் புறம்பே தள்ளுவதில்லை."',
-    en: '"Whoever comes to me I will never drive away."',
-    ref: 'யோவான் 6:37 | John 6:37'
-  }
-];
 
 interface LandingPageProps {
   onEnterAsGuest: () => void;
@@ -46,7 +20,6 @@ interface LandingPageProps {
 export const LandingPage: React.FC<LandingPageProps> = ({ onEnterAsGuest }) => {
   const { login, signup } = useAuth();
 
-  // Mode: 'login' | 'signup'
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [lang, setLang] = useState<'ta' | 'en'>('ta');
 
@@ -61,22 +34,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterAsGuest }) => {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Verse Rotation
-  const [verseIdx, setVerseIdx] = useState(0);
-  const [fadeVerse, setFadeVerse] = useState(true);
-
   const isTA = lang === 'ta';
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setFadeVerse(false);
-      setTimeout(() => {
-        setVerseIdx((prev) => (prev + 1) % LANDING_VERSES.length);
-        setFadeVerse(true);
-      }, 350);
-    }, 6000);
-    return () => clearInterval(timer);
-  }, []);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,689 +74,495 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterAsGuest }) => {
     }
   };
 
-  const currentVerse = LANDING_VERSES[verseIdx];
-
   return (
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: '#0f172a',
-        color: '#f8fafc',
+        backgroundColor: 'var(--bg-primary, #f8fafc)',
+        color: 'var(--text-primary, #0f172a)',
         fontFamily: isTA ? 'var(--font-ta-noto), sans-serif' : 'var(--font-sans)',
         display: 'flex',
         flexDirection: 'column',
-        position: 'relative',
-        overflowX: 'hidden'
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1.5rem 1rem'
       }}
     >
-      {/* Background Glow Blobs */}
+      {/* Centered Minimal Container */}
       <div
         style={{
-          position: 'absolute',
-          top: '-150px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '700px',
-          height: '400px',
-          background: 'radial-gradient(circle, rgba(30, 64, 175, 0.4) 0%, rgba(15, 23, 42, 0) 70%)',
-          pointerEvents: 'none'
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '0',
-          right: '-100px',
-          width: '500px',
-          height: '500px',
-          background: 'radial-gradient(circle, rgba(217, 119, 6, 0.12) 0%, rgba(15, 23, 42, 0) 70%)',
-          pointerEvents: 'none'
-        }}
-      />
-
-      {/* Top Header Navigation */}
-      <header
-        style={{
-          padding: '1.25rem 2rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          backdropFilter: 'blur(10px)',
-          position: 'relative',
-          zIndex: 10
+          width: '100%',
+          maxWidth: '440px',
+          margin: '0 auto'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 16px rgba(37, 99, 235, 0.35)'
-            }}
-          >
-            <BookOpen size={22} color="#ffffff" />
-          </div>
-          <div>
-            <h1 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#ffffff', letterSpacing: '-0.02em' }}>
-              {isTA ? 'வேதாகமம்' : 'Bible App'}
-            </h1>
-            <span style={{ fontSize: '0.725rem', color: '#94a3b8', display: 'block' }}>
-              {isTA ? 'தமிழ் + English Bible' : 'Personal Reading & Study'}
-            </span>
-          </div>
-        </div>
-
-        {/* Language Switcher Pill */}
+        {/* Top Header: Logo + Language Toggle */}
         <div
           style={{
             display: 'flex',
-            backgroundColor: 'rgba(255, 255, 255, 0.06)',
-            borderRadius: '9999px',
-            padding: '3px',
-            border: '1px solid rgba(255, 255, 255, 0.1)'
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '1.5rem'
           }}
         >
-          <button
-            onClick={() => setLang('ta')}
-            style={{
-              padding: '0.35rem 0.875rem',
-              borderRadius: '9999px',
-              border: 'none',
-              backgroundColor: isTA ? '#2563eb' : 'transparent',
-              color: isTA ? '#ffffff' : '#94a3b8',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            🇮🇳 தமிழ்
-          </button>
-          <button
-            onClick={() => setLang('en')}
-            style={{
-              padding: '0.35rem 0.875rem',
-              borderRadius: '9999px',
-              border: 'none',
-              backgroundColor: !isTA ? '#2563eb' : 'transparent',
-              color: !isTA ? '#ffffff' : '#94a3b8',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            🇬🇧 English
-          </button>
-        </div>
-      </header>
-
-      {/* Main Content Area */}
-      <main
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '2.5rem 1.5rem',
-          position: 'relative',
-          zIndex: 10,
-          maxWidth: '1100px',
-          margin: '0 auto',
-          width: '100%'
-        }}
-      >
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: '3rem',
-            width: '100%',
-            alignItems: 'center'
-          }}
-        >
-          {/* Left Column: Hero Intro & Rotating Verse */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
             <div
               style={{
-                display: 'inline-flex',
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                backgroundColor: 'var(--accent-color, #1e40af)',
+                display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.375rem 0.875rem',
-                borderRadius: '9999px',
-                backgroundColor: 'rgba(37, 99, 235, 0.15)',
-                border: '1px solid rgba(37, 99, 235, 0.3)',
-                color: '#60a5fa',
-                fontSize: '0.8125rem',
-                fontWeight: 600,
-                width: 'fit-content'
+                justifyContent: 'center'
               }}
             >
-              <Sparkles size={14} />
-              <span>{isTA ? 'ஆன்மீக வாசிப்பு மற்றும் தியானம்' : 'Personal Bible Study Platform'}</span>
+              <BookOpen size={20} color="#ffffff" />
             </div>
-
-            <h2
-              style={{
-                fontSize: 'clamp(2rem, 4vw, 3rem)',
-                fontWeight: 800,
-                lineHeight: 1.15,
-                margin: 0,
-                color: '#ffffff',
-                letterSpacing: '-0.02em'
-              }}
-            >
-              {isTA ? (
-                <>
-                  தேவனின் வார்த்தை <br />
-                  <span style={{ color: '#60a5fa' }}>உங்கள் கரங்களில்</span>
-                </>
-              ) : (
-                <>
-                  Experience Scripture <br />
-                  <span style={{ color: '#60a5fa' }}>Like Never Before</span>
-                </>
-              )}
-            </h2>
-
-            <p style={{ fontSize: '1.0625rem', color: '#94a3b8', lineHeight: 1.6, margin: 0 }}>
-              {isTA
-                ? 'தமிழ் மற்றும் ஆங்கில வேதாகமத்தை எளிதாக வாசிக்கவும், சேமிக்கவும், Cloud Sync மூலம் எப்போது வேண்டுமானாலும் தொடரவும்.'
-                : 'Read, bookmark, highlight, and search the Holy Bible in Tamil and English with seamless multi-device cloud synchronization.'}
-            </p>
-
-            {/* Rotating Scripture Box */}
-            <div
-              style={{
-                backgroundColor: 'rgba(30, 41, 59, 0.7)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '1.25rem',
-                padding: '1.5rem',
-                backdropFilter: 'blur(12px)',
-                position: 'relative',
-                transition: 'opacity 0.35s ease',
-                opacity: fadeVerse ? 1 : 0
-              }}
-            >
-              <div
-                style={{
-                  width: '4px',
-                  height: '100%',
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  borderTopLeftRadius: '1.25rem',
-                  borderBottomLeftRadius: '1.25rem',
-                  backgroundColor: '#f59e0b'
-                }}
-              />
-              <p
-                style={{
-                  fontSize: '1rem',
-                  color: '#f1f5f9',
-                  fontStyle: 'italic',
-                  lineHeight: 1.7,
-                  margin: '0 0 0.75rem',
-                  fontFamily: isTA ? 'var(--font-ta-noto), serif' : 'var(--font-serif)'
-                }}
-              >
-                {isTA ? currentVerse.ta : currentVerse.en}
-              </p>
-              <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#fbbf24' }}>
-                {currentVerse.ref}
+            <div>
+              <span style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary, #0f172a)' }}>
+                {isTA ? 'வேதாகமம்' : 'Bible App'}
               </span>
-            </div>
-
-            {/* Feature Highlights Grid */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: '0.875rem'
-              }}
-            >
-              {[
-                { icon: BookOpen, ta: 'தமிழ் + English இணையாக', en: 'Parallel Tamil & EN' },
-                { icon: Bookmark, ta: 'வசனங்கள் சேமிப்பு', en: 'Bookmarks & Highlights' },
-                { icon: History, ta: 'வாசித்த வரலாறு', en: 'Reading History' },
-                { icon: Search, ta: 'Tanglish தேடுதல்', en: 'Phonetic Search' }
-              ].map((item, idx) => {
-                const IconComp = item.icon;
-                return (
-                  <div
-                    key={idx}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.625rem',
-                      padding: '0.75rem',
-                      borderRadius: '0.75rem',
-                      backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                      border: '1px solid rgba(255, 255, 255, 0.06)'
-                    }}
-                  >
-                    <IconComp size={16} color="#60a5fa" />
-                    <span style={{ fontSize: '0.8125rem', color: '#cbd5e1', fontWeight: 500 }}>
-                      {isTA ? item.ta : item.en}
-                    </span>
-                  </div>
-                );
-              })}
             </div>
           </div>
 
-          {/* Right Column: Embedded Modern Auth Card */}
+          {/* Language Switcher */}
           <div
             style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '1.5rem',
-              padding: '2.25rem 2rem',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)',
-              color: '#0f172a'
+              display: 'flex',
+              backgroundColor: 'var(--bg-secondary, #f1f5f9)',
+              borderRadius: '9999px',
+              padding: '2px',
+              border: '1px solid var(--border-color, #e2e8f0)'
             }}
           >
-            {/* Auth Card Tabs */}
-            <div
+            <button
+              onClick={() => setLang('ta')}
               style={{
-                display: 'flex',
-                backgroundColor: '#f1f5f9',
-                borderRadius: '0.875rem',
-                padding: '4px',
-                marginBottom: '1.75rem'
+                padding: '0.25rem 0.75rem',
+                borderRadius: '9999px',
+                border: 'none',
+                backgroundColor: isTA ? 'var(--accent-color, #1e40af)' : 'transparent',
+                color: isTA ? '#ffffff' : 'var(--text-muted, #64748b)',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                cursor: 'pointer'
               }}
             >
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthMode('login');
-                  setErrorMsg(null);
-                }}
-                style={{
-                  flex: 1,
-                  padding: '0.625rem',
-                  borderRadius: '0.625rem',
-                  border: 'none',
-                  backgroundColor: authMode === 'login' ? '#ffffff' : 'transparent',
-                  color: authMode === 'login' ? '#1e40af' : '#64748b',
-                  fontWeight: authMode === 'login' ? 700 : 500,
-                  fontSize: '0.875rem',
-                  cursor: 'pointer',
-                  boxShadow: authMode === 'login' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                {isTA ? 'உள்நுழைக' : 'Sign In'}
-              </button>
+              தமிழ்
+            </button>
+            <button
+              onClick={() => setLang('en')}
+              style={{
+                padding: '0.25rem 0.75rem',
+                borderRadius: '9999px',
+                border: 'none',
+                backgroundColor: !isTA ? 'var(--accent-color, #1e40af)' : 'transparent',
+                color: !isTA ? '#ffffff' : 'var(--text-muted, #64748b)',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              EN
+            </button>
+          </div>
+        </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthMode('signup');
-                  setErrorMsg(null);
-                }}
-                style={{
-                  flex: 1,
-                  padding: '0.625rem',
-                  borderRadius: '0.625rem',
-                  border: 'none',
-                  backgroundColor: authMode === 'signup' ? '#ffffff' : 'transparent',
-                  color: authMode === 'signup' ? '#1e40af' : '#64748b',
-                  fontWeight: authMode === 'signup' ? 700 : 500,
-                  fontSize: '0.875rem',
-                  cursor: 'pointer',
-                  boxShadow: authMode === 'signup' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                {isTA ? 'புதிய கணக்கு' : 'Create Account'}
-              </button>
-            </div>
+        {/* Minimal Auth Card */}
+        <div
+          style={{
+            backgroundColor: 'var(--bg-surface, #ffffff)',
+            borderRadius: '1rem',
+            padding: '2rem 1.75rem',
+            border: '1px solid var(--border-color, #e2e8f0)',
+            boxShadow: 'var(--shadow-md, 0 4px 12px rgba(0,0,0,0.06))'
+          }}
+        >
+          {/* Static Verse Banner */}
+          <div
+            style={{
+              padding: '0.875rem 1rem',
+              borderRadius: '0.625rem',
+              backgroundColor: 'var(--bg-secondary, #f1f5f9)',
+              borderLeft: '3px solid var(--accent-color, #1e40af)',
+              marginBottom: '1.5rem'
+            }}
+          >
+            <p
+              style={{
+                fontSize: '0.875rem',
+                color: 'var(--text-primary, #0f172a)',
+                margin: '0 0 0.25rem',
+                fontStyle: 'italic',
+                lineHeight: 1.5
+              }}
+            >
+              {isTA
+                ? '"உங்கள் வார்த்தை என் கால்களுக்கு தீபமும், என் பாதைக்கு வெளிச்சமுமாயிருக்கிறது."'
+                : '"Your word is a lamp for my feet, a light on my path."'}
+            </p>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted, #64748b)' }}>
+              {isTA ? 'சங்கீதம் 119:105' : 'Psalm 119:105'}
+            </span>
+          </div>
 
-            {/* Error Alert */}
-            {errorMsg && (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.75rem 1rem',
-                  borderRadius: '0.75rem',
-                  backgroundColor: '#fef2f2',
-                  border: '1px solid #fecaca',
-                  color: '#dc2626',
-                  fontSize: '0.8125rem',
-                  marginBottom: '1.25rem'
-                }}
-              >
-                <AlertCircle size={16} style={{ flexShrink: 0 }} />
-                <span>{errorMsg}</span>
-              </div>
-            )}
+          {/* Mode Tabs */}
+          <div
+            style={{
+              display: 'flex',
+              backgroundColor: 'var(--bg-secondary, #f1f5f9)',
+              borderRadius: '0.625rem',
+              padding: '3px',
+              marginBottom: '1.25rem'
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode('login');
+                setErrorMsg(null);
+                setSuccessMsg(null);
+              }}
+              style={{
+                flex: 1,
+                padding: '0.5rem',
+                borderRadius: '0.5rem',
+                border: 'none',
+                backgroundColor: authMode === 'login' ? 'var(--bg-surface, #ffffff)' : 'transparent',
+                color: authMode === 'login' ? 'var(--accent-color, #1e40af)' : 'var(--text-muted, #64748b)',
+                fontWeight: authMode === 'login' ? 700 : 500,
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                boxShadow: authMode === 'login' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
+              }}
+            >
+              {isTA ? 'உள்நுழைக' : 'Sign In'}
+            </button>
 
-            {/* Success Alert */}
-            {successMsg && (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.75rem 1rem',
-                  borderRadius: '0.75rem',
-                  backgroundColor: '#f0fdf4',
-                  border: '1px solid #bbf7d0',
-                  color: '#16a34a',
-                  fontSize: '0.8125rem',
-                  marginBottom: '1.25rem'
-                }}
-              >
-                <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
-                <span>{successMsg}</span>
-              </div>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode('signup');
+                setErrorMsg(null);
+                setSuccessMsg(null);
+              }}
+              style={{
+                flex: 1,
+                padding: '0.5rem',
+                borderRadius: '0.5rem',
+                border: 'none',
+                backgroundColor: authMode === 'signup' ? 'var(--bg-surface, #ffffff)' : 'transparent',
+                color: authMode === 'signup' ? 'var(--accent-color, #1e40af)' : 'var(--text-muted, #64748b)',
+                fontWeight: authMode === 'signup' ? 700 : 500,
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                boxShadow: authMode === 'signup' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
+              }}
+            >
+              {isTA ? 'புதிய கணக்கு' : 'Create Account'}
+            </button>
+          </div>
 
-            {/* Form */}
-            <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.125rem' }}>
-              {authMode === 'signup' && (
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.8125rem',
-                      fontWeight: 600,
-                      color: '#334155',
-                      marginBottom: '0.375rem'
-                    }}
-                  >
-                    {isTA ? 'உங்கள் பெயர்' : 'Full Name'}
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <UserIcon
-                      size={18}
-                      style={{
-                        position: 'absolute',
-                        left: '0.875rem',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        color: '#94a3b8'
-                      }}
-                    />
-                    <input
-                      type="text"
-                      placeholder={isTA ? 'உதாரணம்: யோவான்' : 'e.g. John Doe'}
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem 0.875rem 0.75rem 2.625rem',
-                        borderRadius: '0.75rem',
-                        border: '1.5px solid #cbd5e1',
-                        backgroundColor: '#f8fafc',
-                        color: '#0f172a',
-                        fontSize: '0.9375rem',
-                        outline: 'none',
-                        transition: 'border-color 0.15s ease'
-                      }}
-                      onFocus={(e) => (e.target.style.borderColor = '#2563eb')}
-                      onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Email */}
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '0.8125rem',
-                    fontWeight: 600,
-                    color: '#334155',
-                    marginBottom: '0.375rem'
-                  }}
-                >
-                  {isTA ? 'மின்னஞ்சல் முகவரி' : 'Email Address'}
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <Mail
-                    size={18}
-                    style={{
-                      position: 'absolute',
-                      left: '0.875rem',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: '#94a3b8'
-                    }}
-                  />
-                  <input
-                    type="email"
-                    required
-                    placeholder="name@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 0.875rem 0.75rem 2.625rem',
-                      borderRadius: '0.75rem',
-                      border: '1.5px solid #cbd5e1',
-                      backgroundColor: '#f8fafc',
-                      color: '#0f172a',
-                      fontSize: '0.9375rem',
-                      outline: 'none',
-                      transition: 'border-color 0.15s ease'
-                    }}
-                    onFocus={(e) => (e.target.style.borderColor = '#2563eb')}
-                    onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
-                  />
-                </div>
-              </div>
-
-              {/* Password */}
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '0.8125rem',
-                    fontWeight: 600,
-                    color: '#334155',
-                    marginBottom: '0.375rem'
-                  }}
-                >
-                  {isTA ? 'கடவுச்சொல்' : 'Password'}
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <Lock
-                    size={18}
-                    style={{
-                      position: 'absolute',
-                      left: '0.875rem',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: '#94a3b8'
-                    }}
-                  />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 2.625rem 0.75rem 2.625rem',
-                      borderRadius: '0.75rem',
-                      border: '1.5px solid #cbd5e1',
-                      backgroundColor: '#f8fafc',
-                      color: '#0f172a',
-                      fontSize: '0.9375rem',
-                      outline: 'none',
-                      transition: 'border-color 0.15s ease'
-                    }}
-                    onFocus={(e) => (e.target.style.borderColor = '#2563eb')}
-                    onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={{
-                      position: 'absolute',
-                      right: '0.875rem',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      border: 'none',
-                      background: 'none',
-                      color: '#94a3b8',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Primary Submit Button */}
-              <button
-                type="submit"
-                disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '0.875rem',
-                  borderRadius: '0.75rem',
-                  border: 'none',
-                  background: 'linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%)',
-                  color: '#ffffff',
-                  fontSize: '1rem',
-                  fontWeight: 700,
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                  boxShadow: '0 4px 14px rgba(30, 64, 175, 0.35)',
-                  transition: 'all 0.15s ease',
-                  marginTop: '0.5rem'
-                }}
-                onMouseEnter={(e) => {
-                  if (!loading) {
-                    e.currentTarget.style.transform = 'translateY(-1px)';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(30, 64, 175, 0.45)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 14px rgba(30, 64, 175, 0.35)';
-                }}
-              >
-                {loading ? (
-                  <span>{isTA ? 'செயல்படுகிறது...' : 'Processing...'}</span>
-                ) : (
-                  <>
-                    <span>
-                      {authMode === 'login'
-                        ? isTA
-                          ? 'உள்நுழைக'
-                          : 'Sign In'
-                        : isTA
-                        ? 'கணக்கு உருவாக்கு'
-                        : 'Create Account'}
-                    </span>
-                    <ArrowRight size={18} />
-                  </>
-                )}
-              </button>
-            </form>
-
-            {/* Divider */}
+          {/* Error Alert */}
+          {errorMsg && (
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.875rem',
-                margin: '1.5rem 0'
+                gap: '0.5rem',
+                padding: '0.625rem 0.875rem',
+                borderRadius: '0.5rem',
+                backgroundColor: '#fef2f2',
+                border: '1px solid #fecaca',
+                color: '#dc2626',
+                fontSize: '0.8125rem',
+                marginBottom: '1rem'
               }}
             >
-              <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }} />
-              <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}>
-                {isTA ? 'அல்லது' : 'OR'}
-              </span>
-              <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }} />
+              <AlertCircle size={15} style={{ flexShrink: 0 }} />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
+          {/* Success Alert */}
+          {successMsg && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.625rem 0.875rem',
+                borderRadius: '0.5rem',
+                backgroundColor: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+                color: '#16a34a',
+                fontSize: '0.8125rem',
+                marginBottom: '1rem'
+              }}
+            >
+              <CheckCircle2 size={15} style={{ flexShrink: 0 }} />
+              <span>{successMsg}</span>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {authMode === 'signup' && (
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    color: 'var(--text-secondary, #475569)',
+                    marginBottom: '0.25rem'
+                  }}
+                >
+                  {isTA ? 'பெயர்' : 'Full Name'}
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <UserIcon
+                    size={16}
+                    style={{
+                      position: 'absolute',
+                      left: '0.75rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'var(--text-muted, #94a3b8)'
+                    }}
+                  />
+                  <input
+                    type="text"
+                    placeholder={isTA ? 'பெயர்' : 'Full Name'}
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.625rem 0.75rem 0.625rem 2.25rem',
+                      borderRadius: '0.5rem',
+                      border: '1px solid var(--border-color, #cbd5e1)',
+                      backgroundColor: 'var(--bg-primary, #f8fafc)',
+                      color: 'var(--text-primary, #0f172a)',
+                      fontSize: '0.875rem',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Email */}
+            <div>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  color: 'var(--text-secondary, #475569)',
+                  marginBottom: '0.25rem'
+                }}
+              >
+                {isTA ? 'மின்னஞ்சல்' : 'Email Address'}
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Mail
+                  size={16}
+                  style={{
+                    position: 'absolute',
+                    left: '0.75rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'var(--text-muted, #94a3b8)'
+                  }}
+                />
+                <input
+                  type="email"
+                  required
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.625rem 0.75rem 0.625rem 2.25rem',
+                    borderRadius: '0.5rem',
+                    border: '1px solid var(--border-color, #cbd5e1)',
+                    backgroundColor: 'var(--bg-primary, #f8fafc)',
+                    color: 'var(--text-primary, #0f172a)',
+                    fontSize: '0.875rem',
+                    outline: 'none'
+                  }}
+                />
+              </div>
             </div>
 
-            {/* Continue as Guest Button */}
+            {/* Password */}
+            <div>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  color: 'var(--text-secondary, #475569)',
+                  marginBottom: '0.25rem'
+                }}
+              >
+                {isTA ? 'கடவுச்சொல்' : 'Password'}
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Lock
+                  size={16}
+                  style={{
+                    position: 'absolute',
+                    left: '0.75rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'var(--text-muted, #94a3b8)'
+                  }}
+                />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.625rem 2.25rem 0.625rem 2.25rem',
+                    borderRadius: '0.5rem',
+                    border: '1px solid var(--border-color, #cbd5e1)',
+                    backgroundColor: 'var(--bg-primary, #f8fafc)',
+                    color: 'var(--text-primary, #0f172a)',
+                    fontSize: '0.875rem',
+                    outline: 'none'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '0.75rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    border: 'none',
+                    background: 'none',
+                    color: 'var(--text-muted, #94a3b8)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit Button */}
             <button
-              type="button"
-              onClick={onEnterAsGuest}
+              type="submit"
+              disabled={loading}
               style={{
                 width: '100%',
                 padding: '0.75rem',
-                borderRadius: '0.75rem',
-                border: '1.5px solid #cbd5e1',
-                backgroundColor: '#ffffff',
-                color: '#475569',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                cursor: 'pointer',
+                borderRadius: '0.5rem',
+                border: 'none',
+                backgroundColor: 'var(--accent-color, #1e40af)',
+                color: '#ffffff',
+                fontSize: '0.9375rem',
+                fontWeight: 700,
+                cursor: loading ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '0.5rem',
-                transition: 'all 0.15s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#f8fafc';
-                e.currentTarget.style.borderColor = '#1e40af';
-                e.currentTarget.style.color = '#1e40af';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#ffffff';
-                e.currentTarget.style.borderColor = '#cbd5e1';
-                e.currentTarget.style.color = '#475569';
+                gap: '0.375rem',
+                marginTop: '0.25rem'
               }}
             >
-              <Users size={16} />
-              <span>{isTA ? 'விருந்தினராக தொடரவும்' : 'Continue as Guest'}</span>
+              {loading ? (
+                <span>{isTA ? 'செயல்படுகிறது...' : 'Processing...'}</span>
+              ) : (
+                <>
+                  <span>
+                    {authMode === 'login'
+                      ? isTA
+                        ? 'உள்நுழைக'
+                        : 'Sign In'
+                      : isTA
+                      ? 'கணக்கு உருவாக்கு'
+                      : 'Create Account'}
+                  </span>
+                  <ArrowRight size={16} />
+                </>
+              )}
             </button>
+          </form>
 
-            <p
-              style={{
-                fontSize: '0.75rem',
-                color: '#94a3b8',
-                textAlign: 'center',
-                marginTop: '1rem',
-                margin: '1rem 0 0'
-              }}
-            >
-              {isTA
-                ? '✦ கணக்கு இல்லாமல் வாசிக்கலாம் (Cloud Sync இல்லை).'
-                : '✦ Read without an account (Cloud Sync disabled).'}
-            </p>
+          {/* Divider */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              margin: '1.25rem 0'
+            }}
+          >
+            <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color, #e2e8f0)' }} />
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)', fontWeight: 600 }}>
+              {isTA ? 'அல்லது' : 'OR'}
+            </span>
+            <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color, #e2e8f0)' }} />
           </div>
-        </div>
-      </main>
 
-      {/* Footer */}
+          {/* Continue as Guest Button */}
+          <button
+            type="button"
+            onClick={onEnterAsGuest}
+            style={{
+              width: '100%',
+              padding: '0.625rem',
+              borderRadius: '0.5rem',
+              border: '1px solid var(--border-color, #cbd5e1)',
+              backgroundColor: 'transparent',
+              color: 'var(--text-secondary, #475569)',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem'
+            }}
+          >
+            <Users size={16} />
+            <span>{isTA ? 'விருந்தினராக தொடரவும்' : 'Continue as Guest'}</span>
+          </button>
+
+          <p
+            style={{
+              fontSize: '0.75rem',
+              color: 'var(--text-muted, #94a3b8)',
+              textAlign: 'center',
+              margin: '0.875rem 0 0'
+            }}
+          >
+            {isTA
+              ? '✦ கணக்கு இல்லாமல் வாசிக்கலாம் (Cloud Sync இல்லை)'
+              : '✦ Read without an account (Cloud sync disabled)'}
+          </p>
+        </div>
+      </div>
+
+      {/* Minimal Footer */}
       <footer
         style={{
-          padding: '1.25rem 2rem',
-          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          marginTop: '2rem',
           textAlign: 'center',
-          fontSize: '0.8125rem',
-          color: '#64748b',
-          position: 'relative',
-          zIndex: 10
+          fontSize: '0.75rem',
+          color: 'var(--text-muted, #94a3b8)'
         }}
       >
-        {isTA
-          ? '© வேதாகமம் செயலி — பரிசுத்த வேதாகம வாசிப்பு மற்றும் தியானம்'
-          : '© Bible App — Personal Reading & Meditation Platform'}
+        {isTA ? '© பரிசுத்த வேதாகமம்' : '© Holy Bible App'}
       </footer>
     </div>
   );

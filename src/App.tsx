@@ -37,28 +37,20 @@ const AppSplash: React.FC = () => (
   >
     <div
       style={{
-        width: '64px',
-        height: '64px',
-        borderRadius: '16px',
-        background: 'linear-gradient(135deg, var(--accent-color) 0%, #1e375d 100%)',
+        width: '48px',
+        height: '48px',
+        borderRadius: '12px',
+        background: 'var(--accent-color)',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
-        boxShadow: '0 8px 24px rgba(43,76,126,0.25)',
-        animation: 'splashPulse 1.6s ease-in-out infinite'
+        justifyContent: 'center'
       }}
     >
-      <BookOpen size={28} color="#fff" />
+      <BookOpen size={24} color="#fff" />
     </div>
     <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: 0 }}>
-      வேதாகமம் தயாராகுகிறது...
+      வேதாகமம் தயாராகிறது...
     </p>
-    <style>{`
-      @keyframes splashPulse {
-        0%, 100% { transform: scale(1); opacity: 1; }
-        50% { transform: scale(1.07); opacity: 0.85; }
-      }
-    `}</style>
   </div>
 );
 
@@ -73,16 +65,16 @@ const BibleLoadingScreen: React.FC = () => (
       alignItems: 'center',
       justifyContent: 'center',
       background: 'var(--bg-primary)',
-      gap: '1.5rem',
+      gap: '1.25rem',
       padding: '2rem'
     }}
   >
     <div
       style={{
-        width: '56px',
-        height: '56px',
-        borderRadius: '14px',
-        background: 'linear-gradient(135deg, var(--accent-color) 0%, #1e375d 100%)',
+        width: '48px',
+        height: '48px',
+        borderRadius: '12px',
+        background: 'var(--accent-color)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'
@@ -94,10 +86,10 @@ const BibleLoadingScreen: React.FC = () => (
     <div style={{ textAlign: 'center' }}>
       <p
         style={{
-          fontSize: '1rem',
+          fontSize: '0.9375rem',
           fontWeight: 600,
           color: 'var(--text-primary)',
-          margin: '0 0 0.375rem',
+          margin: '0 0 0.25rem',
           fontFamily: 'var(--font-tamil)'
         }}
       >
@@ -107,29 +99,6 @@ const BibleLoadingScreen: React.FC = () => (
         Loading Bible verses...
       </p>
     </div>
-
-    {/* Animated progress dots */}
-    <div style={{ display: 'flex', gap: '0.5rem' }}>
-      {[0, 1, 2].map((i) => (
-        <div
-          key={i}
-          style={{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            backgroundColor: 'var(--accent-color)',
-            animation: `dotBounce 1.2s ease-in-out ${i * 0.2}s infinite`
-          }}
-        />
-      ))}
-    </div>
-
-    <style>{`
-      @keyframes dotBounce {
-        0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-        40% { transform: scale(1); opacity: 1; }
-      }
-    `}</style>
   </div>
 );
 
@@ -309,25 +278,21 @@ const AppGate: React.FC = () => {
 
   // Logged in user → show Bible reader
   if (isAuthenticated) {
-    return (
-      <ReadingProvider>
-        <MainLayout />
-      </ReadingProvider>
-    );
+    return <MainLayout />;
   }
 
   // Guest mode chosen this session → show Bible reader without auth
   if (guestModeEntered) {
     return (
-      <ReadingProvider>
+      <>
         <MainLayout />
         {/* Auth modal accessible from side nav in guest mode */}
         <AuthModal />
-      </ReadingProvider>
+      </>
     );
   }
 
-  // New user / not logged in → show beautiful Landing Page
+  // New user / not logged in → show Landing Page
   return (
     <>
       <LandingPage onEnterAsGuest={handleEnterAsGuest} />
@@ -341,7 +306,9 @@ const AppGate: React.FC = () => {
 export function App() {
   return (
     <AuthProvider>
-      <AppGate />
+      <ReadingProvider>
+        <AppGate />
+      </ReadingProvider>
     </AuthProvider>
   );
 }

@@ -212,16 +212,15 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [registerCloudDataRefresh, loadAllCloudData]);
 
   // React to userId changes:
-  // - userId set (login/session restore): AuthContext already calls loadAllCloudData via the callback
+  // - userId set (login/session restore): Automatically load all cloud data directly from Supabase
   // - userId unset (logout): reset state to guest defaults
   useEffect(() => {
     if (!userId) {
-      // User logged out — reset to guest/localStorage state
       resetToGuestState();
+    } else {
+      loadAllCloudData(userId);
     }
-    // When userId is truthy, AuthContext has already triggered loadAllCloudData via registerCloudDataRefresh.
-    // We don't load again here to avoid double-fetching.
-  }, [userId, resetToGuestState]);
+  }, [userId, resetToGuestState, loadAllCloudData]);
 
   // Initialize Books, Hash Deep-Links & Saved History on mount (runs once)
   useEffect(() => {

@@ -179,7 +179,8 @@ CREATE POLICY "Users can insert own settings"
 
 CREATE POLICY "Users can update own settings"
   ON public.user_settings FOR UPDATE
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 -- 3. Bookmarks Policies
 CREATE POLICY "Users can read own bookmarks"
@@ -192,7 +193,8 @@ CREATE POLICY "Users can insert own bookmarks"
 
 CREATE POLICY "Users can update own bookmarks"
   ON public.bookmarks FOR UPDATE
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete own bookmarks"
   ON public.bookmarks FOR DELETE
@@ -209,7 +211,8 @@ CREATE POLICY "Users can insert own highlights"
 
 CREATE POLICY "Users can update own highlights"
   ON public.highlights FOR UPDATE
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete own highlights"
   ON public.highlights FOR DELETE
@@ -226,7 +229,8 @@ CREATE POLICY "Users can insert own notes"
 
 CREATE POLICY "Users can update own notes"
   ON public.notes FOR UPDATE
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete own notes"
   ON public.notes FOR DELETE
@@ -243,7 +247,8 @@ CREATE POLICY "Users can insert own history"
 
 CREATE POLICY "Users can update own history"
   ON public.reading_history FOR UPDATE
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete own history"
   ON public.reading_history FOR DELETE
@@ -260,7 +265,8 @@ CREATE POLICY "Users can insert own progress"
 
 CREATE POLICY "Users can update own progress"
   ON public.reading_progress FOR UPDATE
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete own progress"
   ON public.reading_progress FOR DELETE
