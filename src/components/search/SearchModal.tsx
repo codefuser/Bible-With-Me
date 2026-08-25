@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, BookOpen, ArrowRight, Clock, Trash2, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { Search, X, BookOpen, ArrowRight, Clock, Trash2, SlidersHorizontal, ArrowUpLeft } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
 import { SearchResult, Testament } from '../../types/bible';
@@ -25,6 +25,8 @@ export const SearchModal: React.FC = () => {
   const [query, setQuery] = useState<string>('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState<boolean>(true);
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
 
   // Filter States
@@ -35,6 +37,7 @@ export const SearchModal: React.FC = () => {
 
   const [loading, setLoading] = useState<boolean>(false);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(0);
+  const [suggestionHighlightIndex, setSuggestionHighlightIndex] = useState<number>(-1);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const resultContainerRef = useRef<HTMLDivElement | null>(null);
@@ -82,22 +85,26 @@ export const SearchModal: React.FC = () => {
     }
   }, [isSearchOpen]);
 
-  // Live Auto-complete & Search Execution Effect
+  // Live Auto-complete Suggestions Effect (Google Style)
   useEffect(() => {
     const trimmed = query.trim();
     if (!trimmed) {
       setResults([]);
       setSuggestions([]);
+      setShowSuggestions(false);
+      setIsSubmitted(false);
       setLoading(false);
       setHighlightedIndex(0);
+      setSuggestionHighlightIndex(-1);
       return;
     }
 
-    // 1. Fetch live Bible word suggestions for prefix
+    // Generate live word suggestions as user types
     const wordSuggestions = getBibleWordSuggestions(trimmed, 6);
-    setSuggestions(wordSuggestions.filter((w) => w.toLowerCase() !== trimmed.toLowerCase()));
+    setSuggestions(wordSuggestions);
+    setShowSuggestions(!isSubmitted && wordSuggestions.length > 0);
 
-    // 2. Perform main search with instant response (50ms debounce)
+    // Auto-search execution
     setLoading(true);
     const timer = setTimeout(() => {
       searchBibleVerses(query, language, testamentFilter, fromBookId, toBookId).then((res) => {
@@ -111,7 +118,7 @@ export const SearchModal: React.FC = () => {
     }, 50);
 
     return () => clearTimeout(timer);
-  }, [query, language, testamentFilter, fromBookId, toBookId, userId]);
+  }, [query, language, testamentFilter, fromBookId, toBookId, userId, isSubmitted]);
 
   if (!isSearchOpen) return null;
 
@@ -120,6 +127,7 @@ export const SearchModal: React.FC = () => {
     setQuery('');
     setResults([]);
     setSuggestions([]);
+    setIsSubmitted(false);
   };
 
   const handleSelectResult = (res: SearchResult) => {
@@ -133,10 +141,36 @@ export const SearchModal: React.FC = () => {
 
   const handleSelectSuggestion = (word: string) => {
     setQuery(word);
+    setShowSuggestions(false);
+    setIsSubmitted(true);
     saveToHistory(word);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // If suggestions are visible, navigate suggestions with keyboard
+    if (showSuggestions && suggestions.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSuggestionHighlightIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : prev));
+        return;
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSuggestionHighlightIndex((prev) => (prev > 0 ? prev - 1 : -1));
+        return;
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (suggestionHighlightIndex >= 0 && suggestions[suggestionHighlightIndex]) {
+          handleSelectSuggestion(suggestions[suggestionHighlightIndex]);
+        } else {
+          setShowSuggestions(false);
+          setIsSubmitted(true);
+          saveToHistory(query);
+        }
+        return;
+      }
+    }
+
+    // Results navigation
     if (results.length === 0) return;
 
     if (e.key === 'ArrowDown') {
@@ -188,11 +222,10 @@ export const SearchModal: React.FC = () => {
   };
 
   return (
-    <div className="modal-overlay" onClick={handleClose}>
+    <div className="search-modal-overlay" onClick={handleClose}>
       <div
-        className="modal-content"
+        className="search-modal-content"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '680px' }}
         onKeyDown={handleKeyDown}
       >
         {/* Header Search Input */}
@@ -219,11 +252,24 @@ export const SearchModal: React.FC = () => {
                   : 'Search... love, anbu, John 3:16, 1 Sam 7:1'
               }
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setIsSubmitted(false);
+              }}
+              onFocus={() => {
+                if (suggestions.length > 0) setShowSuggestions(true);
+              }}
               style={{ width: '100%', fontSize: '0.9375rem', color: 'var(--text-primary)', background: 'transparent' }}
             />
             {query && (
-              <button className="btn-icon" onClick={() => setQuery('')} style={{ width: '1.75rem', height: '1.75rem' }}>
+              <button
+                className="btn-icon"
+                onClick={() => {
+                  setQuery('');
+                  setIsSubmitted(false);
+                }}
+                style={{ width: '1.75rem', height: '1.75rem' }}
+              >
                 <X size={14} />
               </button>
             )}
@@ -232,45 +278,6 @@ export const SearchModal: React.FC = () => {
             <X size={20} />
           </button>
         </div>
-
-        {/* Live Auto-Complete Suggestions Bar */}
-        {suggestions.length > 0 && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.375rem',
-              padding: '0.5rem 1rem',
-              backgroundColor: 'var(--bg-secondary)',
-              borderBottom: '1px solid var(--border-color)',
-              overflowX: 'auto'
-            }}
-          >
-            <Sparkles size={13} style={{ color: 'var(--accent-color)', flexShrink: 0 }} />
-            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', flexShrink: 0 }}>
-              {language === 'ta' ? 'பரிந்துரைகள்:' : 'Suggestions:'}
-            </span>
-            {suggestions.map((sug) => (
-              <button
-                key={sug}
-                onClick={() => handleSelectSuggestion(sug)}
-                style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 500,
-                  padding: '0.2rem 0.5rem',
-                  borderRadius: '0.25rem',
-                  backgroundColor: 'var(--bg-surface)',
-                  border: '1px solid var(--border-color)',
-                  color: 'var(--accent-color)',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {sug}
-              </button>
-            ))}
-          </div>
-        )}
 
         {/* Filter Pills with High Contrast Active Highlighting */}
         <div
@@ -389,13 +396,30 @@ export const SearchModal: React.FC = () => {
           </div>
         )}
 
-        {/* Modal Body */}
-        <div className="modal-body" ref={resultContainerRef}>
-          {loading ? (
+        {/* Modal Body: Suggestions Dropdown or Verse Results / History */}
+        <div className="modal-body" ref={resultContainerRef} style={{ flex: 1, overflowY: 'auto' }}>
+          {showSuggestions && suggestions.length > 0 ? (
+            /* Google-Style Vertical Auto-Complete Suggestions List */
+            <div className="search-suggestion-list">
+              {suggestions.map((sug, idx) => (
+                <div
+                  key={sug}
+                  className={`search-suggestion-row ${idx === suggestionHighlightIndex ? 'active' : ''}`}
+                  onClick={() => handleSelectSuggestion(sug)}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <Search size={16} style={{ color: 'var(--text-muted)' }} />
+                    <span style={{ fontWeight: 500 }}>{sug}</span>
+                  </div>
+                  <ArrowUpLeft size={14} style={{ color: 'var(--text-muted)' }} />
+                </div>
+              ))}
+            </div>
+          ) : loading ? (
             <LoadingState message={language === 'ta' ? 'தேடுகிறது...' : 'Searching...'} />
           ) : query.trim() && results.length === 0 ? (
             /* No Results State */
-            <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'var(--text-secondary)' }}>
+            <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-secondary)' }}>
               <BookOpen size={36} style={{ margin: '0 auto 0.75rem', color: 'var(--text-muted)' }} />
               <h3 style={{ fontSize: '1.0625rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.375rem' }}>
                 {language === 'ta' ? 'தேடல் முடிவுகள் இல்லை' : 'No results found'}
@@ -407,7 +431,7 @@ export const SearchModal: React.FC = () => {
               </p>
             </div>
           ) : !query.trim() ? (
-            /* Empty State: Shows Search History */
+            /* Empty State: Shows Recent Searches */
             <div style={{ padding: '1.25rem 1rem' }}>
               {searchHistory.length > 0 ? (
                 <div>
@@ -446,6 +470,7 @@ export const SearchModal: React.FC = () => {
                         key={item}
                         onClick={() => {
                           setQuery(item);
+                          setIsSubmitted(true);
                           saveToHistory(item);
                         }}
                         style={{
@@ -469,7 +494,7 @@ export const SearchModal: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                <div style={{ padding: '3rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                   <BookOpen size={36} style={{ margin: '0 auto 0.75rem', opacity: 0.5 }} />
                   <p style={{ fontSize: '0.9375rem', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
                     {language === 'ta' ? 'தேட விரும்புவதைத் தட்டச்சு செய்க' : 'Type to search Scripture'}
@@ -484,7 +509,7 @@ export const SearchModal: React.FC = () => {
             </div>
           ) : (
             /* Results List */
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', padding: '1rem' }}>
               <div
                 style={{
                   display: 'flex',
