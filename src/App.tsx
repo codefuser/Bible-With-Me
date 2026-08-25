@@ -12,6 +12,7 @@ import { DailyVerseCard } from './components/daily/DailyVerseCard';
 import { VerseStudyModal } from './components/daily/VerseStudyModal';
 import { ChapterStudyModal } from './components/daily/ChapterStudyModal';
 import { DailyHistoryModal } from './components/daily/DailyHistoryModal';
+import { ReadingHistoryModal } from './components/navigation/ReadingHistoryModal';
 import { SideNavDrawer } from './components/navigation/SideNavDrawer';
 import { KeyboardShortcuts } from './components/common/KeyboardShortcuts';
 import { AuthModal } from './components/auth/AuthModal';
@@ -130,6 +131,7 @@ const MainLayout: React.FC = () => {
       <VerseStudyModal />
       <ChapterStudyModal />
       <DailyHistoryModal />
+      <ReadingHistoryModal />
       <AuthModal />
       <SyncBanner />
     </div>

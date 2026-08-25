@@ -16,6 +16,7 @@ export const SideNavDrawer: React.FC = () => {
     setIsSearchOpen,
     setIsBookmarksOpen,
     setIsPreferencesOpen,
+    setIsReadingHistoryOpen,
     setBookAndChapter,
     historyItem
   } = useReading();
@@ -151,6 +152,18 @@ export const SideNavDrawer: React.FC = () => {
             >
               <Bookmark size={15} />
               <span>{language === 'en' ? 'Bookmarks' : 'சேமிப்புகள்'}</span>
+            </button>
+
+            <button
+              className="btn-pill"
+              onClick={() => {
+                handleClose();
+                setIsReadingHistoryOpen(true);
+              }}
+              style={{ justifyContent: 'flex-start', fontSize: '0.8125rem', gap: '0.375rem', padding: '0.4375rem 0.625rem' }}
+            >
+              <History size={15} />
+              <span>{language === 'en' ? 'History' : 'வரலாறு'}</span>
             </button>
 
             <button
