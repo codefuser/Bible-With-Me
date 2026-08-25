@@ -415,22 +415,25 @@ export const upsertCloudHistory = async (
     return false;
   }
   try {
-    const { error } = await supabase.from('reading_history').upsert(
-      {
-        user_id: userId,
-        book,
-        chapter,
-        verse,
-        last_read_at: new Date().toISOString()
-      },
-      // Use (user_id, book, chapter) so re-reading the same chapter updates timestamp
-      // instead of creating duplicate entries per verse
-      { onConflict: 'user_id,book,chapter' }
-    );
+    const payload = {
+      user_id: userId,
+      book,
+      chapter,
+      verse,
+      last_read_at: new Date().toISOString()
+    };
+
+    const { error } = await supabase.from('reading_history').upsert(payload, { onConflict: 'user_id,book,chapter' });
+
     if (error) {
-      console.error('[Supabase Error] upsertCloudHistory failed:', error.message, error.details, error.hint, error.code);
-      return false;
+      console.warn('[Supabase History Upsert Warning] Trying fallback insert:', error.message);
+      const { error: insertErr } = await supabase.from('reading_history').insert(payload);
+      if (insertErr && !insertErr.message?.includes('duplicate key') && !insertErr.message?.includes('unique constraint')) {
+        console.error('[Supabase Error] upsertCloudHistory failed:', insertErr.message);
+        return false;
+      }
     }
+
     console.log(`[Cloud Sync Success] Saved reading history to Supabase: ${book} ${chapter}:${verse} (user: ${userId})`);
     return true;
   } catch (err) {

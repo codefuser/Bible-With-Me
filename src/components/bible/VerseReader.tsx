@@ -24,7 +24,8 @@ export const VerseReader: React.FC = () => {
     highlights,
     handleToggleBookmark,
     handleSetHighlight: contextHandleSetHighlight,
-    openVerseStudy
+    openVerseStudy,
+    recordChapterRead
   } = useReading();
 
   const { user } = useAuth();
@@ -54,6 +55,8 @@ export const VerseReader: React.FC = () => {
         if (isMounted) {
           setVerses(data);
           setLoading(false);
+          // Record history in local state + Supabase Cloud
+          recordChapterRead(currentBook, currentChapter, selectedVerse || 1);
           // Track activity: Chapter read
           if (userId) {
             trackActivity(userId, 'CHAPTER_READ', currentBook.code, currentChapter);
@@ -71,7 +74,7 @@ export const VerseReader: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [currentBook.id, currentBook.code, currentChapter, userId]);
+  }, [currentBook, currentChapter, selectedVerse, userId, recordChapterRead]);
 
   // Sync route hash and auto-scroll to selected verse
   useEffect(() => {

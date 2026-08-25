@@ -65,6 +65,8 @@ interface ReadingContextType {
   openVerseStudy: (bookId: number, chapter: number, verse: number) => void;
   openChapterStudy: (bookId: number, chapter: number) => void;
   closeStudy: () => void;
+  /** Records a read chapter into reading history (local + cloud sync) */
+  recordChapterRead: (book: BibleBook, chapter: number, verse?: number) => void;
   /** True while the Bible CSV datasets are loading for the first time */
   isBibleDataLoading: boolean;
 }
@@ -265,15 +267,28 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     document.documentElement.setAttribute('data-theme', preferences.theme);
   }, [preferences.theme]);
 
+  const recordChapterRead = useCallback(
+    (book: BibleBook, chapter: number, verse: number = 1) => {
+      updateReadingHistory(book, chapter, verse, language, userId).then((item) => {
+        setHistoryItem(item);
+        setHistoryList((prev) => {
+          const filtered = prev.filter(
+            (h) => !(h.book_id === item.book_id && h.chapter === item.chapter)
+          );
+          return [item, ...filtered];
+        });
+      });
+    },
+    [language, userId]
+  );
+
   const setBookAndChapter = (book: BibleBook, chapter: number, verse: number = 1) => {
     setCurrentBook(book);
     setCurrentChapter(chapter);
     setSelectedVerse(verse);
     setIsBookSelectorOpen(false);
 
-    updateReadingHistory(book, chapter, verse, language, userId).then((item) => {
-      setHistoryItem(item);
-    });
+    recordChapterRead(book, chapter, verse);
   };
 
   const setChapter = (chapter: number) => {
@@ -417,6 +432,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         openVerseStudy,
         openChapterStudy,
         closeStudy,
+        recordChapterRead,
         isBibleDataLoading
       }}
     >
