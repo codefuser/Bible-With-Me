@@ -65,6 +65,8 @@ interface ReadingContextType {
   openVerseStudy: (bookId: number, chapter: number, verse: number) => void;
   openChapterStudy: (bookId: number, chapter: number) => void;
   closeStudy: () => void;
+  /** True while the Bible CSV datasets are loading for the first time */
+  isBibleDataLoading: boolean;
 }
 
 const ReadingContext = createContext<ReadingContextType | undefined>(undefined);
@@ -93,6 +95,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isSideNavOpen, setIsSideNavOpen] = useState<boolean>(false);
   const [isDailyHistoryOpen, setIsDailyHistoryOpen] = useState<boolean>(false);
   const [isReadingHistoryOpen, setIsReadingHistoryOpen] = useState<boolean>(false);
+  const [isBibleDataLoading, setIsBibleDataLoading] = useState<boolean>(true);
 
   const [activeStudyType, setActiveStudyType] = useState<'none' | 'verse' | 'chapter'>('none');
   const [studyLocation, setStudyLocation] = useState<{ bookId: number; chapter: number; verse?: number } | null>(null);
@@ -209,48 +212,52 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [registerCloudDataRefresh, loadAllCloudData]);
 
   // React to userId changes:
-  // - userId set (login/session restore): AuthContext already calls loadAllCloudData via the callback
+  // - userId set (login/session restore): Automatically load all cloud data directly from Supabase
   // - userId unset (logout): reset state to guest defaults
   useEffect(() => {
     if (!userId) {
-      // User logged out — reset to guest/localStorage state
       resetToGuestState();
+    } else {
+      loadAllCloudData(userId);
     }
-    // When userId is truthy, AuthContext has already triggered loadAllCloudData via registerCloudDataRefresh.
-    // We don't load again here to avoid double-fetching.
-  }, [userId, resetToGuestState]);
+  }, [userId, resetToGuestState, loadAllCloudData]);
 
   // Initialize Books, Hash Deep-Links & Saved History on mount (runs once)
   useEffect(() => {
-    fetchBibleBooks().then((data) => {
-      if (data && data.length > 0) {
-        setBooks(data);
+    setIsBibleDataLoading(true);
+    fetchBibleBooks()
+      .then((data) => {
+        if (data && data.length > 0) {
+          setBooks(data);
 
-        // 1. Check for Hash Route Deep-Link (e.g. #JOHN/3/16)
-        const routeState = parseHashRoute(data);
-        if (routeState) {
-          const matchedBook = data.find((b) => b.code.toUpperCase() === routeState.bookCode.toUpperCase());
-          if (matchedBook) {
-            setCurrentBook(matchedBook);
-            setCurrentChapter(routeState.chapter);
-            if (routeState.verse) setSelectedVerse(routeState.verse);
-            return;
+          // 1. Check for Hash Route Deep-Link (e.g. #JOHN/3/16)
+          const routeState = parseHashRoute(data);
+          if (routeState) {
+            const matchedBook = data.find((b) => b.code.toUpperCase() === routeState.bookCode.toUpperCase());
+            if (matchedBook) {
+              setCurrentBook(matchedBook);
+              setCurrentChapter(routeState.chapter);
+              if (routeState.verse) setSelectedVerse(routeState.verse);
+              setIsBibleDataLoading(false);
+              return;
+            }
+          }
+
+          // 2. Fallback to stored history (guest or pre-login)
+          const stored = getStoredHistory();
+          if (stored) {
+            const foundBook = data.find((b) => b.id === stored.book_id);
+            if (foundBook) {
+              setCurrentBook(foundBook);
+              setCurrentChapter(stored.chapter);
+              if (stored.verse) setSelectedVerse(stored.verse);
+              if (stored.language) setLanguageState(stored.language);
+            }
           }
         }
-
-        // 2. Fallback to stored history (guest or pre-login)
-        const stored = getStoredHistory();
-        if (stored) {
-          const foundBook = data.find((b) => b.id === stored.book_id);
-          if (foundBook) {
-            setCurrentBook(foundBook);
-            setCurrentChapter(stored.chapter);
-            if (stored.verse) setSelectedVerse(stored.verse);
-            if (stored.language) setLanguageState(stored.language);
-          }
-        }
-      }
-    });
+        setIsBibleDataLoading(false);
+      })
+      .catch(() => setIsBibleDataLoading(false));
   }, []);
 
   // Update HTML data-theme attribute whenever theme changes
@@ -409,7 +416,8 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setIsReadingHistoryOpen,
         openVerseStudy,
         openChapterStudy,
-        closeStudy
+        closeStudy,
+        isBibleDataLoading
       }}
     >
       {children}
