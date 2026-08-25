@@ -56,6 +56,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   isGuest: boolean;
+  isSessionLoading: boolean;
   syncStatus: SyncStatus;
   isAuthModalOpen: boolean;
   isSyncModalOpen: boolean;
@@ -77,6 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('synced');
+  const [isSessionLoading, setIsSessionLoading] = useState<boolean>(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState<boolean>(false);
 
@@ -153,7 +155,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Initialize session and auth state listener on app mount
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
+    if (!isSupabaseConfigured) {
+      // No Supabase config — skip session check and go directly to landing page
+      setIsSessionLoading(false);
+      return;
+    }
 
     // Check existing session (page reload / tab re-open)
     getSession().then(async (session) => {
@@ -161,6 +167,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Session restore: load cloud data automatically, no sync banner
         await handleUserSessionEstablished(session.user, false);
       }
+      // Session check done — reveal the correct screen
+      setIsSessionLoading(false);
     });
 
     // Listen to Auth State Changes from Supabase (handles token refresh etc.)
@@ -269,6 +277,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated,
         isAdmin,
         isGuest,
+        isSessionLoading,
         syncStatus,
         isAuthModalOpen,
         isSyncModalOpen,
