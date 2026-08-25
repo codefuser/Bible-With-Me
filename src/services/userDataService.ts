@@ -369,6 +369,34 @@ export const fetchCloudHistory = async (userId: string): Promise<CloudHistoryIte
   }
 };
 
+/**
+ * Fetches all recent reading history items for a user (up to 50 records).
+ * Used to populate the full history list modal.
+ */
+export const fetchAllCloudHistory = async (userId: string): Promise<CloudHistoryItem[]> => {
+  if (!supabase) {
+    console.warn('[Supabase] Client not configured. Cannot fetch cloud history list.');
+    return [];
+  }
+  try {
+    const { data, error } = await supabase
+      .from('reading_history')
+      .select('*')
+      .eq('user_id', userId)
+      .order('last_read_at', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error('[Supabase Error] fetchAllCloudHistory failed:', error.message, error.details, error.hint, error.code);
+      return [];
+    }
+    return data || [];
+  } catch (err) {
+    console.error('[Supabase Exception] fetchAllCloudHistory threw:', err);
+    return [];
+  }
+};
+
 export const upsertCloudHistory = async (
   userId: string,
   book: string,
@@ -388,7 +416,9 @@ export const upsertCloudHistory = async (
         verse,
         last_read_at: new Date().toISOString()
       },
-      { onConflict: 'user_id,book,chapter,verse' }
+      // Use (user_id, book, chapter) so re-reading the same chapter updates timestamp
+      // instead of creating duplicate entries per verse
+      { onConflict: 'user_id,book,chapter' }
     );
     if (error) {
       console.error('[Supabase Error] upsertCloudHistory failed:', error.message, error.details, error.hint, error.code);

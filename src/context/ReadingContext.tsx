@@ -11,7 +11,7 @@ import {
 import { fetchBibleBooks, ALL_BIBLE_BOOKS } from '../services/bibleService';
 import { getStoredPreferences, savePreferences } from '../services/preferencesService';
 import { getStoredBookmarks, toggleBookmark } from '../services/bookmarkService';
-import { getStoredHistory, updateReadingHistory } from '../services/historyService';
+import { getStoredHistory, getStoredHistoryList, updateReadingHistory } from '../services/historyService';
 import { getStoredNotes, saveNote as saveNoteService } from '../services/noteService';
 import { getStoredHighlights, saveHighlight, HighlightColor } from '../services/highlightService';
 import { parseHashRoute } from '../services/routerService';
@@ -20,7 +20,8 @@ import {
   fetchCloudSettings,
   fetchCloudHighlights,
   fetchCloudNotes,
-  fetchCloudHistory
+  fetchCloudHistory,
+  fetchAllCloudHistory
 } from '../services/userDataService';
 import { trackActivity } from '../services/activityService';
 import { useAuth } from './AuthContext';
@@ -36,12 +37,14 @@ interface ReadingContextType {
   notes: VerseNote[];
   highlights: Record<string, HighlightColor>;
   historyItem: ReadingHistoryItem | null;
+  historyList: ReadingHistoryItem[];
   isSearchOpen: boolean;
   isPreferencesOpen: boolean;
   isBookSelectorOpen: boolean;
   isBookmarksOpen: boolean;
   isSideNavOpen: boolean;
   isDailyHistoryOpen: boolean;
+  isReadingHistoryOpen: boolean;
   activeStudyType: 'none' | 'verse' | 'chapter';
   studyLocation: { bookId: number; chapter: number; verse?: number } | null;
   setBookAndChapter: (book: BibleBook, chapter: number, verse?: number) => void;
@@ -58,6 +61,7 @@ interface ReadingContextType {
   setIsBookmarksOpen: (open: boolean) => void;
   setIsSideNavOpen: (open: boolean) => void;
   setIsDailyHistoryOpen: (open: boolean) => void;
+  setIsReadingHistoryOpen: (open: boolean) => void;
   openVerseStudy: (bookId: number, chapter: number, verse: number) => void;
   openChapterStudy: (bookId: number, chapter: number) => void;
   closeStudy: () => void;
@@ -80,6 +84,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [notes, setNotes] = useState<VerseNote[]>([]);
   const [highlights, setHighlights] = useState<Record<string, HighlightColor>>({});
   const [historyItem, setHistoryItem] = useState<ReadingHistoryItem | null>(null);
+  const [historyList, setHistoryList] = useState<ReadingHistoryItem[]>([]);
 
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [isPreferencesOpen, setIsPreferencesOpen] = useState<boolean>(false);
@@ -87,6 +92,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isBookmarksOpen, setIsBookmarksOpen] = useState<boolean>(false);
   const [isSideNavOpen, setIsSideNavOpen] = useState<boolean>(false);
   const [isDailyHistoryOpen, setIsDailyHistoryOpen] = useState<boolean>(false);
+  const [isReadingHistoryOpen, setIsReadingHistoryOpen] = useState<boolean>(false);
 
   const [activeStudyType, setActiveStudyType] = useState<'none' | 'verse' | 'chapter'>('none');
   const [studyLocation, setStudyLocation] = useState<{ bookId: number; chapter: number; verse?: number } | null>(null);
@@ -138,7 +144,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setNotes(cloudNotes);
     console.log(`[ReadingContext] Set ${cloudNotes.length} notes from cloud.`);
 
-    // 5. Load Reading History from cloud
+    // 5. Load Reading History from cloud (latest item for "continue reading" banner)
     const cloudHistory = await fetchCloudHistory(uid);
     if (cloudHistory) {
       const matchedBook = ALL_BIBLE_BOOKS.find(
@@ -158,6 +164,28 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         console.log('[ReadingContext] Set reading history from cloud:', matchedBook.name_en, cloudHistory.chapter);
       }
     }
+
+    // 6. Load full history list from cloud
+    const allCloudHistory = await fetchAllCloudHistory(uid);
+    const mappedHistoryList: ReadingHistoryItem[] = allCloudHistory
+      .map((ch) => {
+        const matchedBook = ALL_BIBLE_BOOKS.find(
+          (b) => b.code.toUpperCase() === ch.book.toUpperCase() || String(b.id) === ch.book
+        );
+        if (!matchedBook) return null;
+        return {
+          book_id: matchedBook.id,
+          chapter: ch.chapter,
+          verse: ch.verse,
+          language: 'ta' as Language,
+          book_name_en: matchedBook.name_en,
+          book_name_ta: matchedBook.name_ta,
+          updated_at: ch.last_read_at || new Date().toISOString()
+        } as ReadingHistoryItem;
+      })
+      .filter(Boolean) as ReadingHistoryItem[];
+    setHistoryList(mappedHistoryList);
+    console.log(`[ReadingContext] Set ${mappedHistoryList.length} history items from cloud.`);
   }, []);
 
   /**
@@ -169,6 +197,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setNotes(getStoredNotes());
     setHighlights(getStoredHighlights());
     setHistoryItem(getStoredHistory());
+    setHistoryList(getStoredHistoryList());
     setPreferencesState(getStoredPreferences());
     console.log('[ReadingContext] Reset to guest state (localStorage).');
   }, []);
@@ -353,12 +382,14 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         notes,
         highlights,
         historyItem,
+        historyList,
         isSearchOpen,
         isPreferencesOpen,
         isBookSelectorOpen,
         isBookmarksOpen,
         isSideNavOpen,
         isDailyHistoryOpen,
+        isReadingHistoryOpen,
         activeStudyType,
         studyLocation,
         setBookAndChapter,
@@ -375,6 +406,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setIsBookmarksOpen,
         setIsSideNavOpen,
         setIsDailyHistoryOpen,
+        setIsReadingHistoryOpen,
         openVerseStudy,
         openChapterStudy,
         closeStudy

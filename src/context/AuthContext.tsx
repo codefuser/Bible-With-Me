@@ -12,6 +12,7 @@ const USER_DATA_KEYS = [
   'bible_app_highlights',
   'bible_app_user_notes',
   'bible_app_reading_history',
+  'bible_app_reading_history_list',
   'bible_app_preferences',
   'bible_app_reading_progress'
 ];
@@ -82,15 +83,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // ReadingContext registers this callback so we can trigger a cloud refresh from here
   const cloudDataRefreshRef = useRef<((userId: string) => Promise<void>) | null>(null);
 
+  // Stores the session user while waiting for ReadingContext to register its callback.
+  // This solves the race condition where getSession() fires before ReadingContext mounts.
+  const pendingSessionUserRef = useRef<{ user: User; isNewSignup: boolean } | null>(null);
+
   const registerCloudDataRefresh = useCallback((fn: (userId: string) => Promise<void>) => {
     cloudDataRefreshRef.current = fn;
+
+    // If a session was already restored before ReadingContext mounted (race condition),
+    // fire the cloud data load now that the callback is finally registered.
+    if (pendingSessionUserRef.current) {
+      const { user: pendingUser, isNewSignup } = pendingSessionUserRef.current;
+      pendingSessionUserRef.current = null;
+      console.log('[Auth] ReadingContext callback registered — triggering deferred cloud load for:', pendingUser.id);
+      fn(pendingUser.id).catch((err) =>
+        console.error('[Auth] Deferred cloud data refresh failed:', err)
+      );
+
+      // Show migration banner if applicable
+      const migrationKey = `bible_sync_done_${pendingUser.id}`;
+      const alreadyMigrated = localStorage.getItem(migrationKey) === 'true';
+      if (isNewSignup && !alreadyMigrated) {
+        setIsSyncModalOpen(true);
+      }
+    }
   }, []);
 
   /**
    * Called whenever a user session is established (login, signup, or page-reload session restore).
    * 1. Sets user/profile state
    * 2. Clears stale local data to prevent cross-user contamination
-   * 3. Triggers ReadingContext to load fresh cloud data
+   * 3. Triggers ReadingContext to load fresh cloud data (or defers if not yet mounted)
    * 4. Optionally shows the one-time guest-migration banner
    */
   const handleUserSessionEstablished = useCallback(
@@ -101,29 +124,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       getUserProfile(newUser.id).then((prof) => setProfile(prof));
 
       // Clear any stale local/guest data before loading cloud data
-      // This prevents previously-logged-in user's data showing to the new user
       clearLocalUserData();
 
-      // Trigger cloud data load in ReadingContext (populates bookmarks, notes, highlights, etc.)
       if (cloudDataRefreshRef.current) {
+        // ReadingContext callback already registered — call it directly
         try {
           await cloudDataRefreshRef.current(newUser.id);
           console.log('[Auth] Cloud data refresh completed for user:', newUser.id);
         } catch (err) {
           console.error('[Auth] Cloud data refresh failed:', err);
         }
-      }
 
-      // Show migration banner ONLY if:
-      // 1. This is a new signup (not a returning login)
-      // 2. There was actual guest data in localStorage (before we cleared it above)
-      // 3. We haven't already migrated for this user
-      const migrationKey = `bible_sync_done_${newUser.id}`;
-      const alreadyMigrated = localStorage.getItem(migrationKey) === 'true';
-      if (isNewSignup && !alreadyMigrated) {
-        // At this point local data has been cleared, so we check BEFORE clearLocalUserData runs.
-        // The hasGuestDataBeforeLogin value is passed from the callers below.
-        setIsSyncModalOpen(true);
+        // Show migration banner ONLY if this is a new signup with guest data
+        const migrationKey = `bible_sync_done_${newUser.id}`;
+        const alreadyMigrated = localStorage.getItem(migrationKey) === 'true';
+        if (isNewSignup && !alreadyMigrated) {
+          setIsSyncModalOpen(true);
+        }
+      } else {
+        // ReadingContext not yet mounted — store user for deferred cloud load.
+        // registerCloudDataRefresh() will trigger the load once ReadingContext registers.
+        console.log('[Auth] ReadingContext callback not yet registered. Deferring cloud load until ReadingContext mounts.');
+        pendingSessionUserRef.current = { user: newUser, isNewSignup };
       }
     },
     []
@@ -158,6 +180,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
         setProfile(null);
         setSyncStatus('synced');
+        pendingSessionUserRef.current = null;
       }
     });
 
@@ -201,6 +224,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setProfile(null);
     setSyncStatus('synced');
     setIsSyncModalOpen(false);
+    pendingSessionUserRef.current = null;
 
     // Clear ALL user-specific localStorage keys on logout to protect data isolation
     clearLocalUserData();
