@@ -188,15 +188,59 @@ export const parseBibleReference = (query: string): ParsedReference | null => {
 };
 
 /**
+ * Generates live Bible word suggestions for auto-complete.
+ * When the user types "பெ", it finds words like "பெட்டியை", "பெட்டி", "பெலிஸ்தர்"...
+ * When the user types "பெட்", it finds words starting with "பெட்" like "பெட்டியை", "பெட்டி"...
+ */
+export const getBibleWordSuggestions = (prefix: string, limit: number = 8): string[] => {
+  const norm = normalizeString(prefix);
+  if (!norm || norm.length < 1) return [];
+
+  const lowerPrefix = norm.toLowerCase();
+  const allVerses = getAllLoadedVerses();
+  const wordFreqMap = new Map<string, number>();
+
+  for (const v of allVerses) {
+    const textTa = normalizeString(v.text_ta);
+    const textEn = v.text_en;
+
+    const taWords = textTa.split(/[^\p{L}\p{M}]+/u).filter((w) => w.length >= norm.length);
+    const enWords = textEn.split(/[^a-zA-Z0-9]+/).filter((w) => w.length >= norm.length);
+
+    for (const word of taWords) {
+      if (word.startsWith(norm) || word.toLowerCase().startsWith(lowerPrefix)) {
+        wordFreqMap.set(word, (wordFreqMap.get(word) || 0) + 1);
+      }
+    }
+
+    for (const word of enWords) {
+      if (word.toLowerCase().startsWith(lowerPrefix)) {
+        const titleCaseWord = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        wordFreqMap.set(titleCaseWord, (wordFreqMap.get(titleCaseWord) || 0) + 1);
+      }
+    }
+  }
+
+  // Sort by frequency (most common Bible words first)
+  const sorted = Array.from(wordFreqMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([word]) => word);
+
+  return sorted.slice(0, limit);
+};
+
+/**
  * Executes multi-tier search across the ENTIRE Bible dataset.
  * - Never truncates results artificially (scans all 31,102 verses).
  * - Matches direct Tamil substring, English substring, Tanglish transliteration, and reference lookup.
- * - Filters by testament if specified.
+ * - Filters by testament and optional book range if specified.
  */
 export const executeTanglishSearch = (
   query: string,
   _language: Language = 'en',
-  testamentFilter?: Testament
+  testamentFilter?: Testament,
+  fromBookId?: number,
+  toBookId?: number
 ): SearchResult[] => {
   const normQuery = normalizeString(query);
   if (!normQuery || normQuery.length < 1) return [];
@@ -210,7 +254,12 @@ export const executeTanglishSearch = (
     const refResults: SearchResult[] = [];
     const bookMeta = BOOK_METADATA_LIST[parsedRef.bookIndex];
 
-    if (bookMeta && (!testamentFilter || bookMeta.testament === testamentFilter)) {
+    if (
+      bookMeta &&
+      (!testamentFilter || bookMeta.testament === testamentFilter) &&
+      (!fromBookId || bookMeta.id >= fromBookId) &&
+      (!toBookId || bookMeta.id <= toBookId)
+    ) {
       for (const v of allVerses) {
         if (v.book_id === bookMeta.id && v.chapter === parsedRef.chapter) {
           if (!parsedRef.verse || v.verse === parsedRef.verse) {
@@ -240,6 +289,8 @@ export const executeTanglishSearch = (
     const bookMeta = BOOK_METADATA_LIST[v.book_id - 1];
     if (!bookMeta) continue;
     if (testamentFilter && bookMeta.testament !== testamentFilter) continue;
+    if (fromBookId && v.book_id < fromBookId) continue;
+    if (toBookId && v.book_id > toBookId) continue;
 
     const enText = v.text_en.toLowerCase();
     const taText = normalizeString(v.text_ta);
