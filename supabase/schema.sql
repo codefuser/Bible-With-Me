@@ -210,11 +210,13 @@ CREATE POLICY "Allow all for user_activity"
   USING (true)
   WITH CHECK (true);
 
--- 8. User Activity Policies
-CREATE POLICY "Users can read own activity"
-  ON public.user_activity FOR SELECT
-  USING (auth.uid() = user_id);
+-- ============================================================
+-- DATA API PERMISSIONS (Fixes "API DISABLED" in Supabase)
+-- ============================================================
 
-CREATE POLICY "Users can insert own activity"
-  ON public.user_activity FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO postgres, anon, authenticated, service_role;
+
