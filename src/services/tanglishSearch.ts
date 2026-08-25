@@ -1,5 +1,5 @@
 import { SearchResult, Language, Testament } from '../types/bible';
-import { getAllLoadedVerses, BOOK_METADATA_LIST } from './csvBibleService';
+import { getAllLoadedVerses, getPreindexedBibleWords, BOOK_METADATA_LIST } from './csvBibleService';
 
 // Expanded Phonetic Transliteration & Typo-Tolerance Dictionary (Tanglish -> Tamil)
 export const TANGLISH_MAP: Record<string, string> = {
@@ -188,45 +188,33 @@ export const parseBibleReference = (query: string): ParsedReference | null => {
 };
 
 /**
- * Generates live Bible word suggestions for auto-complete.
- * When the user types "பெ", it finds words like "பெட்டியை", "பெட்டி", "பெலிஸ்தர்"...
- * When the user types "பெட்", it finds words starting with "பெட்" like "பெட்டியை", "பெட்டி"...
+ * Generates live Bible word suggestions for auto-complete using pre-indexed dictionary.
+ * Instant 0ms response time with 0 lag.
  */
-export const getBibleWordSuggestions = (prefix: string, limit: number = 8): string[] => {
+export const getBibleWordSuggestions = (prefix: string, limit: number = 12): string[] => {
   const norm = normalizeString(prefix);
   if (!norm || norm.length < 1) return [];
 
   const lowerPrefix = norm.toLowerCase();
-  const allVerses = getAllLoadedVerses();
-  const wordFreqMap = new Map<string, number>();
+  const indexedWords = getPreindexedBibleWords();
 
-  for (const v of allVerses) {
-    const textTa = normalizeString(v.text_ta);
-    const textEn = v.text_en;
+  const startsMatches: string[] = [];
+  const includesMatches: string[] = [];
 
-    const taWords = textTa.split(/[^\p{L}\p{M}]+/u).filter((w) => w.length >= norm.length);
-    const enWords = textEn.split(/[^a-zA-Z0-9]+/).filter((w) => w.length >= norm.length);
+  for (const item of indexedWords) {
+    const word = item.word;
+    const wordLower = word.toLowerCase();
 
-    for (const word of taWords) {
-      if (word.startsWith(norm) || word.toLowerCase().startsWith(lowerPrefix)) {
-        wordFreqMap.set(word, (wordFreqMap.get(word) || 0) + 1);
-      }
-    }
-
-    for (const word of enWords) {
-      if (word.toLowerCase().startsWith(lowerPrefix)) {
-        const titleCaseWord = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-        wordFreqMap.set(titleCaseWord, (wordFreqMap.get(titleCaseWord) || 0) + 1);
-      }
+    if (word.startsWith(norm) || wordLower.startsWith(lowerPrefix)) {
+      startsMatches.push(word);
+      if (startsMatches.length >= limit) break;
+    } else if (word.includes(norm) || wordLower.includes(lowerPrefix)) {
+      includesMatches.push(word);
     }
   }
 
-  // Sort by frequency (most common Bible words first)
-  const sorted = Array.from(wordFreqMap.entries())
-    .sort((a, b) => b[1] - a[1])
-    .map(([word]) => word);
-
-  return sorted.slice(0, limit);
+  const combined = [...startsMatches, ...includesMatches];
+  return Array.from(new Set(combined)).slice(0, limit);
 };
 
 /**

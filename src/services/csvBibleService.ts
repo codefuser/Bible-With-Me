@@ -114,8 +114,12 @@ let loadPromise: Promise<void> | null = null;
 const verseStore = new Map<string, BibleVerse>();
 // Array of all verses for fast search iteration
 const allVersesStore: BibleVerse[] = [];
+// Pre-indexed unique Bible words sorted by frequency
+let indexedBibleWords: { word: string; count: number }[] = [];
 // Dynamic max chapter map: `bookIndex -> maxChapter`
 const bookMaxChapters = new Map<number, number>();
+
+export const getPreindexedBibleWords = () => indexedBibleWords;
 
 export const loadBibleDatasets = (): Promise<void> => {
   if (isLoaded) return Promise.resolve();
@@ -177,8 +181,34 @@ export const loadBibleDatasets = (): Promise<void> => {
         allVersesStore.push(verseObj);
       }
 
+      // Pre-index unique words for 0ms lag-free auto-complete suggestions
+      const wordCountMap = new Map<string, number>();
+      for (const v of allVersesStore) {
+        const cleanedTa = v.text_ta.normalize('NFC').replace(/[.,!?:;""''()\[\]\-«»—‘’“”]/g, ' ');
+        const cleanedEn = v.text_en.replace(/[^a-zA-Z0-9\s]/g, ' ');
+
+        const taWords = cleanedTa.split(/\s+/);
+        for (const w of taWords) {
+          if (w.length >= 2) {
+            wordCountMap.set(w, (wordCountMap.get(w) || 0) + 1);
+          }
+        }
+
+        const enWords = cleanedEn.split(/\s+/);
+        for (const w of enWords) {
+          if (w.length >= 2) {
+            const titleCase = w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+            wordCountMap.set(titleCase, (wordCountMap.get(titleCase) || 0) + 1);
+          }
+        }
+      }
+
+      indexedBibleWords = Array.from(wordCountMap.entries())
+        .map(([word, count]) => ({ word, count }))
+        .sort((a, b) => b.count - a.count);
+
       isLoaded = true;
-      console.log(`Successfully loaded ${allVersesStore.length} verses from local CSV datasets!`);
+      console.log(`Successfully loaded ${allVersesStore.length} verses and ${indexedBibleWords.length} indexed words!`);
     } catch (err) {
       console.error('Failed loading Bible CSV datasets:', err);
       throw err;
