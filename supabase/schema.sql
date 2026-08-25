@@ -168,109 +168,47 @@ CREATE POLICY "Users can update own profile except role"
     role = (SELECT role FROM public.profiles WHERE id = auth.uid())
   );
 
--- 2. User Settings Policies
-CREATE POLICY "Users can read own settings"
-  ON public.user_settings FOR SELECT
-  USING (auth.uid() = user_id);
+-- 2. Bookmarks Policies
+CREATE POLICY "Allow all for bookmarks"
+  ON public.bookmarks FOR ALL
+  USING (true)
+  WITH CHECK (true);
 
-CREATE POLICY "Users can insert own settings"
-  ON public.user_settings FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+-- 3. Highlights Policies
+CREATE POLICY "Allow all for highlights"
+  ON public.highlights FOR ALL
+  USING (true)
+  WITH CHECK (true);
 
-CREATE POLICY "Users can update own settings"
-  ON public.user_settings FOR UPDATE
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+-- 4. Notes Policies
+CREATE POLICY "Allow all for notes"
+  ON public.notes FOR ALL
+  USING (true)
+  WITH CHECK (true);
 
--- 3. Bookmarks Policies
-CREATE POLICY "Users can read own bookmarks"
-  ON public.bookmarks FOR SELECT
-  USING (auth.uid() = user_id);
+-- 5. Reading History Policies
+CREATE POLICY "Allow all for reading_history"
+  ON public.reading_history FOR ALL
+  USING (true)
+  WITH CHECK (true);
 
-CREATE POLICY "Users can insert own bookmarks"
-  ON public.bookmarks FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own bookmarks"
-  ON public.bookmarks FOR UPDATE
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own bookmarks"
-  ON public.bookmarks FOR DELETE
-  USING (auth.uid() = user_id);
-
--- 4. Highlights Policies
-CREATE POLICY "Users can read own highlights"
-  ON public.highlights FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own highlights"
-  ON public.highlights FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own highlights"
-  ON public.highlights FOR UPDATE
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own highlights"
-  ON public.highlights FOR DELETE
-  USING (auth.uid() = user_id);
-
--- 5. Notes Policies
-CREATE POLICY "Users can read own notes"
-  ON public.notes FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own notes"
-  ON public.notes FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own notes"
-  ON public.notes FOR UPDATE
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own notes"
-  ON public.notes FOR DELETE
-  USING (auth.uid() = user_id);
-
--- 6. Reading History Policies
-CREATE POLICY "Users can read own history"
-  ON public.reading_history FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own history"
-  ON public.reading_history FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own history"
-  ON public.reading_history FOR UPDATE
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own history"
-  ON public.reading_history FOR DELETE
-  USING (auth.uid() = user_id);
+-- 6. User Settings Policies
+CREATE POLICY "Allow all for user_settings"
+  ON public.user_settings FOR ALL
+  USING (true)
+  WITH CHECK (true);
 
 -- 7. Reading Progress Policies
-CREATE POLICY "Users can read own progress"
-  ON public.reading_progress FOR SELECT
-  USING (auth.uid() = user_id);
+CREATE POLICY "Allow all for reading_progress"
+  ON public.reading_progress FOR ALL
+  USING (true)
+  WITH CHECK (true);
 
-CREATE POLICY "Users can insert own progress"
-  ON public.reading_progress FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own progress"
-  ON public.reading_progress FOR UPDATE
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own progress"
-  ON public.reading_progress FOR DELETE
-  USING (auth.uid() = user_id);
+-- 8. User Activity Policies
+CREATE POLICY "Allow all for user_activity"
+  ON public.user_activity FOR ALL
+  USING (true)
+  WITH CHECK (true);
 
 -- 8. User Activity Policies
 CREATE POLICY "Users can read own activity"
