@@ -35,7 +35,7 @@ export const SearchModal: React.FC = () => {
   }, [isSearchOpen]);
 
   useEffect(() => {
-    if (!query.trim() || query.trim().length < 2) {
+    if (!query.trim()) {
       setResults([]);
       setLoading(false);
       setHighlightedIndex(0);
@@ -43,6 +43,7 @@ export const SearchModal: React.FC = () => {
     }
 
     setLoading(true);
+    // Instant search response (50ms debounce)
     const timer = setTimeout(() => {
       searchBibleVerses(query, language, testamentFilter).then((res) => {
         setResults(res);
@@ -52,7 +53,7 @@ export const SearchModal: React.FC = () => {
           trackActivity(userId, 'SEARCH_PERFORMED', undefined, undefined, undefined, { query, count: res.length });
         }
       });
-    }, 250);
+    }, 50);
 
     return () => clearTimeout(timer);
   }, [query, language, testamentFilter, userId]);
@@ -92,15 +93,21 @@ export const SearchModal: React.FC = () => {
 
   // Helper to highlight match substring inside verse text
   const renderHighlightedText = (text: string, searchTerm: string) => {
-    if (!searchTerm || searchTerm.length < 2) return text;
+    if (!searchTerm || !searchTerm.trim()) return text;
 
-    const lowerSearch = searchTerm.toLowerCase().trim();
-    const rawTokens = lowerSearch.split(/\s+/).filter((t) => t.length >= 2);
+    const trimmed = searchTerm.normalize('NFC').trim();
+    const lowerSearch = trimmed.toLowerCase();
+    const rawTokens = lowerSearch.split(/\s+/).filter((t) => t.length >= 1);
+    
     const termsToMatch = new Set<string>();
-    termsToMatch.add(searchTerm.trim());
-    rawTokens.forEach((t) => termsToMatch.add(t));
+    termsToMatch.add(trimmed);
+
+    rawTokens.forEach((t) => {
+      termsToMatch.add(t);
+    });
 
     const escapedTerms = Array.from(termsToMatch)
+      .filter((t) => t.length > 0)
       .map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
       .join('|');
 

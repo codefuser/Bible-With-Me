@@ -2,7 +2,7 @@ import { SearchResult, Language, Testament } from '../types/bible';
 import { getAllLoadedVerses, BOOK_METADATA_LIST } from './csvBibleService';
 
 // Expanded Phonetic Transliteration & Typo-Tolerance Dictionary (Tanglish -> Tamil)
-const TANGLISH_MAP: Record<string, string> = {
+export const TANGLISH_MAP: Record<string, string> = {
   // Love / Affection
   anbu: 'அன்பு',
   anbhu: 'அன்பு',
@@ -127,11 +127,12 @@ const TANGLISH_MAP: Record<string, string> = {
   psalm: 'சங்கீதம்',
   psalms: 'சங்கீதம்',
   neethimozhikal: 'நீதிமொழிகள்',
-  proverbs: 'நீதிமொழிகள்'
+  proverbs: 'நீதிமொழிகள்',
+  samuel: 'சாமுவேல்'
 };
 
 // Normalize Unicode strings to NFC canonical composition
-const normalizeString = (str: string): string => {
+export const normalizeString = (str: string): string => {
   return str ? str.normalize('NFC').trim() : '';
 };
 
@@ -141,12 +142,12 @@ interface ParsedReference {
   verse?: number;
 }
 
-// Complex reference parser (e.g. "John 3:16", "1 John 3 16", "1john 3:16", "2 Samuel 7:12", "sangitham 23 1", "gen 1:1", "rom 8:28", "yovan 3 16", "psalms 23")
+// Unicode-aware Reference Parser (e.g., "John 3:16", "1 Samuel 7:1", "1 சாமுவேல் 7:1", "1sam 7", "sangitham 23 1")
 export const parseBibleReference = (query: string): ParsedReference | null => {
   const normalized = normalizeString(query).toLowerCase();
-  
-  // Match regex: optional book number + book title + chapter + optional verse
-  const match = normalized.match(/^((?:[1-3]\s*)?[a-z]+)\s+(\d+)(?:[:\s]+(\d+))?$/i);
+
+  // Unicode regex: optional book number (1-3) + book title (English or Tamil) + chapter + optional verse
+  const match = normalized.match(/^((?:[1-3]\s*)?[\p{L}\s]+?)\s+(\d+)(?:[:\s]+(\d+))?$/iu);
   if (!match) return null;
 
   const rawBook = match[1].trim();
@@ -168,6 +169,7 @@ export const parseBibleReference = (query: string): ParsedReference | null => {
       nameEn.replace(/\s+/g, '') === compactBook ||
       nameTa === rawBook ||
       nameTa.startsWith(rawBook) ||
+      nameTa.replace(/\s+/g, '') === compactBook ||
       code === rawBook ||
       codeNoSpaces === compactBook ||
       (mappedTanglish && (nameTa.includes(mappedTanglish) || nameEn.includes(rawBook)))
@@ -185,19 +187,24 @@ export const parseBibleReference = (query: string): ParsedReference | null => {
   return null;
 };
 
-// Multi-tier Search Engine
+/**
+ * Executes multi-tier search across the ENTIRE Bible dataset.
+ * - Never truncates results artificially (scans all 31,102 verses).
+ * - Matches direct Tamil substring, English substring, Tanglish transliteration, and reference lookup.
+ * - Filters by testament if specified.
+ */
 export const executeTanglishSearch = (
   query: string,
   _language: Language = 'en',
   testamentFilter?: Testament
 ): SearchResult[] => {
   const normQuery = normalizeString(query);
-  if (!normQuery || normQuery.length < 2) return [];
+  if (!normQuery || normQuery.length < 1) return [];
 
   const allVerses = getAllLoadedVerses();
   const lowerQuery = normQuery.toLowerCase();
 
-  // Tier 1: Reference Match ("John 3:16", "yovan 3 16", "1 john 3 16", "sangitham 23")
+  // Tier 1: Reference Match ("John 3:16", "1 Samuel 7:1", "1 சாமுவேல் 7:1", "yovan 3 16")
   const parsedRef = parseBibleReference(normQuery);
   if (parsedRef) {
     const refResults: SearchResult[] = [];
@@ -221,11 +228,11 @@ export const executeTanglishSearch = (
         }
       }
 
-      if (refResults.length > 0) return refResults.slice(0, 40);
+      if (refResults.length > 0) return refResults;
     }
   }
 
-  // Tier 2: Tokenized Text Matching (Exact, Tanglish Transliterated & Multi-Word)
+  // Tier 2: Complete Dataset Search Across Every Verse
   const results: SearchResult[] = [];
   const tokens = lowerQuery.split(/\s+/).filter((t) => t.length > 0);
 
@@ -237,22 +244,26 @@ export const executeTanglishSearch = (
     const enText = v.text_en.toLowerCase();
     const taText = normalizeString(v.text_ta);
 
-    // Substring match
-    const directEnMatch = enText.includes(lowerQuery);
+    // Direct Tamil substring match (NFC normalized)
     const directTaMatch = taText.includes(normQuery);
+    // Direct English substring match
+    const directEnMatch = enText.includes(lowerQuery);
 
-    // Multi-word Token match (all tokens match either in English or mapped Tamil)
-    const allTokensMatch = tokens.length > 1 && tokens.every((tok) => {
-      const mapped = TANGLISH_MAP[tok];
-      const matchTa = mapped ? taText.includes(mapped) : taText.includes(tok);
-      const matchEn = enText.includes(tok);
-      return matchTa || matchEn;
-    });
+    // Multi-word Token match (all tokens match in English or mapped Tamil)
+    const allTokensMatch =
+      tokens.length > 1 &&
+      tokens.every((tok) => {
+        const mapped = TANGLISH_MAP[tok];
+        const matchTa = mapped ? taText.includes(mapped) : taText.includes(tok);
+        const matchEn = enText.includes(tok);
+        return matchTa || matchEn;
+      });
 
     // Single Tanglish word match
-    const singleTanglishMatch = tokens.length === 1 && TANGLISH_MAP[tokens[0]] && taText.includes(TANGLISH_MAP[tokens[0]]);
+    const singleTanglishMatch =
+      tokens.length === 1 && TANGLISH_MAP[tokens[0]] && taText.includes(TANGLISH_MAP[tokens[0]]);
 
-    if (directEnMatch || directTaMatch || allTokensMatch || singleTanglishMatch) {
+    if (directTaMatch || directEnMatch || allTokensMatch || singleTanglishMatch) {
       results.push({
         id: v.id,
         book_id: v.book_id,
@@ -263,8 +274,6 @@ export const executeTanglishSearch = (
         text_en: v.text_en,
         text_ta: v.text_ta
       });
-
-      if (results.length >= 50) break;
     }
   }
 
