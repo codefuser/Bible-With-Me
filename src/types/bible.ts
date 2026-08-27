@@ -19,6 +19,8 @@ export interface BibleVerse {
   verse: number;
   text_en: string;
   text_ta: string;
+  norm_ta?: string;
+  lower_en?: string;
 }
 
 export interface SearchResult {

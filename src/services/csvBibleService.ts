@@ -110,16 +110,28 @@ interface CsvRow {
 let isLoaded = false;
 let loadPromise: Promise<void> | null = null;
 
+export interface IndexedWord {
+  word: string;
+  lower: string;
+  count: number;
+}
+
 // Map key format: `${bookIndex}_${chapter}_${verseNumber}`
 const verseStore = new Map<string, BibleVerse>();
 // Array of all verses for fast search iteration
 const allVersesStore: BibleVerse[] = [];
 // Pre-indexed unique Bible words sorted by frequency
-let indexedBibleWords: { word: string; count: number }[] = [];
+let indexedBibleWords: IndexedWord[] = [];
+// Bucket index mapping 1st character of word -> array of IndexedWords for 0ms prefix lookup
+const wordPrefixMap = new Map<string, IndexedWord[]>();
 // Dynamic max chapter map: `bookIndex -> maxChapter`
 const bookMaxChapters = new Map<number, number>();
 
 export const getPreindexedBibleWords = () => indexedBibleWords;
+export const getBibleWordsForPrefix = (prefixChar: string): IndexedWord[] => {
+  if (!prefixChar) return indexedBibleWords;
+  return wordPrefixMap.get(prefixChar.toLowerCase()) || indexedBibleWords;
+};
 
 export const loadBibleDatasets = (): Promise<void> => {
   if (isLoaded) return Promise.resolve();
@@ -167,13 +179,18 @@ export const loadBibleDatasets = (): Promise<void> => {
         const bookMeta = getBookMetaByIndex(bookIndex);
         const canonicalBookId = bookMeta ? bookMeta.id : bookIndex + 1;
 
+        const textEn = enRow.verse ? enRow.verse.trim() : '';
+        const textTa = taRow.verse ? taRow.verse.trim() : '';
+
         const verseObj: BibleVerse = {
           id: verseId,
           book_id: canonicalBookId, // 1-based canonical ID (e.g. Genesis=1, John=43)
           chapter,
           verse: verseNum,
-          text_en: enRow.verse ? enRow.verse.trim() : '',
-          text_ta: taRow.verse ? taRow.verse.trim() : ''
+          text_en: textEn,
+          text_ta: textTa,
+          norm_ta: textTa ? textTa.normalize('NFC') : '',
+          lower_en: textEn ? textEn.toLowerCase() : ''
         };
 
         const key = `${bookIndex}_${chapter}_${verseNum}`;
@@ -184,8 +201,8 @@ export const loadBibleDatasets = (): Promise<void> => {
       // Pre-index unique words for 0ms lag-free auto-complete suggestions
       const wordCountMap = new Map<string, number>();
       for (const v of allVersesStore) {
-        const cleanedTa = v.text_ta.normalize('NFC').replace(/[.,!?:;""''()\[\]\-«»—‘’“”]/g, ' ');
-        const cleanedEn = v.text_en.replace(/[^a-zA-Z0-9\s]/g, ' ');
+        const cleanedTa = (v.norm_ta || v.text_ta).replace(/[.,!?:;""''()\[\]\-«»—‘’“”]/g, ' ');
+        const cleanedEn = (v.lower_en || v.text_en).replace(/[^a-zA-Z0-9\s]/g, ' ');
 
         const taWords = cleanedTa.split(/\s+/);
         for (const w of taWords) {
@@ -204,11 +221,24 @@ export const loadBibleDatasets = (): Promise<void> => {
       }
 
       indexedBibleWords = Array.from(wordCountMap.entries())
-        .map(([word, count]) => ({ word, count }))
+        .map(([word, count]) => ({ word, lower: word.toLowerCase(), count }))
         .sort((a, b) => b.count - a.count);
 
+      wordPrefixMap.clear();
+      for (const item of indexedBibleWords) {
+        const firstChar = item.lower[0];
+        if (firstChar) {
+          let bucket = wordPrefixMap.get(firstChar);
+          if (!bucket) {
+            bucket = [];
+            wordPrefixMap.set(firstChar, bucket);
+          }
+          bucket.push(item);
+        }
+      }
+
       isLoaded = true;
-      console.log(`Successfully loaded ${allVersesStore.length} verses and ${indexedBibleWords.length} indexed words!`);
+      console.log(`Successfully loaded ${allVersesStore.length} verses and ${indexedBibleWords.length} indexed words into prefix buckets!`);
     } catch (err) {
       console.error('Failed loading Bible CSV datasets:', err);
       throw err;

@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Search, X, BookOpen, ArrowRight, Clock, Trash2, SlidersHorizontal, ArrowUpLeft } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
-import { SearchResult, Testament, BibleVerse } from '../../types/bible';
+import { SearchResult, Testament, BibleVerse, Language } from '../../types/bible';
 import { searchBibleVerses, getBibleWordSuggestions } from '../../services/searchService';
 import { getChapterVerses } from '../../services/csvBibleService';
 import { trackActivity } from '../../services/activityService';
@@ -10,6 +10,165 @@ import { LoadingState } from '../common/LoadingState';
 
 const SEARCH_HISTORY_KEY = 'bible_app_search_history';
 const MAX_SEARCH_HISTORY = 10;
+const INITIAL_DISPLAY_LIMIT = 40;
+
+// Helper to highlight match substring inside verse text (pure function)
+const renderHighlightedText = (text: string, searchTerm: string) => {
+  if (!searchTerm || !searchTerm.trim()) return text;
+
+  const trimmed = searchTerm.normalize('NFC').trim();
+  const lowerSearch = trimmed.toLowerCase();
+  const rawTokens = lowerSearch.split(/\s+/).filter((t) => t.length >= 1);
+
+  const termsToMatch = Array.from(new Set([trimmed, ...rawTokens])).filter((t) => t.length > 0);
+  if (termsToMatch.length === 0) return text;
+
+  const escapedTerms = termsToMatch
+    .map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('|');
+
+  if (!escapedTerms) return text;
+
+  const regex = new RegExp(`(${escapedTerms})`, 'gi');
+  const parts = text.split(regex);
+
+  return parts.map((part, i) => {
+    const isMatch = termsToMatch.some((term) => part.toLowerCase() === term.toLowerCase());
+    return isMatch ? (
+      <mark key={i} className="search-match-mark">
+        {part}
+      </mark>
+    ) : (
+      part
+    );
+  });
+};
+
+// Memoized Suggestion Row Sub-Component with Smooth Auto-Scroll
+interface SuggestionRowProps {
+  sug: string;
+  isHighlighted: boolean;
+  onSelect: (word: string) => void;
+}
+
+const SuggestionRow = React.memo<SuggestionRowProps>(({ sug, isHighlighted, onSelect }) => {
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isHighlighted && rowRef.current) {
+      rowRef.current.scrollIntoView({
+        block: 'nearest',
+        behavior: 'smooth'
+      });
+    }
+  }, [isHighlighted]);
+
+  return (
+    <div
+      ref={rowRef}
+      className={`search-suggestion-row ${isHighlighted ? 'active' : ''}`}
+      onClick={() => onSelect(sug)}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <Search size={15} style={{ color: 'var(--text-muted)' }} />
+        <span style={{ fontWeight: 500 }}>{sug}</span>
+      </div>
+      <ArrowUpLeft size={14} style={{ color: 'var(--text-muted)' }} />
+    </div>
+  );
+});
+
+// Memoized Search History Row Sub-Component with Smooth Auto-Scroll
+interface HistoryRowProps {
+  item: string;
+  isHighlighted: boolean;
+  onSelect: (word: string) => void;
+}
+
+const HistoryRow = React.memo<HistoryRowProps>(({ item, isHighlighted, onSelect }) => {
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isHighlighted && rowRef.current) {
+      rowRef.current.scrollIntoView({
+        block: 'nearest',
+        behavior: 'smooth'
+      });
+    }
+  }, [isHighlighted]);
+
+  return (
+    <div
+      ref={rowRef}
+      className={`search-suggestion-row ${isHighlighted ? 'active' : ''}`}
+      onClick={() => onSelect(item)}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <Clock size={15} style={{ color: 'var(--text-muted)' }} />
+        <span style={{ fontWeight: 500 }}>{item}</span>
+      </div>
+      <ArrowUpLeft size={14} style={{ color: 'var(--text-muted)' }} />
+    </div>
+  );
+});
+
+// Memoized Search Result Card Component with Smooth Auto-Scroll
+interface SearchResultCardProps {
+  res: SearchResult | BibleVerse;
+  isHighlighted: boolean;
+  query: string;
+  language: Language;
+  defaultBookName?: string;
+  onSelect: (res: SearchResult | BibleVerse) => void;
+}
+
+const SearchResultCard = React.memo<SearchResultCardProps>(
+  ({ res, isHighlighted, query, language, defaultBookName, onSelect }) => {
+    const cardRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      if (isHighlighted && cardRef.current) {
+        cardRef.current.scrollIntoView({
+          block: 'nearest',
+          behavior: 'smooth'
+        });
+      }
+    }, [isHighlighted]);
+
+    const bookName =
+      'book_name_en' in res
+        ? language === 'ta'
+          ? res.book_name_ta
+          : res.book_name_en
+        : defaultBookName || '';
+    const text = language === 'ta' ? res.text_ta : res.text_en;
+
+    return (
+      <div
+        ref={cardRef}
+        onClick={() => onSelect(res)}
+        className={`search-result-card ${isHighlighted ? 'active' : ''}`}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+          <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--accent-color)' }}>
+            {bookName} {res.chapter}:{res.verse}
+          </span>
+          <ArrowRight size={14} style={{ color: 'var(--text-muted)' }} />
+        </div>
+        <div
+          style={{
+            fontSize: '0.9375rem',
+            color: 'var(--text-primary)',
+            fontFamily: language === 'ta' ? 'var(--font-tamil)' : 'var(--font-serif)',
+            lineHeight: 1.6
+          }}
+        >
+          {renderHighlightedText(text, query)}
+        </div>
+      </div>
+    );
+  }
+);
 
 export const SearchModal: React.FC = () => {
   const {
@@ -32,6 +191,7 @@ export const SearchModal: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [defaultChapterVerses, setDefaultChapterVerses] = useState<BibleVerse[]>([]);
+  const [displayLimit, setDisplayLimit] = useState<number>(INITIAL_DISPLAY_LIMIT);
 
   // Filter States
   const [testamentFilter, setTestamentFilter] = useState<Testament | undefined>(undefined);
@@ -46,7 +206,6 @@ export const SearchModal: React.FC = () => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const searchBoxRef = useRef<HTMLDivElement | null>(null);
   const resultContainerRef = useRef<HTMLDivElement | null>(null);
-  const suggestionRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   // Load search history & current chapter default verses
   useEffect(() => {
@@ -66,15 +225,6 @@ export const SearchModal: React.FC = () => {
       setDefaultChapterVerses(defaultVerses);
     }
   }, [isSearchOpen, currentBook, currentChapter]);
-
-  // Auto-scroll highlighted suggestion row into view when navigating with keyboard (↓ / ↑)
-  useEffect(() => {
-    if (suggestionHighlightIndex >= 0 && suggestionRefs.current[suggestionHighlightIndex]) {
-      suggestionRefs.current[suggestionHighlightIndex]?.scrollIntoView({
-        block: 'nearest'
-      });
-    }
-  }, [suggestionHighlightIndex]);
 
   const saveToHistory = (searchTerm: string) => {
     const trimmed = searchTerm.trim();
@@ -134,8 +284,8 @@ export const SearchModal: React.FC = () => {
       return;
     }
 
-    // Generate up to 45 matching words from the entire Bible dataset
-    const wordSuggestions = getBibleWordSuggestions(trimmed, 45);
+    // Generate up to 20 matching words from the Bible dataset (instant prefix bucket lookup)
+    const wordSuggestions = getBibleWordSuggestions(trimmed, 20);
     setSuggestions(wordSuggestions);
 
     if (!isSubmitted && wordSuggestions.length > 0) {
@@ -143,24 +293,38 @@ export const SearchModal: React.FC = () => {
     }
   }, [query, isSubmitted]);
 
+  // Expand display limit automatically when arrow navigating towards bottom of loaded results
+  useEffect(() => {
+    if (highlightedIndex >= displayLimit - 5 && displayLimit < results.length) {
+      setDisplayLimit((prev) => Math.min(prev + 40, results.length));
+    }
+  }, [highlightedIndex, displayLimit, results.length]);
+
   // Execute full verse search ONLY when user submits or selects a search filter/suggestion
-  const executeVerseSearch = (searchQuery: string) => {
-    const trimmed = searchQuery.trim();
-    if (!trimmed || trimmed.length < 1) return;
+  const executeVerseSearch = useCallback(
+    (searchQuery: string) => {
+      const trimmed = searchQuery.trim();
+      if (!trimmed || trimmed.length < 1) return;
 
-    setShowSuggestions(false);
-    setIsSubmitted(true);
-    setLoading(true);
+      setShowSuggestions(false);
+      setIsSubmitted(true);
+      setLoading(true);
 
-    searchBibleVerses(trimmed, language, testamentFilter, fromBookId, toBookId).then((res) => {
-      setResults(res);
-      setLoading(false);
-      setHighlightedIndex(0);
-      if (userId) {
-        trackActivity(userId, 'SEARCH_PERFORMED', undefined, undefined, undefined, { query: trimmed, count: res.length });
-      }
-    });
-  };
+      // Async macro-task deferral to render loading state instantly without main-thread jank
+      setTimeout(() => {
+        searchBibleVerses(trimmed, language, testamentFilter, fromBookId, toBookId).then((res) => {
+          setResults(res);
+          setDisplayLimit(INITIAL_DISPLAY_LIMIT);
+          setLoading(false);
+          setHighlightedIndex(0);
+          if (userId) {
+            trackActivity(userId, 'SEARCH_PERFORMED', undefined, undefined, undefined, { query: trimmed, count: res.length });
+          }
+        });
+      }, 10);
+    },
+    [language, testamentFilter, fromBookId, toBookId, userId]
+  );
 
   // Re-run search if user changes filter options (OT/NT/Book Range) while results are shown
   useEffect(() => {
@@ -177,6 +341,7 @@ export const SearchModal: React.FC = () => {
     setResults([]);
     setSuggestions([]);
     setIsSubmitted(false);
+    setDisplayLimit(INITIAL_DISPLAY_LIMIT);
   };
 
   const handleSelectResult = (res: SearchResult | BibleVerse) => {
@@ -197,10 +362,12 @@ export const SearchModal: React.FC = () => {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // Navigate floating suggestions with keyboard
-    if (showSuggestions && suggestions.length > 0) {
+    if (showSuggestions && (suggestions.length > 0 || searchHistory.length > 0)) {
+      const currentListLength = query.trim() ? suggestions.length : searchHistory.length;
+
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSuggestionHighlightIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : prev));
+        setSuggestionHighlightIndex((prev) => (prev < currentListLength - 1 ? prev + 1 : prev));
         return;
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
@@ -208,7 +375,9 @@ export const SearchModal: React.FC = () => {
         return;
       } else if (e.key === 'Enter') {
         e.preventDefault();
-        if (suggestionHighlightIndex >= 0 && suggestions[suggestionHighlightIndex]) {
+        if (!query.trim() && searchHistory.length > 0 && suggestionHighlightIndex >= 0) {
+          handleSelectSuggestion(searchHistory[suggestionHighlightIndex]);
+        } else if (suggestionHighlightIndex >= 0 && suggestions[suggestionHighlightIndex]) {
           handleSelectSuggestion(suggestions[suggestionHighlightIndex]);
         } else {
           saveToHistory(query);
@@ -241,39 +410,16 @@ export const SearchModal: React.FC = () => {
     }
   };
 
-  // Helper to highlight match substring inside verse text
-  const renderHighlightedText = (text: string, searchTerm: string) => {
-    if (!searchTerm || !searchTerm.trim()) return text;
-
-    const trimmed = searchTerm.normalize('NFC').trim();
-    const lowerSearch = trimmed.toLowerCase();
-    const rawTokens = lowerSearch.split(/\s+/).filter((t) => t.length >= 1);
-
-    const termsToMatch = new Set<string>();
-    termsToMatch.add(trimmed);
-
-    rawTokens.forEach((t) => termsToMatch.add(t));
-
-    const escapedTerms = Array.from(termsToMatch)
-      .filter((t) => t.length > 0)
-      .map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-      .join('|');
-
-    if (!escapedTerms) return text;
-
-    const regex = new RegExp(`(${escapedTerms})`, 'gi');
-    const parts = text.split(regex);
-
-    return parts.map((part, i) =>
-      regex.test(part) ? (
-        <mark key={i} className="search-match-mark">
-          {part}
-        </mark>
-      ) : (
-        part
-      )
-    );
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    if (target.scrollTop + target.clientHeight >= target.scrollHeight - 200) {
+      if (displayLimit < results.length) {
+        setDisplayLimit((prev) => Math.min(prev + 40, results.length));
+      }
+    }
   };
+
+  const visibleResults = results.slice(0, displayLimit);
 
   return (
     <div className="search-modal-overlay" onClick={handleClose}>
@@ -370,18 +516,12 @@ export const SearchModal: React.FC = () => {
                         </button>
                       </div>
                       {searchHistory.map((item, idx) => (
-                        <div
+                        <HistoryRow
                           key={item}
-                          ref={(el) => (suggestionRefs.current[idx] = el)}
-                          className={`search-suggestion-row ${idx === suggestionHighlightIndex ? 'active' : ''}`}
-                          onClick={() => handleSelectSuggestion(item)}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <Clock size={15} style={{ color: 'var(--text-muted)' }} />
-                            <span style={{ fontWeight: 500 }}>{item}</span>
-                          </div>
-                          <ArrowUpLeft size={14} style={{ color: 'var(--text-muted)' }} />
-                        </div>
+                          item={item}
+                          isHighlighted={idx === suggestionHighlightIndex}
+                          onSelect={handleSelectSuggestion}
+                        />
                       ))}
                     </div>
                   ) : (
@@ -393,18 +533,12 @@ export const SearchModal: React.FC = () => {
                   /* When typing, show all Bible Word Suggestions inside Floating Box! */
                   <div>
                     {suggestions.map((sug, idx) => (
-                      <div
+                      <SuggestionRow
                         key={sug}
-                        ref={(el) => (suggestionRefs.current[idx] = el)}
-                        className={`search-suggestion-row ${idx === suggestionHighlightIndex ? 'active' : ''}`}
-                        onClick={() => handleSelectSuggestion(sug)}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <Search size={15} style={{ color: 'var(--text-muted)' }} />
-                          <span style={{ fontWeight: 500 }}>{sug}</span>
-                        </div>
-                        <ArrowUpLeft size={14} style={{ color: 'var(--text-muted)' }} />
-                      </div>
+                        sug={sug}
+                        isHighlighted={idx === suggestionHighlightIndex}
+                        onSelect={handleSelectSuggestion}
+                      />
                     ))}
                   </div>
                 ) : null}
@@ -539,7 +673,12 @@ export const SearchModal: React.FC = () => {
         )}
 
         {/* Modal Body: Verse Results / Default Chapter Verses */}
-        <div className="modal-body" ref={resultContainerRef} style={{ flex: 1, overflowY: 'auto' }}>
+        <div
+          className="modal-body"
+          ref={resultContainerRef}
+          onScroll={handleScroll}
+          style={{ flex: 1, overflowY: 'auto' }}
+        >
           {loading ? (
             <LoadingState message={language === 'ta' ? 'தேடுகிறது...' : 'Searching...'} />
           ) : isSubmitted && results.length === 0 ? (
@@ -570,42 +709,23 @@ export const SearchModal: React.FC = () => {
               >
                 <span>
                   {results.length} {language === 'ta' ? 'முடிவுகள் கண்டறியப்பட்டன' : 'results found'}
+                  {results.length > displayLimit && ` (${language === 'ta' ? 'காண்பிக்கப்படுகிறது' : 'showing'} ${visibleResults.length})`}
                 </span>
                 <span style={{ fontSize: '0.75rem' }}>
                   Use <kbd className="shortcut-kbd">↑</kbd> <kbd className="shortcut-kbd">↓</kbd> to navigate, <kbd className="shortcut-kbd">Enter</kbd> to select
                 </span>
               </div>
 
-              {results.map((res, index) => {
-                const bookName = language === 'ta' ? res.book_name_ta : res.book_name_en;
-                const text = language === 'ta' ? res.text_ta : res.text_en;
-                const isHighlighted = index === highlightedIndex;
-
-                return (
-                  <div
-                    key={`${res.book_id}_${res.chapter}_${res.verse}`}
-                    onClick={() => handleSelectResult(res)}
-                    className={`search-result-card ${isHighlighted ? 'active' : ''}`}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                      <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--accent-color)' }}>
-                        {bookName} {res.chapter}:{res.verse}
-                      </span>
-                      <ArrowRight size={14} style={{ color: 'var(--text-muted)' }} />
-                    </div>
-                    <div
-                      style={{
-                        fontSize: '0.9375rem',
-                        color: 'var(--text-primary)',
-                        fontFamily: language === 'ta' ? 'var(--font-tamil)' : 'var(--font-serif)',
-                        lineHeight: 1.6
-                      }}
-                    >
-                      {renderHighlightedText(text, query)}
-                    </div>
-                  </div>
-                );
-              })}
+              {visibleResults.map((res, index) => (
+                <SearchResultCard
+                  key={`${res.book_id}_${res.chapter}_${res.verse}`}
+                  res={res}
+                  isHighlighted={index === highlightedIndex}
+                  query={query}
+                  language={language}
+                  onSelect={handleSelectResult}
+                />
+              ))}
             </div>
           ) : (
             /* Default State (Before Searching): Shows Current Chapter Verses */
@@ -634,32 +754,17 @@ export const SearchModal: React.FC = () => {
               </div>
 
               {defaultChapterVerses.map((v) => {
-                const text = language === 'ta' ? v.text_ta : v.text_en;
                 const bookName = language === 'ta' ? currentBook.name_ta : currentBook.name_en;
-
                 return (
-                  <div
+                  <SearchResultCard
                     key={`${v.book_id}_${v.chapter}_${v.verse}`}
-                    onClick={() => handleSelectResult(v)}
-                    className="search-result-card"
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                      <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--accent-color)' }}>
-                        {bookName} {v.chapter}:{v.verse}
-                      </span>
-                      <ArrowRight size={14} style={{ color: 'var(--text-muted)' }} />
-                    </div>
-                    <div
-                      style={{
-                        fontSize: '0.9375rem',
-                        color: 'var(--text-primary)',
-                        fontFamily: language === 'ta' ? 'var(--font-tamil)' : 'var(--font-serif)',
-                        lineHeight: 1.6
-                      }}
-                    >
-                      {text}
-                    </div>
-                  </div>
+                    res={v}
+                    isHighlighted={false}
+                    query=""
+                    language={language}
+                    defaultBookName={bookName}
+                    onSelect={handleSelectResult}
+                  />
                 );
               })}
             </div>

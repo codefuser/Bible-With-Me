@@ -1,5 +1,5 @@
 import { SearchResult, Language, Testament } from '../types/bible';
-import { getAllLoadedVerses, getPreindexedBibleWords, BOOK_METADATA_LIST } from './csvBibleService';
+import { getAllLoadedVerses, getBibleWordsForPrefix, BOOK_METADATA_LIST } from './csvBibleService';
 
 // Expanded Phonetic Transliteration & Typo-Tolerance Dictionary (Tanglish -> Tamil)
 export const TANGLISH_MAP: Record<string, string> = {
@@ -196,20 +196,17 @@ export const getBibleWordSuggestions = (prefix: string, limit: number = 12): str
   if (!norm || norm.length < 1) return [];
 
   const lowerPrefix = norm.toLowerCase();
-  const indexedWords = getPreindexedBibleWords();
+  const candidates = getBibleWordsForPrefix(lowerPrefix[0]);
 
   const startsMatches: string[] = [];
   const includesMatches: string[] = [];
 
-  for (const item of indexedWords) {
-    const word = item.word;
-    const wordLower = word.toLowerCase();
-
-    if (word.startsWith(norm) || wordLower.startsWith(lowerPrefix)) {
-      startsMatches.push(word);
+  for (const item of candidates) {
+    if (item.word.startsWith(norm) || item.lower.startsWith(lowerPrefix)) {
+      startsMatches.push(item.word);
       if (startsMatches.length >= limit) break;
-    } else if (word.includes(norm) || wordLower.includes(lowerPrefix)) {
-      includesMatches.push(word);
+    } else if (item.word.includes(norm) || item.lower.includes(lowerPrefix)) {
+      includesMatches.push(item.word);
     }
   }
 
@@ -272,6 +269,12 @@ export const executeTanglishSearch = (
   // Tier 2: Complete Dataset Search Across Every Verse
   const results: SearchResult[] = [];
   const tokens = lowerQuery.split(/\s+/).filter((t) => t.length > 0);
+  const tokenMapInfo = tokens.map((tok) => ({
+    tok,
+    mapped: TANGLISH_MAP[tok] || null
+  }));
+
+  const singleTanglishMapped = tokens.length === 1 ? TANGLISH_MAP[tokens[0]] || null : null;
 
   for (const v of allVerses) {
     const bookMeta = BOOK_METADATA_LIST[v.book_id - 1];
@@ -280,8 +283,8 @@ export const executeTanglishSearch = (
     if (fromBookId && v.book_id < fromBookId) continue;
     if (toBookId && v.book_id > toBookId) continue;
 
-    const enText = v.text_en.toLowerCase();
-    const taText = normalizeString(v.text_ta);
+    const enText = v.lower_en || v.text_en.toLowerCase();
+    const taText = v.norm_ta || normalizeString(v.text_ta);
 
     // Direct Tamil substring match (NFC normalized)
     const directTaMatch = taText.includes(normQuery);
@@ -291,16 +294,14 @@ export const executeTanglishSearch = (
     // Multi-word Token match (all tokens match in English or mapped Tamil)
     const allTokensMatch =
       tokens.length > 1 &&
-      tokens.every((tok) => {
-        const mapped = TANGLISH_MAP[tok];
+      tokenMapInfo.every(({ tok, mapped }) => {
         const matchTa = mapped ? taText.includes(mapped) : taText.includes(tok);
         const matchEn = enText.includes(tok);
         return matchTa || matchEn;
       });
 
     // Single Tanglish word match
-    const singleTanglishMatch =
-      tokens.length === 1 && TANGLISH_MAP[tokens[0]] && taText.includes(TANGLISH_MAP[tokens[0]]);
+    const singleTanglishMatch = singleTanglishMapped !== null && taText.includes(singleTanglishMapped);
 
     if (directTaMatch || directEnMatch || allTokensMatch || singleTanglishMatch) {
       results.push({
