@@ -233,7 +233,7 @@
   z-index: 90;
   background-color: var(--bg-surface);
   border-top: 1px solid var(--border-color);
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: none;
   padding: 0.625rem 1rem max(0.625rem, env(safe-area-inset-bottom));
   width: 100%;
 }

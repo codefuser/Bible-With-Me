@@ -93,6 +93,23 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
   }
 };
 
+export const updateUserProfile = async (
+  userId: string,
+  updates: { display_name?: string }
+): Promise<{ success: boolean; error?: string }> => {
+  if (!supabase) return { success: false, error: 'Supabase client not configured.' };
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .update(updates)
+      .eq('id', userId);
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Failed to update profile.' };
+  }
+};
+
 export const resetPassword = async (email: string): Promise<{ error: Error | null }> => {
   if (!supabase) return { error: new Error('Supabase client not configured.') };
 

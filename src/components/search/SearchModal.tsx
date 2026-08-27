@@ -516,7 +516,7 @@ export const SearchModal: React.FC = () => {
       setIsSearchOpen(false);
       setIsClosing(false);
       setShowSuggestions(false);
-    }, 200);
+    }, 230);
   }, [isClosing, setIsSearchOpen]);
 
   // Execute full verse search ONLY when user submits or selects a search filter/suggestion
@@ -742,12 +742,12 @@ export const SearchModal: React.FC = () => {
           )}
         </div>
 
-        {/* Filter Section Container (Desktop 5-Pill Layout vs Mobile Capsule Layout) */}
+        {/* Filter Section Container */}
         <div className="search-filter-section-container">
-          {/* Desktop Filter Bar (Spacious 5-Pill Button Layout > 640px) */}
-          <div className="desktop-filter-bar">
+          {/* Desktop & Laptop Filter Bar (> 640px) */}
+          <div className="desktop-segmented-filter-bar">
             <button
-              className={`btn-pill ${!testamentFilter && !fromBookId && !toBookId ? 'active' : ''}`}
+              className={`segmented-filter-tab ${!testamentFilter && !fromBookId && !toBookId ? 'active' : ''}`}
               onClick={() => {
                 setTestamentFilter(undefined);
                 setFromBookId(undefined);
@@ -755,12 +755,12 @@ export const SearchModal: React.FC = () => {
                 setShowBookRange(false);
               }}
             >
-              <Layers size={13} />
+              <Layers size={14} />
               <span>{language === 'ta' ? 'அனைத்தும்' : 'All'}</span>
             </button>
 
             <button
-              className={`btn-pill ${testamentFilter === 'OT' && !fromBookId ? 'active' : ''}`}
+              className={`segmented-filter-tab ${testamentFilter === 'OT' && !fromBookId ? 'active' : ''}`}
               onClick={() => {
                 setTestamentFilter('OT');
                 setFromBookId(undefined);
@@ -768,11 +768,12 @@ export const SearchModal: React.FC = () => {
                 setShowBookRange(false);
               }}
             >
+              <BookOpen size={14} />
               <span>{language === 'ta' ? 'பழைய ஏற்பாடு' : 'Old Testament'}</span>
             </button>
 
             <button
-              className={`btn-pill ${testamentFilter === 'NT' && !fromBookId ? 'active' : ''}`}
+              className={`segmented-filter-tab ${testamentFilter === 'NT' && !fromBookId ? 'active' : ''}`}
               onClick={() => {
                 setTestamentFilter('NT');
                 setFromBookId(undefined);
@@ -780,49 +781,47 @@ export const SearchModal: React.FC = () => {
                 setShowBookRange(false);
               }}
             >
+              <BookOpen size={14} />
               <span>{language === 'ta' ? 'புதிய ஏற்பாடு' : 'New Testament'}</span>
             </button>
 
             <button
-              className={`btn-pill ${showBookRange || (fromBookId && toBookId) ? 'active' : ''}`}
+              className={`segmented-filter-tab ${showBookRange || (fromBookId && toBookId) ? 'active' : ''}`}
               onClick={() => setShowBookRange(!showBookRange)}
             >
-              <SlidersHorizontal size={13} />
+              <SlidersHorizontal size={14} />
               <span>{language === 'ta' ? 'புத்தகத் தெரிவு' : 'Book Range'}</span>
             </button>
 
             <button
-              className="btn-pill language-pill"
+              className="segmented-filter-tab language-tab"
               onClick={cycleLanguage}
               title="Switch Language"
             >
-              <Globe size={13} />
+              <Globe size={14} />
               <span>
                 {language === 'ta' ? 'தமிழ்' : language === 'en' ? 'English' : 'இணை (Parallel)'}
               </span>
             </button>
           </div>
 
-          {/* Mobile Filter Bar (Compact Capsule Layout <= 640px) */}
-          <div className="mobile-filter-bar">
-            {/* 1. All Icon Circle Button */}
-            <button
-              className={`btn-filter-circle ${!testamentFilter && !fromBookId && !toBookId ? 'active' : ''}`}
-              onClick={() => {
-                setTestamentFilter(undefined);
-                setFromBookId(undefined);
-                setToBookId(undefined);
-                setShowBookRange(false);
-              }}
-              title={language === 'ta' ? 'அனைத்தும்' : 'All'}
-            >
-              <BookOpen size={15} />
-            </button>
-
-            {/* 2. Segmented Capsule Pill Container (பழைய | புதிய) */}
-            <div className="segmented-testament-capsule">
+          {/* Mobile Phone Filter Layout (<= 640px: 2 Rows, Zero Scroll) */}
+          <div className="mobile-responsive-filter-grid">
+            {/* Row 1: 3-Segment Testament Control */}
+            <div className="mobile-segmented-row">
               <button
-                className={`segmented-pill-btn ${testamentFilter === 'OT' && !fromBookId ? 'active' : ''}`}
+                className={`mobile-seg-btn ${!testamentFilter && !fromBookId && !toBookId ? 'active' : ''}`}
+                onClick={() => {
+                  setTestamentFilter(undefined);
+                  setFromBookId(undefined);
+                  setToBookId(undefined);
+                  setShowBookRange(false);
+                }}
+              >
+                <span>{language === 'ta' ? 'அனைத்தும்' : 'All'}</span>
+              </button>
+              <button
+                className={`mobile-seg-btn ${testamentFilter === 'OT' && !fromBookId ? 'active' : ''}`}
                 onClick={() => {
                   setTestamentFilter('OT');
                   setFromBookId(undefined);
@@ -832,11 +831,8 @@ export const SearchModal: React.FC = () => {
               >
                 <span>{language === 'ta' ? 'பழைய' : 'OT'}</span>
               </button>
-
-              <div className="segmented-pill-divider" />
-
               <button
-                className={`segmented-pill-btn ${testamentFilter === 'NT' && !fromBookId ? 'active' : ''}`}
+                className={`mobile-seg-btn ${testamentFilter === 'NT' && !fromBookId ? 'active' : ''}`}
                 onClick={() => {
                   setTestamentFilter('NT');
                   setFromBookId(undefined);
@@ -848,26 +844,24 @@ export const SearchModal: React.FC = () => {
               </button>
             </div>
 
-            {/* 3. Book Range Filter Button */}
-            <button
-              className={`btn-filter-pill ${showBookRange || (fromBookId && toBookId) ? 'active' : ''}`}
-              onClick={() => setShowBookRange(!showBookRange)}
-            >
-              <BookOpen size={14} />
-              <span>{language === 'ta' ? 'புத்தகம்' : 'Books'}</span>
-            </button>
+            {/* Row 2: Book Range & Language Switcher */}
+            <div className="mobile-actions-row">
+              <button
+                className={`mobile-action-btn ${showBookRange || (fromBookId && toBookId) ? 'active' : ''}`}
+                onClick={() => setShowBookRange(!showBookRange)}
+              >
+                <SlidersHorizontal size={14} />
+                <span>{language === 'ta' ? 'புத்தகத் தெரிவு' : 'Books'}</span>
+              </button>
 
-            {/* 4. Language Switcher Pill Button */}
-            <button
-              className="btn-language-pill"
-              onClick={cycleLanguage}
-              title="Switch Language"
-            >
-              <Globe size={14} />
-              <span>
-                {language === 'ta' ? 'தமிழ்' : 'EN'}
-              </span>
-            </button>
+              <button
+                className="mobile-action-btn language-action"
+                onClick={cycleLanguage}
+              >
+                <Globe size={14} />
+                <span>{language === 'ta' ? 'தமிழ்' : 'English'}</span>
+              </button>
+            </div>
           </div>
 
           {/* Smooth Animated Book Range Selective Filter (Row 2 Card) */}
@@ -969,16 +963,12 @@ export const SearchModal: React.FC = () => {
                 style={{
                   marginBottom: '0.25rem',
                   padding: '0 0.25rem 0.375rem',
-                  borderBottom: '1px solid var(--border-color)'
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  color: 'var(--text-muted)'
                 }}
               >
-                <div className="desktop-only-flex" style={{ alignItems: 'center', gap: '0.375rem', fontWeight: 600, color: 'var(--accent-color)', fontSize: '0.8125rem' }}>
-                  <Clock size={14} />
-                  <span>{language === 'ta' ? 'இறுதியாகத் திறக்கப்பட்ட வசனங்கள்' : 'Recently Opened Verses'}</span>
-                </div>
-                <div className="mobile-only-inline" style={{ color: 'var(--accent-color)' }} title={language === 'ta' ? 'இறுதியாகத் திறக்கப்பட்ட வசனங்கள்' : 'Recently Opened Verses'}>
-                  <Clock size={16} />
-                </div>
+                <span>{language === 'ta' ? 'இறுதியாகத் திறக்கப்பட்ட வசனங்கள்' : 'Recently Opened Verses'}</span>
               </div>
 
               {openedVerses.map((res) => (

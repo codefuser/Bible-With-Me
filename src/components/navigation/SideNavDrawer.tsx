@@ -1,8 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import { X, Search, Bookmark, Settings, BookOpen, ChevronRight, History, Compass, User, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { X, Search, Bookmark, Settings, ChevronRight, History, Compass, User, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
 import { Testament, BibleBook } from '../../types/bible';
+import { TANGLISH_MAP } from '../../services/tanglishSearch';
+
+// ─── Tanglish & Multi-tier Phonetic Book Filter Helper ────────────────────────
+
+const matchBookByTanglishQuery = (b: BibleBook, filterStr: string): boolean => {
+  if (!filterStr || !filterStr.trim()) return true;
+
+  const query = filterStr.trim().toLowerCase();
+  const cleanQuery = query.replace(/[^a-z0-9\u0B80-\u0BFF]/g, '');
+
+  const nameEn = b.name_en.toLowerCase();
+  const nameTa = b.name_ta.toLowerCase();
+  const code = b.code.toLowerCase();
+
+  // 1. Direct includes match on English name, Tamil name, or Book Code
+  if (nameEn.includes(query) || nameTa.includes(query) || code.includes(query)) {
+    return true;
+  }
+
+  // 2. Direct clean substring match
+  const cleanEn = nameEn.replace(/[^a-z0-9]/g, '');
+  const cleanTa = nameTa.replace(/[^\u0B80-\u0BFF]/g, '');
+  if (cleanQuery && (cleanEn.includes(cleanQuery) || cleanTa.includes(cleanQuery))) {
+    return true;
+  }
+
+  // 3. Tanglish map direct lookup
+  const mappedTamil = TANGLISH_MAP[cleanQuery] || TANGLISH_MAP[query];
+  if (mappedTamil && nameTa.includes(mappedTamil)) {
+    return true;
+  }
+
+  // 4. Tanglish map key prefix & fuzzy matching (e.g. "aathi", "aadhi", "aa", "aathiyahamam", "utha", "yutha")
+  for (const [key, tamilVal] of Object.entries(TANGLISH_MAP)) {
+    if ((key.startsWith(cleanQuery) || cleanQuery.startsWith(key)) && tamilVal === b.name_ta) {
+      return true;
+    }
+  }
+
+  return false;
+};
 
 // ─── Inner Navigation Catalog Content (Shared between Mobile Drawer & Desktop Sidebar) ─────
 
@@ -16,8 +57,7 @@ const SideNavContentBody: React.FC<{ onCloseNav?: () => void }> = ({ onCloseNav 
     setIsBookmarksOpen,
     setIsPreferencesOpen,
     setIsReadingHistoryOpen,
-    setBookAndChapter,
-    historyItem
+    setBookAndChapter
   } = useReading();
 
   const { isAuthenticated, setIsAuthModalOpen } = useAuth();
@@ -33,11 +73,7 @@ const SideNavContentBody: React.FC<{ onCloseNav?: () => void }> = ({ onCloseNav 
 
   const filteredBooks = books.filter((b) => {
     const matchesTestament = b.testament === activeTestament;
-    const name = language === 'en' ? b.name_en : b.name_ta;
-    const matchesSearch =
-      !searchFilter.trim() ||
-      name.toLowerCase().includes(searchFilter.toLowerCase()) ||
-      b.code.toLowerCase().includes(searchFilter.toLowerCase());
+    const matchesSearch = matchBookByTanglishQuery(b, searchFilter);
     return matchesTestament && matchesSearch;
   });
 
@@ -105,40 +141,6 @@ const SideNavContentBody: React.FC<{ onCloseNav?: () => void }> = ({ onCloseNav 
           <span>{isAuthenticated ? (language === 'en' ? 'Account' : 'கணக்கு') : (language === 'en' ? 'Sign In' : 'உள்நுழைக')}</span>
         </button>
       </div>
-
-      {/* Stored History Resume Banner */}
-      {historyItem && (
-        <div
-          onClick={() => {
-            const target = books.find((b) => b.id === historyItem.book_id);
-            if (target) handleSelectChapter(target, historyItem.chapter);
-          }}
-          style={{
-            backgroundColor: 'var(--bg-secondary)',
-            border: '1px solid var(--border-color)',
-            borderRadius: '0.5rem',
-            padding: '0.625rem 0.75rem',
-            marginBottom: '1rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <History size={16} style={{ color: 'var(--accent-color)' }} />
-            <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>
-                {language === 'en' ? 'Continue Reading' : 'கடைசியாக வாசித்தது'}
-              </span>
-              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                {language === 'en' ? historyItem.book_name_en : historyItem.book_name_ta} {historyItem.chapter}
-              </span>
-            </div>
-          </div>
-          <ChevronRight size={16} style={{ color: 'var(--text-muted)' }} />
-        </div>
-      )}
 
       {/* Book Catalog Header & Search */}
       <div style={{ marginBottom: '0.75rem' }}>
@@ -220,33 +222,26 @@ const SideNavContentBody: React.FC<{ onCloseNav?: () => void }> = ({ onCloseNav 
                 </span>
               </button>
 
-              {/* Chapter Selector Grid when Expanded */}
-              {isExpanded && (
-                <div
-                  style={{
-                    padding: '0.5rem',
-                    backgroundColor: 'var(--bg-secondary)',
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(5, 1fr)',
-                    gap: '0.375rem',
-                    borderTop: '1px solid var(--border-color)'
-                  }}
-                >
-                  {Array.from({ length: book.total_chapters }, (_, i) => i + 1).map((ch) => {
-                    const isCurrentCh = isSelectedBook && currentChapter === ch;
-                    return (
-                      <button
-                        key={ch}
-                        className={`chapter-btn ${isCurrentCh ? 'selected' : ''}`}
-                        onClick={() => handleSelectChapter(book, ch)}
-                        style={{ padding: '0.375rem', fontSize: '0.75rem', borderRadius: '0.25rem' }}
-                      >
-                        {ch}
-                      </button>
-                    );
-                  })}
+              {/* Chapter Selector Grid Container with Smooth CSS Grid Expand & Collapse */}
+              <div className={`chapter-accordion-wrapper ${isExpanded ? 'open' : ''}`}>
+                <div className="chapter-accordion-inner">
+                  <div className="chapter-accordion-grid">
+                    {Array.from({ length: book.total_chapters }, (_, i) => i + 1).map((ch) => {
+                      const isCurrentCh = isSelectedBook && currentChapter === ch;
+                      return (
+                        <button
+                          key={ch}
+                          className={`chapter-btn ${isCurrentCh ? 'selected' : ''}`}
+                          onClick={() => handleSelectChapter(book, ch)}
+                          style={{ padding: '0.375rem', fontSize: '0.75rem', borderRadius: '0.25rem' }}
+                        >
+                          {ch}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
           );
         })}
@@ -322,12 +317,6 @@ export const SideNavDrawer: React.FC = () => {
       >
         {/* Drawer Header */}
         <div className="sidenav-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <BookOpen size={20} style={{ color: 'var(--accent-color)' }} />
-            <h2 className="modal-title" style={{ fontSize: '1.125rem' }}>
-              {language === 'en' ? 'Bible Index' : 'வேதாகம அட்டவணை'}
-            </h2>
-          </div>
           <button className="btn-icon" onClick={handleClose} title="Close Navigation">
             <X size={18} />
           </button>
@@ -340,7 +329,7 @@ export const SideNavDrawer: React.FC = () => {
   );
 };
 
-// ─── 2. Permanent Desktop Sidebar Component ───────────────────────────────────
+// ─── 2. Permanent Resizable Desktop Sidebar Component ─────────────────────────
 
 export const DesktopSidebar: React.FC = () => {
   const {
@@ -354,6 +343,40 @@ export const DesktopSidebar: React.FC = () => {
   } = useReading();
 
   const { isAuthenticated, setIsAuthModalOpen } = useAuth();
+
+  const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
+    const saved = localStorage.getItem('bible_sidebar_width');
+    return saved ? Math.max(260, Math.min(650, Number(saved))) : 330;
+  });
+
+  const [isResizing, setIsResizing] = useState<boolean>(false);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  };
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const newWidth = Math.max(260, Math.min(650, e.clientX));
+      setSidebarWidth(newWidth);
+      localStorage.setItem('bible_sidebar_width', String(newWidth));
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
 
   if (isDesktopSidebarCollapsed) {
     return (
@@ -431,15 +454,12 @@ export const DesktopSidebar: React.FC = () => {
   }
 
   return (
-    <aside className="desktop-sidebar expanded">
+    <aside
+      className={`desktop-sidebar expanded ${isResizing ? 'resizing' : ''}`}
+      style={{ width: `${sidebarWidth}px` }}
+    >
       {/* Sidebar Header with Collapse Button */}
       <div className="desktop-sidebar-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <BookOpen size={18} style={{ color: 'var(--accent-color)' }} />
-          <span style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-            {language === 'en' ? 'Bible Index' : 'வேதாகம அட்டவணை'}
-          </span>
-        </div>
         <button
           className="btn-icon"
           onClick={toggleDesktopSidebar}
@@ -451,6 +471,13 @@ export const DesktopSidebar: React.FC = () => {
 
       {/* Catalog Body */}
       <SideNavContentBody />
+
+      {/* Mouse Drag Resizer Handle */}
+      <div
+        className="sidebar-resizer-handle"
+        onMouseDown={handleMouseDown}
+        title={language === 'en' ? 'Drag right edge to resize sidebar' : 'அட்டவணை அகலத்தை மாற்ற வலது ஓரத்தில் இழுக்கவும்'}
+      />
     </aside>
   );
 };
