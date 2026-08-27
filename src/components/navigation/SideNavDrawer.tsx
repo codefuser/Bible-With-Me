@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Search, Bookmark, Settings, ChevronRight, History, Compass, User, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { X, Search, Bookmark, Settings, ChevronRight, History, Compass, User, PanelLeftClose, PanelLeftOpen, BookOpen } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
 import { UserAvatar } from '../common/UserAvatar';
@@ -58,7 +58,8 @@ const SideNavContentBody: React.FC<{ onCloseNav?: () => void }> = ({ onCloseNav 
     setIsBookmarksOpen,
     setIsPreferencesOpen,
     setIsReadingHistoryOpen,
-    setBookAndChapter
+    setBookAndChapter,
+    toggleDesktopSidebar
   } = useReading();
 
   const { user, profile, isAuthenticated, setIsAuthModalOpen } = useAuth();
@@ -94,17 +95,28 @@ const SideNavContentBody: React.FC<{ onCloseNav?: () => void }> = ({ onCloseNav 
           <span>{language === 'en' ? 'Search' : 'தேடுதல்'}</span>
         </button>
 
-        <button
-          className="btn-pill"
-          onClick={() => {
-            if (onCloseNav) onCloseNav();
-            setIsBookmarksOpen(true);
-          }}
-          style={{ justifyContent: 'flex-start', fontSize: '0.8125rem', gap: '0.375rem', padding: '0.4375rem 0.625rem' }}
-        >
-          <Bookmark size={15} />
-          <span>{language === 'en' ? 'Bookmarks' : 'சேமிப்புகள்'}</span>
-        </button>
+        <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
+          <button
+            className="btn-pill"
+            onClick={() => {
+              if (onCloseNav) onCloseNav();
+              setIsBookmarksOpen(true);
+            }}
+            style={{ flex: 1, justifyContent: 'flex-start', fontSize: '0.8125rem', gap: '0.375rem', padding: '0.4375rem 0.625rem' }}
+          >
+            <Bookmark size={15} />
+            <span>{language === 'en' ? 'Bookmarks' : 'சேமிப்புகள்'}</span>
+          </button>
+
+          <button
+            className="btn-icon desktop-collapse-btn"
+            onClick={toggleDesktopSidebar}
+            title={language === 'en' ? 'Collapse Side Navigation' : 'பக்கவாட்டு அட்டவணையை சுருக்கவும்'}
+            style={{ padding: '0.4375rem', flexShrink: 0 }}
+          >
+            <PanelLeftClose size={16} />
+          </button>
+        </div>
 
         <button
           className="btn-pill"
@@ -459,17 +471,6 @@ export const DesktopSidebar: React.FC = () => {
       className={`desktop-sidebar expanded ${isResizing ? 'resizing' : ''}`}
       style={{ width: `${sidebarWidth}px` }}
     >
-      {/* Sidebar Header with Collapse Button */}
-      <div className="desktop-sidebar-header">
-        <button
-          className="btn-icon"
-          onClick={toggleDesktopSidebar}
-          title={language === 'en' ? 'Collapse Side Navigation' : 'பக்கவாட்டு அட்டவணையை சுருக்கவும்'}
-        >
-          <PanelLeftClose size={18} />
-        </button>
-      </div>
-
       {/* Catalog Body */}
       <SideNavContentBody />
 

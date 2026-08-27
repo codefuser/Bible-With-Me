@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Sparkles, BookOpen, Compass, Calendar, ChevronDown, History } from 'lucide-react';
+import { Sparkles, BookOpen, Compass, Calendar, ChevronDown, History, Image as ImageIcon } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
 import { getDailyVerse, LoadedDailyVerse } from '../../services/dailyVerseService';
@@ -9,7 +9,7 @@ import { trackActivity } from '../../services/activityService';
 const COLLAPSE_STORAGE_KEY = 'bible_daily_verse_collapsed';
 
 export const DailyVerseCard: React.FC = () => {
-  const { books, setBookAndChapter, language, setIsDailyHistoryOpen } = useReading();
+  const { books, setBookAndChapter, language, setIsDailyHistoryOpen, openVerseCard } = useReading();
   const { user } = useAuth();
   const userId = user?.id || null;
 
@@ -99,23 +99,17 @@ export const DailyVerseCard: React.FC = () => {
           userSelect: 'none'
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.375rem',
-            fontSize: '0.8125rem',
-            fontWeight: 600,
-            color: 'var(--accent-color)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em'
-          }}
-        >
-          <Sparkles size={15} />
-          <span>{language === 'ta' ? 'இன்றைய எழுப்புதல் வார்த்தை' : "Today's Revival Word"}</span>
-          <span style={{ fontWeight: 600, color: 'var(--text-muted)', marginLeft: '0.25rem' }}>
-            · {language === 'ta' ? refTa : refEn}
-          </span>
+        <div className="daily-verse-header-title-group">
+          <div className="daily-verse-title-wrapper">
+            <Sparkles size={15} className="daily-verse-sparkles-icon" />
+            <span className="daily-verse-title-text">
+              {language === 'ta' ? 'இன்றைய எழுப்புதல் வார்த்தை' : "Today's Revival Word"}
+            </span>
+          </div>
+          <div className="daily-verse-ref-text">
+            <span className="daily-verse-ref-dot">· </span>
+            <span>{language === 'ta' ? refTa : refEn}</span>
+          </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
@@ -199,10 +193,36 @@ export const DailyVerseCard: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'flex-end',
+                gap: '0.5rem',
                 paddingTop: '0.75rem',
                 borderTop: '1px dashed var(--border-color)'
               }}
             >
+              {/* Create Image Card Button */}
+              <button
+                className="btn-pill"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (dailyData) {
+                    const book = books.find((b) => b.id === dailyData.verse.book_id);
+                    if (book) openVerseCard(dailyData.verse, book, dailyData.verse.chapter);
+                  }
+                }}
+                style={{
+                  fontSize: '0.8125rem',
+                  padding: '0.4375rem 0.875rem',
+                  gap: '0.375rem',
+                  backgroundColor: 'var(--bg-secondary)',
+                  color: 'var(--text-secondary)',
+                  fontWeight: 600,
+                  border: '1.5px solid var(--border-color)',
+                  cursor: 'pointer'
+                }}
+              >
+                <ImageIcon size={13} />
+                <span>{language === 'ta' ? 'கார்டு உருவாக்கு' : 'Create Card'}</span>
+              </button>
+
               <button
                 className="btn-pill"
                 onClick={handleGoToChapter}

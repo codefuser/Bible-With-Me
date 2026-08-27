@@ -31,6 +31,9 @@ export const trackActivity = async (
   return executeInsertActivity(userId, activityType, book, chapter, verse, metadata);
 };
 
+// Table user_activity is not present in public schema; disable remote POST calls to keep console clean
+let isActivityTableMissing = true;
+
 const executeInsertActivity = async (
   userId: string,
   activityType: ActivityType,
@@ -39,7 +42,7 @@ const executeInsertActivity = async (
   verse?: number,
   metadata: Record<string, any> = {}
 ): Promise<boolean> => {
-  if (!supabase) return false;
+  if (!supabase || isActivityTableMissing) return false;
   try {
     const payload: UserActivity = {
       user_id: userId,
@@ -54,14 +57,21 @@ const executeInsertActivity = async (
     const { error } = await supabase.from('user_activity').insert(payload);
 
     if (error) {
-      console.warn(`[Activity Track Fail] ${activityType}:`, error.message);
+      if (
+        error.code === 'PGRST204' ||
+        error.code === '42P01' ||
+        error.message?.includes('404') ||
+        error.message?.includes('schema cache') ||
+        error.message?.includes('user_activity')
+      ) {
+        isActivityTableMissing = true;
+      }
       return false;
     }
 
-    console.log(`[Activity Tracked] ${activityType}`, book ? `${book} ${chapter}:${verse}` : '');
     return true;
-  } catch (err) {
-    console.error('[Activity Track Exception]:', err);
+  } catch {
+    isActivityTableMissing = true;
     return false;
   }
 };

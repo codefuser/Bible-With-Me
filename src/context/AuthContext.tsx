@@ -129,7 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (prof?.avatar_url) {
           try {
             localStorage.setItem('bible_app_user_avatar', prof.avatar_url);
-            console.log('[Auth] Restored profile avatar from cloud:', prof.avatar_url);
+            console.log('[Auth] Restored profile avatar from cloud');
           } catch {
             // ignore
           }

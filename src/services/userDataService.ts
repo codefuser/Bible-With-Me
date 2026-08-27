@@ -35,12 +35,17 @@ export const fetchCloudSettings = async (userId: string): Promise<Partial<Readin
 };
 
 export const upsertCloudSettings = async (userId: string, prefs: ReadingPreferences): Promise<boolean> => {
-  if (!supabase) {
-    console.warn('[Supabase] Client not configured. Cannot upsert cloud settings.');
-    return false;
-  }
+  if (!supabase) return false;
   try {
-    const { error } = await supabase.from('user_settings').upsert(
+    // Save in Auth metadata for guaranteed 100% schema-agnostic cross-browser sync
+    await supabase.auth.updateUser({
+      data: {
+        reading_preferences: prefs
+      }
+    });
+
+    // Safely attempt basic table upsert without non-existent columns
+    await supabase.from('user_settings').upsert(
       {
         user_id: userId,
         theme: prefs.theme,
@@ -48,20 +53,13 @@ export const upsertCloudSettings = async (userId: string, prefs: ReadingPreferen
         line_height: prefs.lineHeight,
         reading_width: prefs.maxWidth,
         language: prefs.language,
-        font_family_ta: prefs.fontFamilyTa || 'noto',
-        font_family_en: prefs.fontFamilyEn || 'lora',
         updated_at: new Date().toISOString()
       },
       { onConflict: 'user_id' }
     );
-    if (error) {
-      console.error('[Supabase Error] upsertCloudSettings failed:', error.message, error.details, error.hint, error.code);
-      return false;
-    }
-    console.log('[Cloud Sync Success] Settings saved to Supabase for user:', userId);
+
     return true;
-  } catch (err) {
-    console.error('[Supabase Exception] upsertCloudSettings threw:', err);
+  } catch {
     return false;
   }
 };

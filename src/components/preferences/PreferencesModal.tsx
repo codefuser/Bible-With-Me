@@ -37,6 +37,44 @@ export const PreferencesModal: React.FC = () => {
     { id: 'playfair', label: 'Playfair', preview: 'Heritage Serif', fontVar: 'var(--font-en-playfair)' }
   ];
 
+  const fontSizeLabels: Record<FontSizeOption, string> = {
+    sm: isEn ? 'Small' : 'சிறியது',
+    md: isEn ? 'Medium' : 'நடுத்தரம்',
+    lg: isEn ? 'Large' : 'பெரியது',
+    xl: isEn ? 'Extra Large' : 'மிகப்பெரியது'
+  };
+
+  const fontSizeBtnLabels: Record<FontSizeOption, string> = {
+    sm: isEn ? 'SM' : 'சிறிய',
+    md: isEn ? 'MD' : 'நடுத்தர',
+    lg: isEn ? 'LG' : 'பெரிய',
+    xl: isEn ? 'XL' : 'மிகப்பெரிய'
+  };
+
+  const lineHeightLabels: Record<LineHeightOption, string> = {
+    normal: isEn ? 'Normal' : 'சாதாரண',
+    relaxed: isEn ? 'Relaxed' : 'சீராக',
+    loose: isEn ? 'Loose' : 'அகலமாக'
+  };
+
+  const lineHeightBtnLabels: Record<LineHeightOption, string> = {
+    normal: isEn ? 'Normal' : 'சாதாரண',
+    relaxed: isEn ? 'Relaxed' : 'சீராக',
+    loose: isEn ? 'Loose' : 'அகலமாக'
+  };
+
+  const maxWidthLabels: Record<MaxWidthOption, string> = {
+    compact: isEn ? 'Compact' : 'செறிவான',
+    standard: isEn ? 'Standard' : 'சாதாரண',
+    wide: isEn ? 'Wide' : 'அகலமான'
+  };
+
+  const maxWidthBtnLabels: Record<MaxWidthOption, string> = {
+    compact: isEn ? 'Compact' : 'செறிவான',
+    standard: isEn ? 'Standard' : 'சாதாரண',
+    wide: isEn ? 'Wide' : 'அகலமான'
+  };
+
   return (
     <div className="modal-overlay" onClick={() => setIsPreferencesOpen(false)}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
@@ -53,7 +91,7 @@ export const PreferencesModal: React.FC = () => {
           {/* Group 1: Appearance & Theme */}
           <div>
             <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.625rem' }}>
-              {isEn ? 'Appearance & Theme' : 'தோற்றம் (Appearance)'}
+              {isEn ? 'Appearance & Theme' : 'தோற்றம் & தீம்'}
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
               <button
@@ -75,7 +113,7 @@ export const PreferencesModal: React.FC = () => {
                 }}
               >
                 {preferences.theme === 'light' ? <Check size={16} style={{ color: 'var(--accent-color)' }} /> : <Sun size={16} />}
-                <span>Light</span>
+                <span>{isEn ? 'Light' : 'வெளிச்சம்'}</span>
               </button>
 
               <button
@@ -97,7 +135,7 @@ export const PreferencesModal: React.FC = () => {
                 }}
               >
                 {preferences.theme === 'sepia' ? <Check size={16} style={{ color: 'var(--accent-color)' }} /> : <BookOpen size={16} />}
-                <span>Sepia</span>
+                <span>{isEn ? 'Sepia' : 'செபியா'}</span>
               </button>
 
               <button
@@ -119,7 +157,7 @@ export const PreferencesModal: React.FC = () => {
                 }}
               >
                 {preferences.theme === 'dark' ? <Check size={16} style={{ color: 'var(--accent-color)' }} /> : <Moon size={16} />}
-                <span>Dark</span>
+                <span>{isEn ? 'Dark' : 'இருள்'}</span>
               </button>
             </div>
           </div>
@@ -135,7 +173,7 @@ export const PreferencesModal: React.FC = () => {
             {!isEn && (
               <div style={{ marginBottom: '1.125rem' }}>
                 <label style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '0.375rem' }}>
-                  🇮🇳 {isEn ? 'Tamil Font Style' : 'தமிழ் எழுத்து பாணி'}
+                  {isEn ? 'Tamil Font Style' : 'தமிழ் எழுத்து பாணி'}
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
                   {tamilFonts.map((font) => {
@@ -173,7 +211,7 @@ export const PreferencesModal: React.FC = () => {
             {!isTa && (
               <div style={{ marginBottom: '1.125rem' }}>
                 <label style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '0.375rem' }}>
-                  🇬🇧 {isEn ? 'English Font Style' : 'ஆங்கில எழுத்து பாணி'}
+                  {isEn ? 'English Font Style' : 'ஆங்கில எழுத்து பாணி'}
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
                   {englishFonts.map((font) => {
@@ -211,7 +249,7 @@ export const PreferencesModal: React.FC = () => {
             <div style={{ marginBottom: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '0.375rem' }}>
                 <span>{isEn ? 'Font Size' : 'எழுத்து அளவு'}</span>
-                <span style={{ fontWeight: 600, textTransform: 'uppercase' }}>{preferences.fontSize}</span>
+                <span style={{ fontWeight: 600 }}>{fontSizeLabels[preferences.fontSize]}</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
                 {(['sm', 'md', 'lg', 'xl'] as FontSizeOption[]).map((size) => {
@@ -224,14 +262,15 @@ export const PreferencesModal: React.FC = () => {
                       aria-pressed={isSelected}
                       style={{
                         justifyContent: 'center',
-                        textTransform: 'uppercase',
                         fontSize: '0.8125rem',
+                        padding: '0.4375rem 0.25rem',
+                        gap: '0.25rem',
                         border: isSelected ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
                         fontWeight: isSelected ? 700 : 500
                       }}
                     >
                       {isSelected && <Check size={13} />}
-                      <span>{size}</span>
+                      <span>{fontSizeBtnLabels[size]}</span>
                     </button>
                   );
                 })}
@@ -242,7 +281,7 @@ export const PreferencesModal: React.FC = () => {
             <div style={{ marginBottom: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '0.375rem' }}>
                 <span>{isEn ? 'Line Spacing' : 'வரி இடைவெளி'}</span>
-                <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{preferences.lineHeight}</span>
+                <span style={{ fontWeight: 600 }}>{lineHeightLabels[preferences.lineHeight]}</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
                 {(['normal', 'relaxed', 'loose'] as LineHeightOption[]).map((line) => {
@@ -255,14 +294,13 @@ export const PreferencesModal: React.FC = () => {
                       aria-pressed={isSelected}
                       style={{
                         justifyContent: 'center',
-                        textTransform: 'capitalize',
                         fontSize: '0.8125rem',
                         border: isSelected ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
                         fontWeight: isSelected ? 700 : 500
                       }}
                     >
                       {isSelected && <Check size={13} />}
-                      <span>{line}</span>
+                      <span>{lineHeightBtnLabels[line]}</span>
                     </button>
                   );
                 })}
@@ -273,7 +311,7 @@ export const PreferencesModal: React.FC = () => {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '0.375rem' }}>
                 <span>{isEn ? 'Page Width' : 'பக்க அகலம்'}</span>
-                <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{preferences.maxWidth}</span>
+                <span style={{ fontWeight: 600 }}>{maxWidthLabels[preferences.maxWidth]}</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
                 {(['compact', 'standard', 'wide'] as MaxWidthOption[]).map((width) => {
@@ -286,14 +324,13 @@ export const PreferencesModal: React.FC = () => {
                       aria-pressed={isSelected}
                       style={{
                         justifyContent: 'center',
-                        textTransform: 'capitalize',
                         fontSize: '0.8125rem',
                         border: isSelected ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
                         fontWeight: isSelected ? 700 : 500
                       }}
                     >
                       {isSelected && <Check size={13} />}
-                      <span>{width}</span>
+                      <span>{maxWidthBtnLabels[width]}</span>
                     </button>
                   );
                 })}
@@ -334,7 +371,7 @@ export const PreferencesModal: React.FC = () => {
                 }}
               >
                 {language === 'en' && <Check size={13} />}
-                <span>English</span>
+                <span>{isEn ? 'English' : 'ஆங்கிலம்'}</span>
               </button>
 
               <button
@@ -349,7 +386,7 @@ export const PreferencesModal: React.FC = () => {
                 }}
               >
                 {language === 'parallel' && <Check size={13} />}
-                <span>தமிழ் + EN</span>
+                <span>{isEn ? 'Tamil + EN' : 'தமிழ் + ஆங்கிலம்'}</span>
               </button>
             </div>
           </div>
