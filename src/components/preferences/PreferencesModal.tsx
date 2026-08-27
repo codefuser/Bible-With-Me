@@ -45,10 +45,10 @@ export const PreferencesModal: React.FC = () => {
   };
 
   const fontSizeBtnLabels: Record<FontSizeOption, string> = {
-    sm: isEn ? 'SM' : 'சிறியது',
-    md: isEn ? 'MD' : 'நடுத்தரம்',
-    lg: isEn ? 'LG' : 'பெரியது',
-    xl: isEn ? 'XL' : 'மிகப்பெரிது'
+    sm: isEn ? 'SM' : 'சிறிய',
+    md: isEn ? 'MD' : 'நடுத்தர',
+    lg: isEn ? 'LG' : 'பெரிய',
+    xl: isEn ? 'XL' : 'மிகப்பெரிய'
   };
 
   const lineHeightLabels: Record<LineHeightOption, string> = {
@@ -263,6 +263,8 @@ export const PreferencesModal: React.FC = () => {
                       style={{
                         justifyContent: 'center',
                         fontSize: '0.8125rem',
+                        padding: '0.4375rem 0.25rem',
+                        gap: '0.25rem',
                         border: isSelected ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
                         fontWeight: isSelected ? 700 : 500
                       }}
