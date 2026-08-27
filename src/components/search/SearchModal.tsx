@@ -420,7 +420,7 @@ export const SearchModal: React.FC = () => {
         }
       });
     }
-  }, [userId]);
+  }, [userId, isSearchOpen]);
 
   // When search modal opens: reset closing state & hide suggestions popup initially
   useEffect(() => {
