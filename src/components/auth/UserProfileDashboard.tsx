@@ -27,6 +27,48 @@ interface UserProfileDashboardProps {
 
 const PRESET_AVATARS = ['✝️', '🕊️', '📖', '🔥', '👑', '⭐️'];
 
+const compressImage = (file: File): Promise<string> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const maxDim = 160;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.75));
+        } else {
+          resolve(e.target?.result as string);
+        }
+      };
+      img.onerror = () => resolve(e.target?.result as string);
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => resolve('');
+    reader.readAsDataURL(file);
+  });
+};
+
 export const UserProfileDashboard: React.FC<UserProfileDashboardProps> = ({ onClose }) => {
   const { user, profile, logout, updateProfileState } = useAuth();
   const { bookmarks, highlights, historyList, language } = useReading();
@@ -87,27 +129,34 @@ export const UserProfileDashboard: React.FC<UserProfileDashboardProps> = ({ onCl
     setShowAvatarPicker(false);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      alert(isEn ? 'Image size must be under 2MB.' : 'படம் 2MB அளவுக்குள் இருக்க வேண்டும்.');
+    if (file.size > 5 * 1024 * 1024) {
+      alert(isEn ? 'Image size must be under 5MB.' : 'படம் 5MB அளவுக்குள் இருக்க வேண்டும்.');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const dataUrl = reader.result as string;
-      setSelectedAvatar(dataUrl);
-      localStorage.setItem('bible_app_user_avatar', dataUrl);
-      updateProfileState({ avatar_url: dataUrl });
+    try {
+      // Compress avatar to 160x160 JPEG (~8KB) for instant cloud sync
+      const compressedDataUrl = await compressImage(file);
+      if (!compressedDataUrl) return;
+
+      setSelectedAvatar(compressedDataUrl);
+      localStorage.setItem('bible_app_user_avatar', compressedDataUrl);
+      updateProfileState({ avatar_url: compressedDataUrl });
+
       if (user) {
-        await updateUserProfile(user.id, { avatar_url: dataUrl });
+        const res = await updateUserProfile(user.id, { avatar_url: compressedDataUrl });
+        if (!res.success) {
+          console.warn('[Avatar Upload Warning]:', res.error);
+        }
       }
-      setShowAvatarPicker(false);
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Error compressing image:', err);
+    }
+    setShowAvatarPicker(false);
   };
 
   const userInitial = (displayName || user?.email || 'U')[0].toUpperCase();
