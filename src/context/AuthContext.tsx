@@ -3,6 +3,7 @@ import { User } from '@supabase/supabase-js';
 import { UserProfile, SyncStatus } from '../types/bible';
 import { getSession, getUserProfile, signIn, signUp, signOut, onAuthStateChange } from '../services/authService';
 import { syncGuestDataToCloud } from '../services/syncService';
+import { fetchCloudSearchData } from '../services/userDataService';
 import { isSupabaseConfigured } from '../lib/supabase';
 
 // ─── LocalStorage Keys ────────────────────────────────────────────────────────
@@ -123,13 +124,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     async (newUser: User, isNewSignup: boolean) => {
       setUser(newUser);
 
-      // Fetch profile (non-blocking — UI updates when ready)
+      // Fetch profile & search history (non-blocking — UI updates when ready)
       getUserProfile(newUser.id).then((prof) => {
         setProfile(prof);
         if (prof?.avatar_url) {
           try {
             localStorage.setItem('bible_app_user_avatar', prof.avatar_url);
             console.log('[Auth] Restored profile avatar from cloud');
+          } catch {
+            // ignore
+          }
+        }
+      });
+
+      fetchCloudSearchData(newUser.id).then(({ searchHistory, openedVerses }) => {
+        if (searchHistory && searchHistory.length > 0) {
+          try {
+            localStorage.setItem('bible_app_search_history', JSON.stringify(searchHistory));
+            console.log('[Auth] Restored search history from cloud:', searchHistory.length);
+          } catch {
+            // ignore
+          }
+        }
+        if (openedVerses && openedVerses.length > 0) {
+          try {
+            localStorage.setItem('bible_app_opened_verses_history', JSON.stringify(openedVerses));
+            console.log('[Auth] Restored opened search verses from cloud:', openedVerses.length);
           } catch {
             // ignore
           }

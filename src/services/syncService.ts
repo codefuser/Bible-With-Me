@@ -13,7 +13,9 @@ import {
   fetchCloudHighlights,
   fetchCloudNotes,
   fetchCloudSettings,
-  fetchCloudHistory
+  fetchCloudHistory,
+  saveCloudSearchHistory,
+  saveCloudOpenedVerses
 } from './userDataService';
 import { Bookmark } from '../types/bible';
 import { ALL_BIBLE_BOOKS, fetchChapterVerses } from './bibleService';
@@ -54,6 +56,31 @@ export const syncGuestDataToCloud = async (userId: string): Promise<boolean> => 
     if (localHistory) {
       const bookCode = ALL_BIBLE_BOOKS.find((b) => b.id === localHistory.book_id)?.code || String(localHistory.book_id);
       await upsertCloudHistory(userId, bookCode, localHistory.chapter, localHistory.verse);
+    }
+
+    // 6. Sync Search History & Opened Verses
+    const rawSearchHistory = localStorage.getItem('bible_app_search_history');
+    if (rawSearchHistory) {
+      try {
+        const hist = JSON.parse(rawSearchHistory);
+        if (Array.isArray(hist) && hist.length > 0) {
+          await saveCloudSearchHistory(userId, hist);
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    const rawOpened = localStorage.getItem('bible_app_opened_verses_history');
+    if (rawOpened) {
+      try {
+        const opened = JSON.parse(rawOpened);
+        if (Array.isArray(opened) && opened.length > 0) {
+          await saveCloudOpenedVerses(userId, opened);
+        }
+      } catch {
+        // ignore
+      }
     }
 
     return true;
