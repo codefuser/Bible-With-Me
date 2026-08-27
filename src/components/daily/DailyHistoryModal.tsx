@@ -41,10 +41,10 @@ export const DailyHistoryModal: React.FC = () => {
           <div className="study-title-group">
             <span className="study-badge">
               <Calendar size={14} />
-              <span>{language === 'ta' ? 'தினசரி வரலாற்றுப் பதிவுகள்' : 'Daily Verse History'}</span>
+              <span>{language === 'ta' ? 'எழுப்புதல் வார்த்தை வரலாறு' : 'Revival Word History'}</span>
             </span>
             <h2 className="study-main-title">
-              {language === 'ta' ? 'முந்தைய தினசரி வசனங்கள்' : 'Past Daily Verses'}
+              {language === 'ta' ? 'முந்தைய எழுப்புதல் வார்த்தைகள்' : 'Past Revival Words'}
             </h2>
           </div>
           <button className="btn-icon" onClick={() => setIsDailyHistoryOpen(false)}>
@@ -56,7 +56,7 @@ export const DailyHistoryModal: React.FC = () => {
         <div className="study-body">
           {historyItems.length === 0 ? (
             <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem 0' }}>
-              {language === 'ta' ? 'கடந்த நாட்களின் வசனங்கள் இங்கு சேமிக்கப்படும்.' : 'Past daily verses will appear here.'}
+              {language === 'ta' ? 'கடந்த நாட்களின் எழுப்புதல் வார்த்தைகள் இங்கு சேமிக்கப்படும்.' : 'Past revival words will appear here.'}
             </p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>

@@ -9,7 +9,7 @@ import { trackActivity } from '../../services/activityService';
 const COLLAPSE_STORAGE_KEY = 'bible_daily_verse_collapsed';
 
 export const DailyVerseCard: React.FC = () => {
-  const { language, openVerseStudy, openChapterStudy, setIsDailyHistoryOpen } = useReading();
+  const { books, setBookAndChapter, language, setIsDailyHistoryOpen } = useReading();
   const { user } = useAuth();
   const userId = user?.id || null;
 
@@ -61,14 +61,13 @@ export const DailyVerseCard: React.FC = () => {
   const verseText = language === 'ta' ? verse.text_ta : verse.text_en;
   const promptText = language === 'ta' ? prompt_ta : prompt_en;
 
-  const handleOpenVerseStudy = (e: React.MouseEvent) => {
+  const handleGoToChapter = (e: React.MouseEvent) => {
     e.stopPropagation();
-    openVerseStudy(verse.book_id, verse.chapter, verse.verse);
-  };
-
-  const handleOpenChapterStudy = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    openChapterStudy(verse.book_id, verse.chapter);
+    if (!dailyData) return;
+    const book = books.find((b) => b.id === dailyData.verse.book_id);
+    if (book) {
+      setBookAndChapter(book, dailyData.verse.chapter, dailyData.verse.verse);
+    }
   };
 
   const handleOpenHistory = (e: React.MouseEvent) => {
@@ -113,7 +112,7 @@ export const DailyVerseCard: React.FC = () => {
           }}
         >
           <Sparkles size={15} />
-          <span>{language === 'ta' ? 'இன்றைய வசனம்' : "Today's Verse"}</span>
+          <span>{language === 'ta' ? 'இன்றைய எழுப்புதல் வார்த்தை' : "Today's Revival Word"}</span>
           <span style={{ fontWeight: 600, color: 'var(--text-muted)', marginLeft: '0.25rem' }}>
             · {language === 'ta' ? refTa : refEn}
           </span>
@@ -123,7 +122,7 @@ export const DailyVerseCard: React.FC = () => {
           <button
             className="btn-icon"
             onClick={handleOpenHistory}
-            title={language === 'ta' ? 'முந்தைய வசனங்கள்' : 'Daily Verse History'}
+            title={language === 'ta' ? 'முந்தைய எழுப்புதல் வார்த்தைகள்' : 'Revival Word History'}
             style={{ width: '1.75rem', height: '1.75rem', color: 'var(--text-muted)' }}
           >
             <History size={15} />
@@ -135,7 +134,7 @@ export const DailyVerseCard: React.FC = () => {
               e.stopPropagation();
               toggleCollapse();
             }}
-            title={isCollapsed ? "Expand Today's Verse" : "Collapse Today's Verse"}
+            title={isCollapsed ? "Expand Today's Revival Word" : "Collapse Today's Revival Word"}
             aria-expanded={!isCollapsed}
             style={{ width: '1.75rem', height: '1.75rem' }}
           >
@@ -194,50 +193,34 @@ export const DailyVerseCard: React.FC = () => {
               <span>{promptText}</span>
             </p>
 
-            {/* Action Buttons (Study Options Hidden - Uncomment to enable):
+            {/* Read Chapter Primary Action Button */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '0.625rem',
+                justifyContent: 'flex-end',
                 paddingTop: '0.75rem',
                 borderTop: '1px dashed var(--border-color)'
               }}
             >
               <button
                 className="btn-pill"
-                onClick={handleOpenVerseStudy}
+                onClick={handleGoToChapter}
                 style={{
                   fontSize: '0.8125rem',
-                  gap: '0.375rem',
-                  backgroundColor: 'var(--bg-secondary)',
-                  border: '1px solid var(--border-color)',
-                  color: 'var(--accent-color)',
-                  fontWeight: 600
-                }}
-              >
-                <Compass size={14} />
-                <span>{language === 'ta' ? 'வசனத்தை ஆழமாக அறிய' : 'Explore Verse Deeply'}</span>
-              </button>
-
-              <button
-                className="btn-pill"
-                onClick={handleOpenChapterStudy}
-                style={{
-                  fontSize: '0.8125rem',
+                  padding: '0.4375rem 0.875rem',
                   gap: '0.375rem',
                   backgroundColor: 'var(--accent-color)',
                   color: '#ffffff',
-                  fontWeight: 600
+                  fontWeight: 600,
+                  boxShadow: '0 2px 8px rgba(59, 130, 246, 0.25)',
+                  cursor: 'pointer'
                 }}
               >
                 <BookOpen size={14} />
-                <span>{language === 'ta' ? 'அதிகாரத்தை முழுமையாக அறிய' : 'Explore Full Chapter'}</span>
+                <span>{language === 'ta' ? 'அதிகாரத்தை வாசிக்க' : 'Read Full Chapter'}</span>
               </button>
             </div>
-            */}
           </div>
         </div>
       </div>

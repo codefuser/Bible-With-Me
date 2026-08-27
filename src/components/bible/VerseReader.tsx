@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Bookmark as BookmarkIcon, Copy, Share2, BookOpen, Highlighter, Check, Trash2 } from 'lucide-react';
+import { Bookmark as BookmarkIcon, Copy, Share2, BookOpen, Highlighter, Check, Trash2, Sparkles } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
 import { BibleVerse } from '../../types/bible';
@@ -7,6 +7,7 @@ import { fetchChapterVerses } from '../../services/bibleService';
 import { isVerseBookmarked } from '../../services/bookmarkService';
 import { updateHashRoute } from '../../services/routerService';
 import { getVerseHighlightColor, HighlightColor } from '../../services/highlightService';
+import { getTodayVerseRef } from '../../services/dailyVerseService';
 import { trackActivity } from '../../services/activityService';
 import { upsertCloudProgress } from '../../services/userDataService';
 import { LoadingState } from '../common/LoadingState';
@@ -35,6 +36,7 @@ export const VerseReader: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
   const [activeVerseNum, setActiveVerseNum] = useState<number | null>(selectedVerse);
+  const [clickedVerseNum, setClickedVerseNum] = useState<number | null>(selectedVerse);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showHighlightPicker, setShowHighlightPicker] = useState<boolean>(false);
 
@@ -80,6 +82,7 @@ export const VerseReader: React.FC = () => {
   useEffect(() => {
     if (selectedVerse) {
       setActiveVerseNum(selectedVerse);
+      setClickedVerseNum(selectedVerse);
       updateHashRoute(currentBook.code, currentChapter, selectedVerse);
       setTimeout(() => {
         verseRefs.current[selectedVerse]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -244,22 +247,37 @@ export const VerseReader: React.FC = () => {
         <div className="verse-list">
           {verses.map((verseObj) => {
             const isBookmarked = isVerseBookmarked(bookmarks, currentBook.id, currentChapter, verseObj.verse);
-            const isSelected = activeVerseNum === verseObj.verse;
+            const isSelected = clickedVerseNum === verseObj.verse;
             const highlightColor = getVerseHighlightColor(highlights, currentBook.id, currentChapter, verseObj.verse);
-
             const highlightClass = highlightColor ? `highlight-${highlightColor}` : '';
+
+            const todayRef = getTodayVerseRef();
+            const isTodayDailyVerse =
+              todayRef &&
+              todayRef.book_id === currentBook.id &&
+              todayRef.chapter === currentChapter &&
+              todayRef.verse === verseObj.verse;
 
             return (
               <div
                 key={verseObj.id || verseObj.verse}
                 ref={(el) => (verseRefs.current[verseObj.verse] = el)}
                 data-verse-num={verseObj.verse}
-                className={`verse-item ${isSelected ? 'selected' : ''} ${highlightClass}`}
+                className={`verse-item ${isSelected ? 'selected' : ''} ${highlightClass} ${
+                  isTodayDailyVerse ? 'is-today-daily-verse' : ''
+                }`}
                 onClick={() => {
-                  setActiveVerseNum(isSelected ? null : verseObj.verse);
+                  setClickedVerseNum(isSelected ? null : verseObj.verse);
                   setShowHighlightPicker(false);
                 }}
               >
+                {/* Special Devotional Badge for Today's Revival Word */}
+                {isTodayDailyVerse && (
+                  <div className="today-daily-verse-badge">
+                    <Sparkles size={11} />
+                    <span>{language === 'en' ? "Today's Revival Word" : 'இன்றைய எழுப்புதல் வார்த்தை'}</span>
+                  </div>
+                )}
                 <div className="verse-content-row">
                   <span className="verse-number">{verseObj.verse}</span>
 
