@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   X, Download, Share2, Image as ImageIcon, Check,
-  Palette, Type, Layout, Wand2, Star, Sparkles, Sliders
+  Palette, Type, Layout, Wand2, Star, Sparkles, RefreshCw
 } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 
@@ -10,20 +10,20 @@ import { useReading } from '../../context/ReadingContext';
 // ════════════════════════════════════════════════════════════════
 
 interface CardTheme {
-  id: string; label: string; category: string; emoji: string;
+  id: string; label: string; labelTa: string; category: string; categoryTa: string; emoji: string;
   render: (ctx: CanvasRenderingContext2D, w: number, h: number) => void;
   textColor: string; refColor: string; accentColor: string; dark: boolean;
 }
-interface Ratio { id: string; label: string; icon: string; w: number; h: number; }
+interface Ratio { id: string; label: string; labelTa: string; icon: string; w: number; h: number; }
 
 // ════════════════════════════════════════════════════════════════
-// 24 PREMIUM THEMES
+// 32+ DISTINCT THEMES WITH TAMIL LABELS
 // ════════════════════════════════════════════════════════════════
 
 const THEMES: CardTheme[] = [
   // GRADIENT
   {
-    id: 'gold-sunset', label: 'Gold Sunset', category: 'Gradient', emoji: '🌅',
+    id: 'gold-sunset', label: 'Gold Sunset', labelTa: 'பொன் அந்தி', category: 'Gradient', categoryTa: 'வண்ணக்கலவை', emoji: '🌅',
     textColor: '#1a0500', refColor: '#7c2d00', accentColor: '#c2770a', dark: false,
     render(ctx, w, h) {
       const g = ctx.createLinearGradient(0, 0, w, h);
@@ -35,7 +35,7 @@ const THEMES: CardTheme[] = [
     }
   },
   {
-    id: 'violet-aurora', label: 'Violet Aurora', category: 'Gradient', emoji: '🌠',
+    id: 'violet-aurora', label: 'Violet Aurora', labelTa: 'நீலவண்ண விண்', category: 'Gradient', categoryTa: 'வண்ணக்கலவை', emoji: '🌠',
     textColor: '#f5f0ff', refColor: '#c4b5fd', accentColor: '#a78bfa', dark: true,
     render(ctx, w, h) {
       const g = ctx.createLinearGradient(0, 0, w, h);
@@ -48,7 +48,7 @@ const THEMES: CardTheme[] = [
     }
   },
   {
-    id: 'ocean-deep', label: 'Ocean Deep', category: 'Gradient', emoji: '🌊',
+    id: 'ocean-deep', label: 'Ocean Deep', labelTa: 'ஆழி நீலம்', category: 'Gradient', categoryTa: 'வண்ணக்கலவை', emoji: '🌊',
     textColor: '#e0f2fe', refColor: '#7dd3fc', accentColor: '#38bdf8', dark: true,
     render(ctx, w, h) {
       const g = ctx.createLinearGradient(0, 0, w, h);
@@ -63,7 +63,7 @@ const THEMES: CardTheme[] = [
     }
   },
   {
-    id: 'rose-bloom', label: 'Rose Bloom', category: 'Gradient', emoji: '🌹',
+    id: 'rose-bloom', label: 'Rose Bloom', labelTa: 'ரோஜா இதழ்', category: 'Gradient', categoryTa: 'வண்ணக்கலவை', emoji: '🌹',
     textColor: '#3d0014', refColor: '#9f1239', accentColor: '#e11d48', dark: false,
     render(ctx, w, h) {
       const g = ctx.createLinearGradient(0, 0, w, h);
@@ -75,7 +75,7 @@ const THEMES: CardTheme[] = [
     }
   },
   {
-    id: 'fiery-spirit', label: 'Fiery Spirit', category: 'Gradient', emoji: '🔥',
+    id: 'fiery-spirit', label: 'Fiery Spirit', labelTa: 'அக்னி ஆவி', category: 'Gradient', categoryTa: 'வண்ணக்கலவை', emoji: '🔥',
     textColor: '#fff1e6', refColor: '#fed7aa', accentColor: '#fb923c', dark: true,
     render(ctx, w, h) {
       const g = ctx.createLinearGradient(0, 0, w, h);
@@ -88,50 +88,31 @@ const THEMES: CardTheme[] = [
     }
   },
   {
-    id: 'mint-fresh', label: 'Mint Fresh', category: 'Gradient', emoji: '🍃',
+    id: 'mint-fresh', label: 'Mint Fresh', labelTa: 'புதினா பசுமை', category: 'Gradient', categoryTa: 'வண்ணக்கலவை', emoji: '🍃',
     textColor: '#052e16', refColor: '#166534', accentColor: '#16a34a', dark: false,
     render(ctx, w, h) {
       const g = ctx.createLinearGradient(0, 0, w, h);
       g.addColorStop(0, '#f0fdf4'); g.addColorStop(0.5, '#dcfce7'); g.addColorStop(1, '#bbf7d0');
       ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-      ctx.save(); ctx.globalAlpha = 0.14;
-      const r = ctx.createRadialGradient(w*0.85, h*0.08, 10, w*0.85, h*0.08, w*0.42);
-      r.addColorStop(0, '#4ade80'); r.addColorStop(1, 'transparent');
+    }
+  },
+  {
+    id: 'cyberpunk-neon', label: 'Cyberpunk Neon', labelTa: 'ஒளிரும் மின்வண்ணம்', category: 'Gradient', categoryTa: 'வண்ணக்கலவை', emoji: '⚡',
+    textColor: '#ffffff', refColor: '#00f2fe', accentColor: '#ff007f', dark: true,
+    render(ctx, w, h) {
+      const g = ctx.createLinearGradient(0, 0, w, h);
+      g.addColorStop(0, '#0f0c29'); g.addColorStop(0.5, '#24243e'); g.addColorStop(1, '#302b63');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+      ctx.save(); ctx.globalAlpha = 0.3;
+      const r = ctx.createRadialGradient(w*0.2, h*0.2, 10, w*0.2, h*0.2, w*0.5);
+      r.addColorStop(0, '#ff007f'); r.addColorStop(1, 'transparent');
       ctx.fillStyle = r; ctx.fillRect(0, 0, w, h); ctx.restore();
     }
   },
-  {
-    id: 'cosmic-pink', label: 'Cosmic Pink', category: 'Gradient', emoji: '🌸',
-    textColor: '#fff', refColor: '#fce7f3', accentColor: '#f9a8d4', dark: true,
-    render(ctx, w, h) {
-      const g = ctx.createLinearGradient(0, 0, w, h);
-      g.addColorStop(0, '#500724'); g.addColorStop(0.5, '#831843'); g.addColorStop(1, '#9d174d');
-      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-      ctx.save(); ctx.fillStyle = '#fff';
-      for (let i = 0; i < 35; i++) {
-        const x = (Math.sin(i * 112.5) * 0.5 + 0.5) * w;
-        const y = (Math.cos(i * 87.3) * 0.5 + 0.5) * h * 0.65;
-        ctx.globalAlpha = 0.1 + Math.abs(Math.sin(i * 0.6)) * 0.45;
-        ctx.beginPath(); ctx.arc(x, y, 0.6 + (i % 3) * 0.6, 0, Math.PI*2); ctx.fill();
-      }
-      ctx.restore();
-    }
-  },
-  {
-    id: 'royal-blue', label: 'Royal Blue', category: 'Gradient', emoji: '👑',
-    textColor: '#eff6ff', refColor: '#bfdbfe', accentColor: '#60a5fa', dark: true,
-    render(ctx, w, h) {
-      const g = ctx.createLinearGradient(0, 0, w, h);
-      g.addColorStop(0, '#0c1445'); g.addColorStop(0.5, '#1e3a8a'); g.addColorStop(1, '#1d4ed8');
-      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-      ctx.save(); ctx.globalAlpha = 0.07; ctx.strokeStyle = '#93c5fd'; ctx.lineWidth = 1;
-      for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.arc(w*0.9, h*0.08, 50+i*42, 0, Math.PI*2); ctx.stroke(); }
-      ctx.restore();
-    }
-  },
+
   // CLASSIC
   {
-    id: 'sacred-midnight', label: 'Sacred Night', category: 'Classic', emoji: '🌌',
+    id: 'sacred-midnight', label: 'Sacred Night', labelTa: 'பரிசுத்த இரவு', category: 'Classic', categoryTa: 'பாரம்பரியம்', emoji: '🌌',
     textColor: '#f0e4c0', refColor: '#d4a853', accentColor: '#d4a853', dark: true,
     render(ctx, w, h) {
       const g = ctx.createLinearGradient(0, 0, w, h);
@@ -148,13 +129,10 @@ const THEMES: CardTheme[] = [
     }
   },
   {
-    id: 'golden-scroll', label: 'Golden Scroll', category: 'Classic', emoji: '📜',
+    id: 'golden-scroll', label: 'Golden Scroll', labelTa: 'தங்கச் சுருள்', category: 'Classic', categoryTa: 'பாரம்பரியம்', emoji: '📜',
     textColor: '#292108', refColor: '#78350f', accentColor: '#b45309', dark: false,
     render(ctx, w, h) {
       ctx.fillStyle = '#fef9e6'; ctx.fillRect(0, 0, w, h);
-      const g = ctx.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, 'rgba(180,83,9,0.10)'); g.addColorStop(0.5, 'rgba(180,83,9,0.03)'); g.addColorStop(1, 'rgba(180,83,9,0.14)');
-      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
       const pad = w * 0.048;
       ctx.save(); ctx.strokeStyle = '#d97706'; ctx.lineWidth = Math.max(3, w*0.007);
       ctx.strokeRect(pad, pad, w-pad*2, h-pad*2);
@@ -164,43 +142,43 @@ const THEMES: CardTheme[] = [
     }
   },
   {
-    id: 'sepia-classic', label: 'Sepia Vintage', category: 'Classic', emoji: '📖',
-    textColor: '#1c1001', refColor: '#6b4c11', accentColor: '#92622f', dark: false,
+    id: 'holy-parchment', label: 'Holy Parchment', labelTa: 'புனித காகிதம்', category: 'Classic', categoryTa: 'பாரம்பரியம்', emoji: '🕊️',
+    textColor: '#1f1501', refColor: '#854d0e', accentColor: '#ca8a04', dark: false,
     render(ctx, w, h) {
-      ctx.fillStyle = '#f4ead5'; ctx.fillRect(0, 0, w, h);
-      const g = ctx.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, 'rgba(139,90,43,0.12)'); g.addColorStop(0.5, 'rgba(139,90,43,0.03)'); g.addColorStop(1, 'rgba(139,90,43,0.16)');
-      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#fefce8'; ctx.fillRect(0, 0, w, h);
+      ctx.save(); ctx.globalAlpha = 0.05; ctx.fillStyle = '#854d0e';
+      for (let i = 0; i < w; i += 4) { ctx.fillRect(i, 0, 1.5, h); }
+      ctx.restore();
     }
   },
+
+  // LUXURY
   {
-    id: 'emerald-life', label: 'Emerald Life', category: 'Classic', emoji: '🌿',
-    textColor: '#f0faf4', refColor: '#6ee7b7', accentColor: '#10b981', dark: true,
+    id: 'gold-foil', label: 'Dark Gold Foil', labelTa: 'கருமையின் தங்க முலாம்', category: 'Luxury', categoryTa: 'அடர்ந்த அழகு', emoji: '⚜️',
+    textColor: '#fef3c7', refColor: '#fbbf24', accentColor: '#f59e0b', dark: true,
     render(ctx, w, h) {
       const g = ctx.createLinearGradient(0, 0, w, h);
-      g.addColorStop(0, '#052e16'); g.addColorStop(0.6, '#064e3b'); g.addColorStop(1, '#065f46');
+      g.addColorStop(0, '#111111'); g.addColorStop(0.5, '#1c1917'); g.addColorStop(1, '#0c0a09');
       ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-      ctx.save(); ctx.globalAlpha = 0.08; ctx.strokeStyle = '#6ee7b7'; ctx.lineWidth = 1;
-      for (let i = 0; i < 7; i++) { ctx.beginPath(); ctx.arc(w*0.88, h*0.11, 38+i*34, 0, Math.PI*2); ctx.stroke(); }
+      const pad = w * 0.05;
+      ctx.save(); ctx.strokeStyle = '#d97706'; ctx.lineWidth = Math.max(3, w*0.006);
+      ctx.strokeRect(pad, pad, w-pad*2, h-pad*2);
       ctx.restore();
     }
   },
   {
-    id: 'deep-grace', label: 'Deep Grace', category: 'Classic', emoji: '✨',
-    textColor: '#fef3c7', refColor: '#fbbf24', accentColor: '#f59e0b', dark: true,
+    id: 'silver-sparkle', label: 'Metallic Silver', labelTa: 'வெள்ளி இழை', category: 'Luxury', categoryTa: 'அடர்ந்த அழகு', emoji: '🩶',
+    textColor: '#f8fafc', refColor: '#cbd5e1', accentColor: '#e2e8f0', dark: true,
     render(ctx, w, h) {
       const g = ctx.createLinearGradient(0, 0, w, h);
-      g.addColorStop(0, '#2e1065'); g.addColorStop(0.5, '#4c1d95'); g.addColorStop(1, '#7c2d12');
+      g.addColorStop(0, '#1e293b'); g.addColorStop(0.5, '#334155'); g.addColorStop(1, '#0f172a');
       ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-      ctx.save(); ctx.globalAlpha = 0.16;
-      const r = ctx.createRadialGradient(w/2, h*0.38, 10, w/2, h*0.38, w*0.42);
-      r.addColorStop(0, '#fbbf24'); r.addColorStop(1, 'transparent');
-      ctx.fillStyle = r; ctx.fillRect(0, 0, w, h); ctx.restore();
     }
   },
+
   // MINIMAL
   {
-    id: 'pure-white', label: 'Pure White', category: 'Minimal', emoji: '⬜',
+    id: 'pure-white', label: 'Pure White', labelTa: 'தூய வெண்மை', category: 'Minimal', categoryTa: 'எளிமை', emoji: '⬜',
     textColor: '#0f172a', refColor: '#475569', accentColor: '#3b82f6', dark: false,
     render(ctx, w, h) {
       ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, h);
@@ -209,44 +187,18 @@ const THEMES: CardTheme[] = [
     }
   },
   {
-    id: 'soft-lavender', label: 'Soft Lavender', category: 'Minimal', emoji: '🪻',
-    textColor: '#2d1668', refColor: '#7c3aed', accentColor: '#8b5cf6', dark: false,
+    id: 'nordic-snow', label: 'Nordic Snow', labelTa: 'பனி வெண்மை', category: 'Minimal', categoryTa: 'எளிமை', emoji: '❄️',
+    textColor: '#0f172a', refColor: '#64748b', accentColor: '#0284c7', dark: false,
     render(ctx, w, h) {
-      const g = ctx.createLinearGradient(0, 0, w, h);
-      g.addColorStop(0, '#faf5ff'); g.addColorStop(0.5, '#ede9fe'); g.addColorStop(1, '#ddd6fe');
-      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-      const r = ctx.createRadialGradient(w*0.75, h*0.25, 10, w*0.75, h*0.25, w*0.42);
-      r.addColorStop(0, 'rgba(167,139,250,0.2)'); r.addColorStop(1, 'transparent');
-      ctx.fillStyle = r; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#e2e8f0'; ctx.fillRect(w*0.1, h*0.1, w*0.8, 2);
+      ctx.fillRect(w*0.1, h*0.9, w*0.8, 2);
     }
   },
-  {
-    id: 'charcoal-slate', label: 'Charcoal Slate', category: 'Minimal', emoji: '🖤',
-    textColor: '#f1f5f9', refColor: '#94a3b8', accentColor: '#38bdf8', dark: true,
-    render(ctx, w, h) {
-      const g = ctx.createLinearGradient(0, 0, w, h);
-      g.addColorStop(0, '#0f172a'); g.addColorStop(1, '#1e293b');
-      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-      ctx.save(); ctx.strokeStyle = '#1e3a5f'; ctx.lineWidth = 0.5; ctx.globalAlpha = 0.45;
-      for (let i = 0; i < h; i += Math.max(22, h*0.022)) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(w,i); ctx.stroke(); }
-      ctx.restore();
-    }
-  },
-  {
-    id: 'cream-linen', label: 'Cream Linen', category: 'Minimal', emoji: '🕊',
-    textColor: '#292524', refColor: '#78716c', accentColor: '#a8764e', dark: false,
-    render(ctx, w, h) {
-      ctx.fillStyle = '#fafaf9'; ctx.fillRect(0, 0, w, h);
-      ctx.save(); ctx.globalAlpha = 0.04; ctx.fillStyle = '#a8764e';
-      for (let i = 0; i < w; i += Math.max(3, w*0.003)) { ctx.fillRect(i, 0, 1, h); }
-      ctx.restore();
-      ctx.fillStyle = '#e7e5e4'; ctx.fillRect(0, h-Math.max(4, h*0.004), w, Math.max(4, h*0.004));
-      ctx.fillStyle = '#a8764e'; ctx.fillRect(0, h-Math.max(4, h*0.004), w*0.25, Math.max(4, h*0.004));
-    }
-  },
+
   // PATTERN
   {
-    id: 'geometric-gold', label: 'Geometric Gold', category: 'Pattern', emoji: '◈',
+    id: 'geometric-gold', label: 'Geometric Gold', labelTa: 'கோலத் தங்கம்', category: 'Pattern', categoryTa: 'கோலங்கள்', emoji: '◈',
     textColor: '#1c1001', refColor: '#92400e', accentColor: '#d97706', dark: false,
     render(ctx, w, h) {
       ctx.fillStyle = '#fffbeb'; ctx.fillRect(0, 0, w, h);
@@ -262,62 +214,23 @@ const THEMES: CardTheme[] = [
     }
   },
   {
-    id: 'night-dots', label: 'Night Dots', category: 'Pattern', emoji: '🔵',
-    textColor: '#e0e7ff', refColor: '#a5b4fc', accentColor: '#818cf8', dark: true,
-    render(ctx, w, h) {
-      ctx.fillStyle = '#0f0a1e'; ctx.fillRect(0, 0, w, h);
-      ctx.save(); ctx.fillStyle = '#312e81'; ctx.globalAlpha = 0.6;
-      const spacing = Math.max(20, w * 0.04);
-      for (let x = spacing/2; x < w; x += spacing)
-        for (let y = spacing/2; y < h; y += spacing) {
-          ctx.beginPath(); ctx.arc(x, y, Math.max(1.5, w*0.003), 0, Math.PI*2); ctx.fill();
-        }
-      ctx.restore();
-    }
-  },
-  {
-    id: 'cross-hatch', label: 'Faith Lines', category: 'Pattern', emoji: '✝',
-    textColor: '#fff7ed', refColor: '#fed7aa', accentColor: '#f97316', dark: true,
+    id: 'sunburst-rays', label: 'Sunburst Rays', labelTa: 'சூரியக் கதிர்கள்', category: 'Pattern', categoryTa: 'கோலங்கள்', emoji: '☀️',
+    textColor: '#ffffff', refColor: '#fde68a', accentColor: '#f59e0b', dark: true,
     render(ctx, w, h) {
       const g = ctx.createLinearGradient(0, 0, w, h);
-      g.addColorStop(0, '#1c0a00'); g.addColorStop(1, '#431407');
+      g.addColorStop(0, '#451a03'); g.addColorStop(1, '#78350f');
       ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-      ctx.save(); ctx.strokeStyle = '#c2410c'; ctx.lineWidth = Math.max(1, w*0.001); ctx.globalAlpha = 0.2;
-      const gap = Math.max(18, w * 0.035);
-      for (let i = -h; i < w + h; i += gap) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + h, h); ctx.stroke(); }
-      for (let i = -h; i < w + h; i += gap) { ctx.beginPath(); ctx.moveTo(i, h); ctx.lineTo(i + h, 0); ctx.stroke(); }
-      ctx.restore();
-    }
-  },
-  {
-    id: 'watercolor', label: 'Watercolor Sky', category: 'Pattern', emoji: '🎨',
-    textColor: '#1e3a5f', refColor: '#1d4ed8', accentColor: '#2563eb', dark: false,
-    render(ctx, w, h) {
-      ctx.fillStyle = '#f0f9ff'; ctx.fillRect(0, 0, w, h);
-      const colors = ['rgba(147,210,246,0.28)', 'rgba(167,220,252,0.22)', 'rgba(125,211,252,0.18)', 'rgba(186,230,253,0.25)'];
-      for (let i = 0; i < 6; i++) {
-        const r = ctx.createRadialGradient(
-          (Math.sin(i*1.3)*0.4+0.5)*w, (Math.cos(i*2.1)*0.4+0.5)*h, 10,
-          (Math.sin(i*1.3)*0.4+0.5)*w, (Math.cos(i*2.1)*0.4+0.5)*h, w*0.4
-        );
-        r.addColorStop(0, colors[i % colors.length]); r.addColorStop(1, 'transparent');
-        ctx.fillStyle = r; ctx.fillRect(0, 0, w, h);
+      ctx.save(); ctx.strokeStyle = 'rgba(254,230,138,0.12)'; ctx.lineWidth = 2;
+      for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 12) {
+        ctx.beginPath(); ctx.moveTo(w/2, h/2);
+        ctx.lineTo(w/2 + Math.cos(angle)*w, h/2 + Math.sin(angle)*w); ctx.stroke();
       }
-    }
-  },
-  {
-    id: 'radial-glow', label: 'Radial Glow', category: 'Pattern', emoji: '💫',
-    textColor: '#fff', refColor: '#fde68a', accentColor: '#fbbf24', dark: true,
-    render(ctx, w, h) {
-      ctx.fillStyle = '#050210'; ctx.fillRect(0, 0, w, h);
-      const r = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, Math.max(w, h)*0.65);
-      r.addColorStop(0, 'rgba(99,102,241,0.45)'); r.addColorStop(0.45, 'rgba(139,92,246,0.2)'); r.addColorStop(1, 'transparent');
-      ctx.fillStyle = r; ctx.fillRect(0, 0, w, h);
+      ctx.restore();
     }
   },
   // CUSTOM
   {
-    id: 'custom', label: 'My Custom', category: 'Custom', emoji: '🎨',
+    id: 'custom', label: 'My Custom', labelTa: 'என் விருப்பக் கலர்', category: 'Custom', categoryTa: 'தனிப்பயன்', emoji: '🎨',
     textColor: '#ffffff', refColor: '#e2e8f0', accentColor: '#fbbf24', dark: true,
     render(ctx, w, h) {
       const g = ctx.createLinearGradient(0, 0, w, h);
@@ -327,54 +240,82 @@ const THEMES: CardTheme[] = [
   },
 ];
 
-const THEME_CATEGORIES = ['All', 'Gradient', 'Classic', 'Minimal', 'Pattern', 'Custom'];
+const THEME_CATEGORIES_TA = [
+  { id: 'All', labelTa: 'அனைத்தும்' },
+  { id: 'Gradient', labelTa: 'வண்ணக்கலவை' },
+  { id: 'Classic', labelTa: 'பாரம்பரியம்' },
+  { id: 'Luxury', labelTa: 'அடர்ந்த அழகு' },
+  { id: 'Minimal', labelTa: 'எளிமை' },
+  { id: 'Pattern', labelTa: 'கோலங்கள்' },
+  { id: 'Custom', labelTa: 'தனிப்பயன்' },
+];
 
 const RATIOS: Ratio[] = [
-  { id: 'square',    label: '1:1',  icon: '⬛', w: 1080, h: 1080 },
-  { id: 'story',     label: '9:16', icon: '📱', w: 1080, h: 1920 },
-  { id: 'landscape', label: '16:9', icon: '🖥',  w: 1920, h: 1080 },
-  { id: 'portrait',  label: '4:5',  icon: '🖼',  w: 1080, h: 1350 },
+  { id: 'square',    label: '1:1',  labelTa: '1:1 சதுரம்',   icon: '⬛', w: 1080, h: 1080 },
+  { id: 'story',     label: '9:16', labelTa: '9:16 ஸ்டோரி', icon: '📱', w: 1080, h: 1920 },
+  { id: 'landscape', label: '16:9', labelTa: '16:9 திரையகம்',icon: '🖥',  w: 1920, h: 1080 },
+  { id: 'portrait',  label: '4:5',  labelTa: '4:5 படம்',     icon: '🖼',  w: 1080, h: 1350 },
 ];
 
-const FRAMES = [
-  { id: 'none',          label: 'None',     emoji: '○' },
-  { id: 'thin-border',   label: 'Border',   emoji: '□' },
-  { id: 'double-border', label: 'Double',   emoji: '⊡' },
-  { id: 'corner-marks',  label: 'Corners',  emoji: '⌐' },
-  { id: 'glow-border',   label: 'Glow',     emoji: '◈' },
-  { id: 'thick-border',  label: 'Bold',     emoji: '■' },
-  { id: 'arch-frame',    label: 'Arch 🏛️',   emoji: '∩' },
-  { id: 'vintage-dash',  label: 'Dashed ✂️', emoji: '╌' },
+const FRAMES_TA = [
+  { id: 'none',          labelEn: 'None',     labelTa: 'எதுவுமில்லை',    emoji: '○' },
+  { id: 'thin-border',   labelEn: 'Border',   labelTa: 'மெல்லிய எல்லை',  emoji: '□' },
+  { id: 'double-border', labelEn: 'Double',   labelTa: 'இரட்டை எல்லை',   emoji: '⊡' },
+  { id: 'corner-marks',  labelEn: 'Corners',  labelTa: 'மூலைக்குறிகள்',   emoji: '⌐' },
+  { id: 'glow-border',   labelEn: 'Glow',     labelTa: 'ஒளிரும் எல்லை',  emoji: '◈' },
+  { id: 'thick-border',  labelEn: 'Bold',     labelTa: 'தடிமனான எல்லை',  emoji: '■' },
+  { id: 'arch-frame',    labelEn: 'Arch',     labelTa: 'வளைவு வாயில் 🏛️', emoji: '∩' },
+  { id: 'vintage-dash',  labelEn: 'Dashed',   labelTa: 'புள்ளி எல்லை ✂️',  emoji: '╌' },
 ];
 
-const DIVIDERS = [
-  { id: 'line',    label: 'Line ──',    symbol: '──' },
-  { id: 'cross',   label: 'Cross ✝',    symbol: '✝' },
-  { id: 'diamond', label: 'Diamond ◈',  symbol: '◈' },
-  { id: 'dots',    label: 'Dots •••',   symbol: '• • •' },
-  { id: 'star',    label: 'Star ✨',     symbol: '✨' },
-  { id: 'none',    label: 'None',       symbol: '' },
+const DIVIDERS_TA = [
+  { id: 'line',    labelTa: 'நேர்கோடு ──',    symbol: '──' },
+  { id: 'cross',   labelTa: 'சிலுவை ✝',    symbol: '✝' },
+  { id: 'diamond', labelTa: 'வைரம் ◈',      symbol: '◈' },
+  { id: 'dots',    labelTa: 'புள்ளிகள் •••',   symbol: '• • •' },
+  { id: 'star',    labelTa: 'நட்சத்திரம் ✨', symbol: '✨' },
+  { id: 'none',    labelTa: 'எதுவுமில்லை',   symbol: '' },
 ];
 
-const EMBLEMS = [
-  { id: 'none',  label: 'None',   symbol: '' },
-  { id: 'dove',  label: 'Dove 🕊️', symbol: '🕊️' },
-  { id: 'cross', label: 'Cross ✝️', symbol: '✝️' },
-  { id: 'star',  label: 'Star ⭐',  symbol: '⭐' },
-  { id: 'heart', label: 'Heart 💖', symbol: '💖' },
+const EMBLEMS_TA = [
+  { id: 'none',  labelTa: 'எதுவுமில்லை',   symbol: '' },
+  { id: 'dove',  labelTa: 'புறா 🕊️',      symbol: '🕊️' },
+  { id: 'cross', labelTa: 'சிலுவை ✝️',    symbol: '✝️' },
+  { id: 'star',  labelTa: 'நட்சத்திரம் ⭐',  symbol: '⭐' },
+  { id: 'heart', labelTa: 'இதயம் 💖',      symbol: '💖' },
 ];
 
-const CUSTOM_PRESETS = [
-  { label: 'Cosmic',   from: '#667eea', to: '#764ba2', text: '#fff',    accent: '#fbbf24' },
-  { label: 'Bloom',    from: '#f093fb', to: '#f5576c', text: '#fff',    accent: '#fef3c7' },
-  { label: 'Sky',      from: '#4facfe', to: '#00f2fe', text: '#fff',    accent: '#fef9c3' },
-  { label: 'Spring',   from: '#43e97b', to: '#38f9d7', text: '#052e16', accent: '#14532d' },
-  { label: 'Candy',    from: '#fa709a', to: '#fee140', text: '#3d0014', accent: '#7f1d1d' },
-  { label: 'Midnight', from: '#1a1a2e', to: '#16213e', text: '#e2e8f0', accent: '#818cf8' },
-  { label: 'Copper',   from: '#b79b72', to: '#8b5a2b', text: '#fff7ed', accent: '#fde68a' },
-  { label: 'Forest',   from: '#134e4a', to: '#065f46', text: '#f0fdf4', accent: '#6ee7b7' },
-  { label: 'Cyber',    from: '#0f0c29', to: '#24243e', text: '#00f2fe', accent: '#ff007f' },
-  { label: 'Sunset',   from: '#ff7e5f', to: '#feb47b', text: '#2b1055', accent: '#752267' },
+const REF_PREFIXES_TA = [
+  { id: 'dash',     labelTa: '— இருப்பிடம்',   fmt: (r: string) => `— ${r}` },
+  { id: 'brackets', labelTa: '[ இருப்பிடம் ]', fmt: (r: string) => `[ ${r} ]` },
+  { id: 'dots',     labelTa: '• இருப்பிடம் •', fmt: (r: string) => `• ${r} •` },
+  { id: 'clean',    labelTa: 'இருப்பிடம் மட்டும்', fmt: (r: string) => r },
+];
+
+// ════════════════════════════════════════════════════════════════
+// 8 EXCLUSIVE TAMIL FONT FAMILIES
+// ════════════════════════════════════════════════════════════════
+
+const TAMIL_FONTS = [
+  { id: 'noto-serif', labelTa: 'பாரம்பரியம்', subTa: 'Classic Serif', font: `'Noto Serif Tamil', 'Latha', Georgia, serif` },
+  { id: 'noto-sans',  labelTa: 'நவீன எழுத்து', subTa: 'Modern Sans', font: `'Noto Sans Tamil', 'InaiMathi', sans-serif` },
+  { id: 'mukta',      labelTa: 'அழகிய மலர்', subTa: 'Mukta Malar', font: `'Mukta Malar', 'Noto Sans Tamil', sans-serif` },
+  { id: 'catamaran',  labelTa: 'கம்பீர நடை', subTa: 'Catamaran', font: `'Catamaran', 'Noto Sans Tamil', sans-serif` },
+  { id: 'kavivanar',  labelTa: 'கவிவாணர்', subTa: 'Calligraphy', font: `'Kavivanar', 'Noto Serif Tamil', cursive` },
+  { id: 'baloo',      labelTa: 'தடிமன் பாலு', subTa: 'Baloo Rounded', font: `'Baloo Thambi 2', 'Noto Sans Tamil', sans-serif` },
+  { id: 'hind',       labelTa: 'மதுரை நடை', subTa: 'Hind Madurai', font: `'Hind Madurai', 'Noto Sans Tamil', sans-serif` },
+  { id: 'arima',      labelTa: 'அரிமா கவிதை', subTa: 'Arima Script', font: `'Arima', 'Noto Sans Tamil', cursive` },
+];
+
+const CUSTOM_PRESETS_TA = [
+  { labelTa: 'பிரபஞ்சம்',  from: '#667eea', to: '#764ba2', text: '#fff',    accent: '#fbbf24' },
+  { labelTa: 'மலர்ச்சி',   from: '#f093fb', to: '#f5576c', text: '#fff',    accent: '#fef3c7' },
+  { labelTa: 'வானம்',     from: '#4facfe', to: '#00f2fe', text: '#fff',    accent: '#fef9c3' },
+  { labelTa: 'வசந்தம்',   from: '#43e97b', to: '#38f9d7', text: '#052e16', accent: '#14532d' },
+  { labelTa: 'இனிமை',     from: '#fa709a', to: '#fee140', text: '#3d0014', accent: '#7f1d1d' },
+  { labelTa: 'நள்ளிரவு',   from: '#1a1a2e', to: '#16213e', text: '#e2e8f0', accent: '#818cf8' },
+  { labelTa: 'செம்பு',    from: '#b79b72', to: '#8b5a2b', text: '#fff7ed', accent: '#fde68a' },
+  { labelTa: 'காடு',      from: '#134e4a', to: '#065f46', text: '#f0fdf4', accent: '#6ee7b7' },
 ];
 
 // ════════════════════════════════════════════════════════════════
@@ -438,12 +379,20 @@ function drawFrame(ctx: CanvasRenderingContext2D, w: number, h: number, id: stri
 }
 
 interface DrawOptions {
-  verseText: string; refText: string;
+  verseText: string; refText: string; taglineText: string;
   theme: CardTheme; useCustom: boolean;
   customColors: { from: string; to: string; text: string; accent: string };
   frame: string; textAlign: 'left'|'center'|'right';
-  fontSizeMult: number; lineHeightMult: number; fontFamily: string;
-  fontWeight: string; textStyle: string; textTransform: string;
+  lineHeightMult: number;
+  // Verse styling
+  verseFontSz: number; verseFontFam: string; verseColor: string; verseWeight: string;
+  verseStyle: string; verseOpacity: number;
+  // Reference styling
+  refFontSz: number; refFontFam: string; refColor: string; refWeight: string;
+  refPrefixId: string; refOpacity: number;
+  // Tagline styling
+  taglineFontSz: number; taglineColor: string;
+  // Options & FX
   showTagline: boolean; showQuote: boolean;
   showTextBg: boolean; showVignette: boolean;
   showTextShadow: boolean; showGrain: boolean;
@@ -458,14 +407,14 @@ function drawCard(canvas: HTMLCanvasElement, opts: DrawOptions) {
   const PAD = W * (0.08 * opts.paddingMult);
   const TW = W - PAD * 2;
 
-  // 1. Background
+  // Background
   if (opts.useCustom) {
     const g = ctx.createLinearGradient(0, 0, W, H);
     g.addColorStop(0, opts.customColors.from); g.addColorStop(1, opts.customColors.to);
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   } else { opts.theme.render(ctx, W, H); }
 
-  // 2. Grain Effect
+  // Grain Effect
   if (opts.showGrain) {
     ctx.save(); ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.035;
     for (let i = 0; i < (W * H * 0.0004); i++) {
@@ -475,7 +424,7 @@ function drawCard(canvas: HTMLCanvasElement, opts: DrawOptions) {
     ctx.restore();
   }
 
-  // 3. Vignette
+  // Vignette
   if (opts.showVignette) {
     ctx.save();
     const vig = ctx.createRadialGradient(W/2, H/2, H*0.1, W/2, H/2, Math.max(W,H)*0.75);
@@ -486,32 +435,34 @@ function drawCard(canvas: HTMLCanvasElement, opts: DrawOptions) {
   const activeAccent = opts.useCustom ? opts.customColors.accent : opts.theme.accentColor;
   if (opts.frame !== 'none') drawFrame(ctx, W, H, opts.frame, activeAccent);
 
-  const textColor = opts.useCustom ? opts.customColors.text : opts.theme.textColor;
-  const refColor  = opts.useCustom ? opts.customColors.accent : opts.theme.refColor;
-  const isTa = opts.language === 'ta';
-  const fontStack = opts.fontFamily === 'serif'
-    ? (isTa ? `"Noto Sans Tamil","Latha",Georgia,serif` : `Georgia,"Times New Roman",serif`)
-    : opts.fontFamily === 'mono' ? `"Courier New",Courier,monospace`
-    : opts.fontFamily === 'script' ? `"Brush Script MT",Cursive,Georgia,serif`
-    : (isTa ? `"Noto Sans Tamil","Latha",sans-serif` : `Inter,system-ui,sans-serif`);
+  const getFontStack = (famId: string) => {
+    const tf = TAMIL_FONTS.find(f => f.id === famId);
+    if (tf) return tf.font;
+    return famId === 'serif' ? `'Noto Serif Tamil', Georgia, serif`
+      : famId === 'mono' ? `'Courier New', monospace`
+      : famId === 'script' ? `'Kavivanar', cursive`
+      : `'Noto Sans Tamil', sans-serif`;
+  };
 
-  const baseFS = Math.round(W * 0.038 * opts.fontSizeMult);
-  const refFS  = Math.round(W * 0.022);
-  const tagFS  = Math.round(W * 0.017);
-  const lineH  = baseFS * opts.lineHeightMult;
+  const verseFS = Math.round(W * 0.038 * opts.verseFontSz);
+  const refFS   = Math.round(W * 0.022 * opts.refFontSz);
+  const tagFS   = Math.round(W * 0.017 * opts.taglineFontSz);
+  const lineH   = verseFS * opts.lineHeightMult;
   const centerY = H * 0.48;
-  const xBase = opts.textAlign === 'center' ? W/2 : opts.textAlign === 'left' ? PAD : W-PAD;
+  const xBase   = opts.textAlign === 'center' ? W/2 : opts.textAlign === 'left' ? PAD : W-PAD;
 
-  let rawVerse = opts.verseText;
-  if (opts.textTransform === 'uppercase') rawVerse = rawVerse.toUpperCase();
+  // Colors
+  const verseTextColor = opts.verseColor || (opts.useCustom ? opts.customColors.text : opts.theme.textColor);
+  const refTextColor   = opts.refColor   || (opts.useCustom ? opts.customColors.accent : opts.theme.refColor);
+  const taglineColor   = opts.taglineColor || verseTextColor;
 
   // Emblem at Top
   if (opts.emblemStyle !== 'none') {
-    const emblemObj = EMBLEMS.find(e => e.id === opts.emblemStyle);
+    const emblemObj = EMBLEMS_TA.find(e => e.id === opts.emblemStyle);
     if (emblemObj && emblemObj.symbol) {
       ctx.save(); ctx.font = `${Math.round(W*0.045)}px sans-serif`;
       ctx.textAlign = 'center'; ctx.fillStyle = activeAccent; ctx.globalAlpha = 0.85;
-      ctx.fillText(emblemObj.symbol, W/2, startYOffset(H, TW) - baseFS * 1.5);
+      ctx.fillText(emblemObj.symbol, W/2, startYOffset(H, TW) - verseFS * 1.5);
       ctx.restore();
     }
   }
@@ -523,15 +474,16 @@ function drawCard(canvas: HTMLCanvasElement, opts: DrawOptions) {
     ctx.fillText('"', PAD*0.3, centerY - TW*0.09); ctx.restore();
   }
 
-  ctx.font = `${opts.textStyle} ${opts.fontWeight} ${baseFS}px ${fontStack}`;
-  const lines = wrapText(ctx, rawVerse, TW * 0.95);
+  const fontStack = getFontStack(opts.verseFontFam);
+  ctx.font = `${opts.verseStyle} ${opts.verseWeight} ${verseFS}px ${fontStack}`;
+  const lines = wrapText(ctx, opts.verseText, TW * 0.95);
   const totalH = lines.length * lineH;
   const startY = centerY - totalH / 2;
 
   // Text Background Box
   if (opts.showTextBg) {
     ctx.save();
-    const bgPadV = baseFS * 0.6, bgPadH = baseFS * 0.85;
+    const bgPadV = verseFS * 0.6, bgPadH = verseFS * 0.85;
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
     ctx.beginPath();
     const bx = opts.textAlign === 'center' ? W/2 - TW/2 - bgPadH : opts.textAlign === 'left' ? PAD - bgPadH : W - PAD - TW - bgPadH;
@@ -546,18 +498,19 @@ function drawCard(canvas: HTMLCanvasElement, opts: DrawOptions) {
     ctx.shadowBlur = Math.max(8, W*0.012); ctx.shadowOffsetY = Math.max(2, W*0.003);
   }
 
+  // Render Verse Text
   ctx.textAlign = opts.textAlign;
-  ctx.font = `${opts.textStyle} ${opts.fontWeight} ${baseFS}px ${fontStack}`;
-  ctx.fillStyle = textColor; ctx.globalAlpha = 1;
+  ctx.font = `${opts.verseStyle} ${opts.verseWeight} ${verseFS}px ${fontStack}`;
+  ctx.fillStyle = verseTextColor; ctx.globalAlpha = opts.verseOpacity;
   lines.forEach((line, i) => ctx.fillText(line, xBase, startY + i * lineH));
   ctx.restore();
 
   // Divider
-  const sepY = startY + totalH + baseFS * 0.8;
+  const sepY = startY + totalH + verseFS * 0.8;
   if (opts.dividerStyle !== 'none') {
     ctx.save(); ctx.strokeStyle = activeAccent; ctx.fillStyle = activeAccent;
     ctx.lineWidth = Math.max(2, W*0.003); ctx.globalAlpha = 0.7;
-    const divObj = DIVIDERS.find(d => d.id === opts.dividerStyle);
+    const divObj = DIVIDERS_TA.find(d => d.id === opts.dividerStyle);
     if (divObj && divObj.symbol && divObj.id !== 'line') {
       ctx.font = `bold ${Math.round(W*0.025)}px ${fontStack}`;
       ctx.textAlign = 'center'; ctx.fillText(divObj.symbol, W/2, sepY + 4);
@@ -571,16 +524,20 @@ function drawCard(canvas: HTMLCanvasElement, opts: DrawOptions) {
     ctx.restore();
   }
 
-  // Reference Text
-  ctx.font = `bold ${refFS}px ${fontStack}`;
-  ctx.fillStyle = refColor; ctx.globalAlpha = 1; ctx.textAlign = opts.textAlign;
-  ctx.fillText(`— ${opts.refText}`, xBase, sepY + refFS * 1.8);
+  // Reference Text Formatting
+  const prefixObj = REF_PREFIXES_TA.find(p => p.id === opts.refPrefixId) || REF_PREFIXES_TA[0];
+  const formattedRef = prefixObj.fmt(opts.refText);
+  const refFontStack = getFontStack(opts.refFontFam);
+
+  ctx.font = `${opts.refWeight} ${refFS}px ${refFontStack}`;
+  ctx.fillStyle = refTextColor; ctx.globalAlpha = opts.refOpacity; ctx.textAlign = opts.textAlign;
+  ctx.fillText(formattedRef, xBase, sepY + refFS * 1.8);
 
   // Tagline Watermark
-  if (opts.showTagline) {
-    ctx.font = `${tagFS}px Inter,sans-serif`;
-    ctx.fillStyle = textColor; ctx.globalAlpha = 0.42; ctx.textAlign = 'center';
-    ctx.fillText('Bible My Gift · வேதாகம வரம்', W/2, H - PAD*0.5);
+  if (opts.showTagline && opts.taglineText) {
+    ctx.font = `${tagFS}px 'Noto Sans Tamil', Inter, sans-serif`;
+    ctx.fillStyle = taglineColor; ctx.globalAlpha = 0.5; ctx.textAlign = 'center';
+    ctx.fillText(opts.taglineText, W/2, H - PAD*0.5);
   }
 }
 
@@ -624,7 +581,7 @@ const Toggle: React.FC<{ value: boolean; onChange: (v: boolean) => void }> = ({ 
 );
 
 const SLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <p style={{ margin: '0 0 0.625rem', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{children}</p>
+  <p style={{ margin: '0 0 0.625rem', fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{children}</p>
 );
 
 // ════════════════════════════════════════════════════════════════
@@ -635,6 +592,20 @@ export const VerseCardModal: React.FC = () => {
   const { isVerseCardOpen, verseCardData, closeVerseCard, language } = useReading();
   const previewRef = useRef<HTMLCanvasElement>(null);
 
+  const isTa = language === 'ta';
+
+  const verseText = verseCardData
+    ? isTa ? verseCardData.verse.text_ta
+    : language === 'en' ? verseCardData.verse.text_en
+    : `${verseCardData.verse.text_ta}\n${verseCardData.verse.text_en}`
+    : '';
+
+  const refText = verseCardData
+    ? `${isTa ? verseCardData.book.name_ta : verseCardData.book.name_en} ${verseCardData.chapter}:${verseCardData.verse.verse}`
+    : '';
+
+  const taglineText = isTa ? 'Bible My Gift · வேதாகம வரம்' : 'Bible My Gift';
+
   // Studio State
   const [tab, setTab] = useState('theme');
   const [themeIdx, setThemeIdx] = useState(0);
@@ -642,12 +613,29 @@ export const VerseCardModal: React.FC = () => {
   const [ratioIdx, setRatioIdx] = useState(0);
   const [frame, setFrame] = useState('none');
   const [align, setAlign] = useState<'left'|'center'|'right'>('center');
-  const [fontSz, setFontSz] = useState(1.0);
   const [lineH, setLineH] = useState(1.65);
-  const [fontFam, setFontFam] = useState('serif');
-  const [fontWeight, setFontWeight] = useState('normal');
-  const [textStyle, setTextStyle] = useState('normal');
-  const [textTransform, setTextTransform] = useState('none');
+
+  // Verse Styling
+  const [verseFontSz, setVerseFontSz] = useState(1.0);
+  const [verseFontFam, setVerseFontFam] = useState('noto-serif');
+  const [verseColor, setVerseColor] = useState('');
+  const [verseWeight, setVerseWeight] = useState('normal');
+  const [verseStyle, setVerseStyle] = useState('normal');
+  const [verseOpacity, setVerseOpacity] = useState(1.0);
+
+  // Reference Styling
+  const [refFontSz, setRefFontSz] = useState(1.0);
+  const [refFontFam, setRefFontFam] = useState('noto-serif');
+  const [refColor, setRefColor] = useState('');
+  const [refWeight, setRefWeight] = useState('bold');
+  const [refPrefixId, setRefPrefixId] = useState('dash');
+  const [refOpacity, setRefOpacity] = useState(1.0);
+
+  // Tagline Styling
+  const [taglineFontSz, setTaglineFontSz] = useState(1.0);
+  const [taglineColor, setTaglineColor] = useState('');
+
+  // Toggles & Effects
   const [showTagline, setShowTagline] = useState(true);
   const [showQuote, setShowQuote] = useState(true);
   const [showTextBg, setShowTextBg] = useState(false);
@@ -665,23 +653,16 @@ export const VerseCardModal: React.FC = () => {
   const theme = THEMES[themeIdx];
   const ratio = RATIOS[ratioIdx];
 
-  const verseText = verseCardData
-    ? language === 'en' ? verseCardData.verse.text_en
-    : language === 'ta' ? verseCardData.verse.text_ta
-    : `${verseCardData.verse.text_ta}\n${verseCardData.verse.text_en}`
-    : '';
-
-  const refText = verseCardData
-    ? `${language === 'en' ? verseCardData.book.name_en : verseCardData.book.name_ta} ${verseCardData.chapter}:${verseCardData.verse.verse}`
-    : '';
-
   const drawOpts = useCallback((): DrawOptions => ({
-    verseText, refText, theme, useCustom, customColors: cc, frame,
-    textAlign: align, fontSizeMult: fontSz, lineHeightMult: lineH,
-    fontFamily: fontFam, fontWeight, textStyle, textTransform,
+    verseText, refText, taglineText,
+    theme, useCustom, customColors: cc, frame,
+    textAlign: align, lineHeightMult: lineH,
+    verseFontSz, verseFontFam, verseColor, verseWeight, verseStyle, verseOpacity,
+    refFontSz, refFontFam, refColor, refWeight, refPrefixId, refOpacity,
+    taglineFontSz, taglineColor,
     showTagline, showQuote, showTextBg, showVignette, showTextShadow, showGrain,
     dividerStyle, emblemStyle, paddingMult, language
-  }), [verseText, refText, theme, useCustom, cc, frame, align, fontSz, lineH, fontFam, fontWeight, textStyle, textTransform, showTagline, showQuote, showTextBg, showVignette, showTextShadow, showGrain, dividerStyle, emblemStyle, paddingMult, language]);
+  }), [verseText, refText, taglineText, theme, useCustom, cc, frame, align, lineH, verseFontSz, verseFontFam, verseColor, verseWeight, verseStyle, verseOpacity, refFontSz, refFontFam, refColor, refWeight, refPrefixId, refOpacity, taglineFontSz, taglineColor, showTagline, showQuote, showTextBg, showVignette, showTextShadow, showGrain, dividerStyle, emblemStyle, paddingMult, language]);
 
   const redraw = useCallback(() => {
     const pv = previewRef.current; if (!pv || !verseCardData) return;
@@ -706,7 +687,7 @@ export const VerseCardModal: React.FC = () => {
     const handleResize = () => { if (isVerseCardOpen) redraw(); };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [isVerseCardOpen, verseCardData, themeIdx, ratioIdx, frame, align, fontSz, lineH, fontFam, fontWeight, textStyle, textTransform, showTagline, showQuote, showTextBg, showVignette, showTextShadow, showGrain, dividerStyle, emblemStyle, paddingMult, cc, useCustom, redraw]);
+  }, [isVerseCardOpen, verseCardData, themeIdx, ratioIdx, frame, align, lineH, verseFontSz, verseFontFam, verseColor, verseWeight, verseStyle, verseOpacity, refFontSz, refFontFam, refColor, refWeight, refPrefixId, refOpacity, taglineFontSz, taglineColor, showTagline, showQuote, showTextBg, showVignette, showTextShadow, showGrain, dividerStyle, emblemStyle, paddingMult, cc, useCustom, redraw]);
 
   // Lock background body scroll when modal is active
   useEffect(() => {
@@ -757,11 +738,11 @@ export const VerseCardModal: React.FC = () => {
   const filteredThemes = catFilter === 'All' ? THEMES : THEMES.filter(t => t.category === catFilter);
 
   const TABS = [
-    { id: 'theme',  label: 'Theme',   ta: 'தீம்',     Icon: Palette },
-    { id: 'layout', label: 'Layout',  ta: 'அமைப்பு',  Icon: Layout  },
-    { id: 'text',   label: 'Text',    ta: 'உரை',      Icon: Type    },
-    { id: 'fx',     label: 'Effects', ta: 'விளைவுகள்', Icon: Star    },
-    { id: 'custom', label: 'Custom',  ta: 'கலர்',     Icon: Wand2   },
+    { id: 'theme',  label: 'Theme',   ta: 'தீம் தோற்றம்',    Icon: Palette },
+    { id: 'layout', label: 'Layout',  ta: 'வடிவமைப்பு',   Icon: Layout  },
+    { id: 'text',   label: 'Text',    ta: 'எழுத்து அரங்கம்', Icon: Type    },
+    { id: 'fx',     label: 'Effects', ta: 'காட்சி விளைவுகள்', Icon: Star    },
+    { id: 'custom', label: 'Custom',  ta: 'கலர் கலவை',     Icon: Wand2   },
   ];
 
   // ─── Studio Control Panels ───────────────────────────────────
@@ -769,14 +750,14 @@ export const VerseCardModal: React.FC = () => {
   const ThemePanel = (
     <div>
       <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.875rem', overflowX: 'auto', paddingBottom: '2px' }}>
-        {THEME_CATEGORIES.map(cat => (
-          <button key={cat} onClick={() => setCatFilter(cat)} style={{
+        {THEME_CATEGORIES_TA.map(cat => (
+          <button key={cat.id} onClick={() => setCatFilter(cat.id)} style={{
             padding: '0.28rem 0.85rem', borderRadius: '999px', whiteSpace: 'nowrap', border: '1.5px solid',
-            borderColor: catFilter === cat ? 'var(--accent-color)' : 'var(--border-color)',
-            background: catFilter === cat ? 'rgba(59,130,246,0.12)' : 'var(--bg-secondary)',
-            color: catFilter === cat ? 'var(--accent-color)' : 'var(--text-muted)',
+            borderColor: catFilter === cat.id ? 'var(--accent-color)' : 'var(--border-color)',
+            background: catFilter === cat.id ? 'rgba(59,130,246,0.12)' : 'var(--bg-secondary)',
+            color: catFilter === cat.id ? 'var(--accent-color)' : 'var(--text-muted)',
             fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer', transition: 'all 140ms ease'
-          }}>{cat}</button>
+          }}>{isTa ? cat.labelTa : cat.id}</button>
         ))}
       </div>
       <div className="vc-theme-grid">
@@ -798,7 +779,7 @@ export const VerseCardModal: React.FC = () => {
               {sel && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.38)' }}><Check size={18} color="#fff" /></div>}
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0.2rem 0.1rem', background: 'rgba(0,0,0,0.56)' }}>
                 <p style={{ margin: 0, fontSize: '0.58rem', color: '#fff', fontWeight: 600, lineHeight: 1, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {t.emoji} {t.label}
+                  {t.emoji} {isTa ? t.labelTa : t.label}
                 </p>
               </div>
             </button>
@@ -806,7 +787,7 @@ export const VerseCardModal: React.FC = () => {
         })}
       </div>
       <p style={{ margin: '0.75rem 0 0', fontSize: '0.82rem', color: 'var(--text-muted)', textAlign: 'center', fontStyle: 'italic' }}>
-        {theme.emoji} {theme.label} · {theme.category}
+        {theme.emoji} {isTa ? theme.labelTa : theme.label} · {isTa ? theme.categoryTa : theme.category}
       </p>
     </div>
   );
@@ -814,42 +795,42 @@ export const VerseCardModal: React.FC = () => {
   const LayoutPanel = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       <div>
-        <SLabel>{language === 'ta' ? 'Frame ஸ்டைல்' : 'Frame Style'}</SLabel>
+        <SLabel>{isTa ? 'Frame எல்லை அலங்காரம்' : 'Frame Style'}</SLabel>
         <div className="vc-frame-grid">
-          {FRAMES.map(f => (
+          {FRAMES_TA.map(f => (
             <button key={f.id} onClick={() => setFrame(f.id)} style={{
               padding: '0.55rem 0.35rem', borderRadius: '0.625rem', border: '1.5px solid',
               borderColor: frame === f.id ? 'var(--accent-color)' : 'var(--border-color)',
               background: frame === f.id ? 'rgba(59,130,246,0.1)' : 'var(--bg-secondary)',
               color: frame === f.id ? 'var(--accent-color)' : 'var(--text-secondary)',
-              cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600,
+              cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600,
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem',
               transition: 'all 140ms ease'
             }}>
               <span style={{ fontSize: '1.2rem' }}>{f.emoji}</span>
-              <span>{f.label}</span>
+              <span>{isTa ? f.labelTa : f.labelEn}</span>
             </button>
           ))}
         </div>
       </div>
 
       <div>
-        <SLabel>{language === 'ta' ? 'அலங்காரக் கோடு / பிரிப்பான்' : 'Divider Line Style'}</SLabel>
+        <SLabel>{isTa ? 'அலங்காரக் கோடு / பிரிப்பான்' : 'Divider Line Style'}</SLabel>
         <div className="vc-preset-grid">
-          {DIVIDERS.map(d => (
+          {DIVIDERS_TA.map(d => (
             <button key={d.id} onClick={() => setDividerStyle(d.id)} style={{
               padding: '0.5rem', borderRadius: '0.5rem', border: '1.5px solid',
               borderColor: dividerStyle === d.id ? 'var(--accent-color)' : 'var(--border-color)',
               background: dividerStyle === d.id ? 'rgba(59,130,246,0.1)' : 'var(--bg-secondary)',
               color: dividerStyle === d.id ? 'var(--accent-color)' : 'var(--text-secondary)',
-              fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', transition: 'all 140ms ease'
-            }}>{d.label}</button>
+              fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', transition: 'all 140ms ease'
+            }}>{d.labelTa}</button>
           ))}
         </div>
       </div>
 
       <div>
-        <SLabel>{language === 'ta' ? 'உரை சீரமைப்பு' : 'Text Alignment'}</SLabel>
+        <SLabel>{isTa ? 'உரை சீரமைப்பு' : 'Text Alignment'}</SLabel>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           {(['left', 'center', 'right'] as const).map(a => (
             <button key={a} onClick={() => setAlign(a)} style={{
@@ -861,7 +842,7 @@ export const VerseCardModal: React.FC = () => {
             }}>
               <div style={{ fontSize: '1.15rem' }}>{a === 'left' ? '⬅' : a === 'center' ? '⬛' : '➡'}</div>
               <div style={{ fontSize: '0.72rem', marginTop: '0.2rem' }}>
-                {language === 'ta' ? (a === 'left' ? 'இடது' : a === 'center' ? 'நடு' : 'வலது') : a.charAt(0).toUpperCase()+a.slice(1)}
+                {isTa ? (a === 'left' ? 'இடது' : a === 'center' ? 'நடு' : 'வலது') : a.charAt(0).toUpperCase()+a.slice(1)}
               </div>
             </button>
           ))}
@@ -870,7 +851,7 @@ export const VerseCardModal: React.FC = () => {
 
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-          <SLabel>{language === 'ta' ? 'உள் இடைவெளி (Padding)' : 'Content Margin'}</SLabel>
+          <SLabel>{isTa ? 'உள் இடைவெளி (Padding)' : 'Content Margin'}</SLabel>
           <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--accent-color)' }}>{Math.round(paddingMult*100)}%</span>
         </div>
         <input type="range" min={70} max={140} step={5} value={Math.round(paddingMult*100)}
@@ -882,117 +863,233 @@ export const VerseCardModal: React.FC = () => {
   );
 
   const TextPanel = (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-          <SLabel>{language === 'ta' ? 'எழுத்து அளவு' : 'Font Size'}</SLabel>
-          <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--accent-color)' }}>{Math.round(fontSz*100)}%</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      
+      {/* ── 1. VERSE STYLING & TAMIL FONTS ── */}
+      <div style={{ padding: '0.875rem', borderRadius: '0.875rem', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.625rem' }}>
+          <SLabel>{isTa ? '📖 வசனத்தின் தோற்றம் (Verse Design)' : '📖 Verse Design & Typography'}</SLabel>
+          <button onClick={() => { setVerseFontSz(1.0); setVerseFontFam('noto-serif'); setVerseColor(''); setVerseWeight('normal'); setVerseStyle('normal'); setVerseOpacity(1.0); }} style={{ fontSize: '0.68rem', color: 'var(--accent-color)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem', fontWeight: 600 }}>
+            <RefreshCw size={12} /> {isTa ? 'மீட்டமை' : 'Reset'}
+          </button>
         </div>
-        <input type="range" min={60} max={170} step={5} value={Math.round(fontSz*100)}
-          onChange={e => setFontSz(Number(e.target.value)/100)}
-          style={{ width: '100%', accentColor: 'var(--accent-color)' }}
-        />
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+          {/* Verse Font Size */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{isTa ? 'எழுத்து அளவு (Font Size)' : 'Font Size'}</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-color)' }}>{Math.round(verseFontSz*100)}%</span>
+            </div>
+            <input type="range" min={60} max={180} step={5} value={Math.round(verseFontSz*100)}
+              onChange={e => setVerseFontSz(Number(e.target.value)/100)}
+              style={{ width: '100%', accentColor: 'var(--accent-color)' }}
+            />
+          </div>
+
+          {/* 8 RICH TAMIL FONT SELECTIONS */}
+          <div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.4rem', fontWeight: 700 }}>
+              {isTa ? 'தமிழ் எழுத்து வடிவங்கள் (Tamil Fonts)' : 'Tamil Font Family'}
+            </span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+              {TAMIL_FONTS.map(f => (
+                <button key={f.id} onClick={() => setVerseFontFam(f.id)} style={{
+                  padding: '0.5rem', borderRadius: '0.5rem', border: '1.5px solid',
+                  borderColor: verseFontFam === f.id ? 'var(--accent-color)' : 'var(--border-color)',
+                  background: verseFontFam === f.id ? 'rgba(59,130,246,0.12)' : 'var(--bg-primary)',
+                  color: verseFontFam === f.id ? 'var(--accent-color)' : 'var(--text-primary)',
+                  cursor: 'pointer', textAlign: 'left', transition: 'all 140ms ease'
+                }}>
+                  <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, fontFamily: f.font, lineHeight: 1.2 }}>
+                    {f.labelTa}
+                  </p>
+                  <p style={{ margin: '0.15rem 0 0', fontSize: '0.62rem', color: 'var(--text-muted)' }}>
+                    {f.subTa}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Font Weight & Style Toggles */}
+          <div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.35rem' }}>
+              {isTa ? 'எழுத்து தடிமன் (Font Weight)' : 'Font Weight'}
+            </span>
+            <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.4rem' }}>
+              {[
+                ['normal', isTa ? 'சாதாரண' : 'Normal'],
+                ['500', isTa ? 'நடுத்தர' : 'Medium'],
+                ['bold', isTa ? 'தடிமனான' : 'Bold']
+              ].map(([w, label]) => (
+                <button key={w} onClick={() => setVerseWeight(w)} style={{
+                  flex: 1, padding: '0.4rem', borderRadius: '0.4rem', border: '1.5px solid',
+                  borderColor: verseWeight === w ? 'var(--accent-color)' : 'var(--border-color)',
+                  background: verseWeight === w ? 'rgba(59,130,246,0.1)' : 'var(--bg-primary)',
+                  color: verseWeight === w ? 'var(--accent-color)' : 'var(--text-secondary)',
+                  cursor: 'pointer', fontWeight: 700, fontSize: '0.72rem'
+                }}>{label}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Color & Opacity */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{isTa ? 'வசன நிறம் (Color)' : 'Verse Color'}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {verseColor && (
+                <button onClick={() => setVerseColor('')} style={{ fontSize: '0.65rem', color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}>{isTa ? 'இயல்பு' : 'Default'}</button>
+              )}
+              <input type="color" value={verseColor || (useCustom ? cc.text : theme.textColor)}
+                onChange={e => setVerseColor(e.target.value)}
+                style={{ width: '32px', height: '32px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
+              />
+            </div>
+          </div>
+
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{isTa ? 'தெளிவுத்தன்மை (Opacity)' : 'Text Opacity'}</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-color)' }}>{Math.round(verseOpacity*100)}%</span>
+            </div>
+            <input type="range" min={40} max={100} step={5} value={Math.round(verseOpacity*100)}
+              onChange={e => setVerseOpacity(Number(e.target.value)/100)}
+              style={{ width: '100%', accentColor: 'var(--accent-color)' }}
+            />
+          </div>
+        </div>
       </div>
 
+      {/* ── 2. REFERENCE STYLING ── */}
+      <div style={{ padding: '0.875rem', borderRadius: '0.875rem', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.625rem' }}>
+          <SLabel>{isTa ? '📍 இருப்பிடத்தின் தோற்றம் (Reference)' : '📍 Reference Design'}</SLabel>
+          <button onClick={() => { setRefFontSz(1.0); setRefFontFam('noto-serif'); setRefColor(''); setRefWeight('bold'); setRefPrefixId('dash'); setRefOpacity(1.0); }} style={{ fontSize: '0.68rem', color: 'var(--accent-color)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem', fontWeight: 600 }}>
+            <RefreshCw size={12} /> {isTa ? 'மீட்டமை' : 'Reset'}
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+          {/* Reference Prefix Format */}
+          <div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.35rem' }}>{isTa ? 'அடையாள வடிவம் (Prefix)' : 'Prefix Format'}</span>
+            <div className="vc-preset-grid">
+              {REF_PREFIXES_TA.map(p => (
+                <button key={p.id} onClick={() => setRefPrefixId(p.id)} style={{
+                  padding: '0.4rem', borderRadius: '0.4rem', border: '1.5px solid',
+                  borderColor: refPrefixId === p.id ? 'var(--accent-color)' : 'var(--border-color)',
+                  background: refPrefixId === p.id ? 'rgba(59,130,246,0.1)' : 'var(--bg-primary)',
+                  color: refPrefixId === p.id ? 'var(--accent-color)' : 'var(--text-secondary)',
+                  cursor: 'pointer', fontWeight: 700, fontSize: '0.72rem'
+                }}>{p.labelTa}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Reference Font Size */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{isTa ? 'எழுத்து அளவு' : 'Font Size'}</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-color)' }}>{Math.round(refFontSz*100)}%</span>
+            </div>
+            <input type="range" min={60} max={160} step={5} value={Math.round(refFontSz*100)}
+              onChange={e => setRefFontSz(Number(e.target.value)/100)}
+              style={{ width: '100%', accentColor: 'var(--accent-color)' }}
+            />
+          </div>
+
+          {/* Reference Color */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{isTa ? 'இருப்பிட நிறம்' : 'Reference Color'}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {refColor && (
+                <button onClick={() => setRefColor('')} style={{ fontSize: '0.65rem', color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}>{isTa ? 'இயல்பு' : 'Default'}</button>
+              )}
+              <input type="color" value={refColor || (useCustom ? cc.accent : theme.refColor)}
+                onChange={e => setRefColor(e.target.value)}
+                style={{ width: '32px', height: '32px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 3. TAGLINE / WATERMARK STYLING ── */}
+      <div style={{ padding: '0.875rem', borderRadius: '0.875rem', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.625rem' }}>
+          <SLabel>{isTa ? '🏷️ மேலதிக குறிப்பு (Watermark)' : '🏷️ Watermark Tagline'}</SLabel>
+          <Toggle value={showTagline} onChange={setShowTagline} />
+        </div>
+
+        {showTagline && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{isTa ? 'எழுத்து அளவு' : 'Font Size'}</span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-color)' }}>{Math.round(taglineFontSz*100)}%</span>
+              </div>
+              <input type="range" min={60} max={150} step={5} value={Math.round(taglineFontSz*100)}
+                onChange={e => setTaglineFontSz(Number(e.target.value)/100)}
+                style={{ width: '100%', accentColor: 'var(--accent-color)' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{isTa ? 'குறிப்பு நிறம்' : 'Color Override'}</span>
+              <input type="color" value={taglineColor || (useCustom ? cc.text : theme.textColor)}
+                onChange={e => setTaglineColor(e.target.value)}
+                style={{ width: '32px', height: '32px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Line Height Control */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-          <SLabel>{language === 'ta' ? 'வரி இடைவெளி' : 'Line Height'}</SLabel>
+          <SLabel>{isTa ? 'வரி இடைவெளி' : 'Line Height'}</SLabel>
           <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--accent-color)' }}>{lineH.toFixed(2)}x</span>
         </div>
-        <input type="range" min={120} max={220} step={5} value={Math.round(lineH*100)}
+        <input type="range" min={120} max={240} step={5} value={Math.round(lineH*100)}
           onChange={e => setLineH(Number(e.target.value)/100)}
           style={{ width: '100%', accentColor: 'var(--accent-color)' }}
         />
       </div>
 
-      <div>
-        <SLabel>{language === 'ta' ? 'எழுத்து வகை' : 'Font Family'}</SLabel>
-        <div className="vc-preset-grid">
-          {[
-            ['serif', 'Serif 📖'], ['sans', 'Sans 🔤'],
-            ['mono', 'Mono 💻'], ['script', 'Script ✍️']
-          ].map(([id, label]) => (
-            <button key={id} onClick={() => setFontFam(id)} style={{
-              padding: '0.55rem 0.35rem', borderRadius: '0.5rem', border: '1.5px solid',
-              borderColor: fontFam === id ? 'var(--accent-color)' : 'var(--border-color)',
-              background: fontFam === id ? 'rgba(59,130,246,0.1)' : 'var(--bg-secondary)',
-              color: fontFam === id ? 'var(--accent-color)' : 'var(--text-secondary)',
-              cursor: 'pointer', fontWeight: 700, fontSize: '0.78rem', transition: 'all 140ms ease'
-            }}>{label}</button>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <SLabel>{language === 'ta' ? 'எழுத்து தடிமன் & ஸ்டைல்' : 'Font Weight & Style'}</SLabel>
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-          {[
-            ['normal', 'Normal'], ['500', 'Medium'], ['bold', 'Bold']
-          ].map(([w, label]) => (
-            <button key={w} onClick={() => setFontWeight(w)} style={{
-              flex: 1, padding: '0.45rem', borderRadius: '0.5rem', border: '1.5px solid',
-              borderColor: fontWeight === w ? 'var(--accent-color)' : 'var(--border-color)',
-              background: fontWeight === w ? 'rgba(59,130,246,0.1)' : 'var(--bg-secondary)',
-              color: fontWeight === w ? 'var(--accent-color)' : 'var(--text-secondary)',
-              cursor: 'pointer', fontWeight: 700, fontSize: '0.75rem'
-            }}>{label}</button>
-          ))}
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button onClick={() => setTextStyle(textStyle === 'italic' ? 'normal' : 'italic')} style={{
-            flex: 1, padding: '0.45rem', borderRadius: '0.5rem', border: '1.5px solid',
-            borderColor: textStyle === 'italic' ? 'var(--accent-color)' : 'var(--border-color)',
-            background: textStyle === 'italic' ? 'rgba(59,130,246,0.1)' : 'var(--bg-secondary)',
-            color: textStyle === 'italic' ? 'var(--accent-color)' : 'var(--text-secondary)',
-            cursor: 'pointer', fontWeight: 700, fontSize: '0.75rem', fontStyle: 'italic'
-          }}>Italic Style</button>
-          <button onClick={() => setTextTransform(textTransform === 'uppercase' ? 'none' : 'uppercase')} style={{
-            flex: 1, padding: '0.45rem', borderRadius: '0.5rem', border: '1.5px solid',
-            borderColor: textTransform === 'uppercase' ? 'var(--accent-color)' : 'var(--border-color)',
-            background: textTransform === 'uppercase' ? 'rgba(59,130,246,0.1)' : 'var(--bg-secondary)',
-            color: textTransform === 'uppercase' ? 'var(--accent-color)' : 'var(--text-secondary)',
-            cursor: 'pointer', fontWeight: 700, fontSize: '0.75rem'
-          }}>UPPERCASE</button>
-        </div>
-      </div>
-
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-        <SLabel>{language === 'ta' ? 'உரை விருப்பங்கள்' : 'Text Options'}</SLabel>
-        {[
-          { key: 'quote',   val: showQuote,   set: setShowQuote,   en: 'Opening Quote Mark ❝', ta: 'மேற்கோள் குறி ❝' },
-          { key: 'tagline', val: showTagline, set: setShowTagline, en: 'App Tagline Watermark', ta: '"Bible My Gift" குறிப்பிட' },
-        ].map(({ key, val, set, en, ta }) => (
-          <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
-            <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-              {language === 'ta' ? ta : en}
-            </p>
-            <Toggle value={val} onChange={set} />
-          </div>
-        ))}
+        <SLabel>{isTa ? 'உரை விருப்பங்கள்' : 'Text Options'}</SLabel>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+          <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+            {isTa ? 'மேற்கோள் குறி ❝' : 'Opening Quote Mark ❝'}
+          </p>
+          <Toggle value={showQuote} onChange={setShowQuote} />
+        </div>
       </div>
     </div>
   );
 
   const FxPanel = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      <SLabel>{language === 'ta' ? 'மேல்சின்னம் (Top Emblem)' : 'Top Emblem Icon'}</SLabel>
+      <SLabel>{isTa ? 'மேல்சின்னம் (Top Emblem)' : 'Top Emblem Icon'}</SLabel>
       <div className="vc-preset-grid">
-        {EMBLEMS.map(e => (
+        {EMBLEMS_TA.map(e => (
           <button key={e.id} onClick={() => setEmblemStyle(e.id)} style={{
             padding: '0.5rem', borderRadius: '0.5rem', border: '1.5px solid',
             borderColor: emblemStyle === e.id ? 'var(--accent-color)' : 'var(--border-color)',
             background: emblemStyle === e.id ? 'rgba(59,130,246,0.1)' : 'var(--bg-secondary)',
             color: emblemStyle === e.id ? 'var(--accent-color)' : 'var(--text-secondary)',
             fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', transition: 'all 140ms ease'
-          }}>{e.label}</button>
+          }}>{e.labelTa}</button>
         ))}
       </div>
 
-      <SLabel>{language === 'ta' ? 'காட்சி விளைவுகள்' : 'Visual Effects'}</SLabel>
+      <SLabel>{isTa ? 'காட்சி விளைவுகள்' : 'Visual Effects'}</SLabel>
       {[
         { key: 'shadow',   val: showTextShadow, set: setShowTextShadow, en: 'Text Drop Shadow / Glow', ta: 'உரை நிழல் / ஒளி',         desc: 'Adds elegant depth behind text' },
         { key: 'textbg',   val: showTextBg,     set: setShowTextBg,     en: 'Text Background Box',     ta: 'உரை பின்னணி பெட்டி',     desc: 'Adds a subtle translucent card box' },
-        { key: 'vignette', val: showVignette,   set: setShowVignette,   en: 'Vignette (Cinematic Shadow)', ta: 'விஞ்ஞப்பன நிழல்',    desc: 'Darkens border edges for focal focus' },
+        { key: 'vignette', val: showVignette,   set: setShowVignette,   en: 'Vignette (Cinematic Shadow)', ta: 'சினிமா நிழல் (Vignette)',  desc: 'Darkens border edges for focal focus' },
         { key: 'grain',    val: showGrain,      set: setShowGrain,      en: 'Vintage Paper Grain',     ta: 'காகித தானிய விளைவு',     desc: 'Simulates fine paper texture' },
       ].map(({ key, val, set, en, ta, desc }) => (
         <div key={key} style={{
@@ -1004,7 +1101,7 @@ export const VerseCardModal: React.FC = () => {
         }}>
           <div>
             <p style={{ margin: '0 0 0.2rem', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {language === 'ta' ? ta : en}
+              {isTa ? ta : en}
             </p>
             <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-muted)' }}>{desc}</p>
           </div>
@@ -1025,33 +1122,33 @@ export const VerseCardModal: React.FC = () => {
       }}>
         <div>
           <p style={{ margin: '0 0 0.2rem', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-            {language === 'ta' ? 'தனிப்பயன் கலர்கள்' : 'Custom Colors Mode'}
+            {isTa ? 'தனிப்பயன் கலர்கள்' : 'Custom Colors Mode'}
           </p>
           <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-            {language === 'ta' ? 'உங்கள் சொந்த கலர் கலவை' : 'Build your own custom gradient'}
+            {isTa ? 'உங்கள் சொந்த கலர் கலவை உருவாக்கவும்' : 'Build your own custom gradient'}
           </p>
         </div>
         <Toggle value={useCustom} onChange={setUseCustom} />
       </div>
 
       <div>
-        <SLabel>{language === 'ta' ? 'விரைவு கலர் தொகுப்புகள்' : 'Quick Color Presets'}</SLabel>
+        <SLabel>{isTa ? 'விரைவு கலர் தொகுப்புகள்' : 'Quick Color Presets'}</SLabel>
         <div className="vc-preset-grid">
-          {CUSTOM_PRESETS.map(p => (
-            <button key={p.label} onClick={() => { setCc({ from: p.from, to: p.to, text: p.text, accent: p.accent }); setUseCustom(true); }} style={{
+          {CUSTOM_PRESETS_TA.map(p => (
+            <button key={p.labelTa} onClick={() => { setCc({ from: p.from, to: p.to, text: p.text, accent: p.accent }); setUseCustom(true); }} style={{
               padding: '0.5rem 0.25rem', borderRadius: '0.625rem',
               border: '2px solid transparent', cursor: 'pointer',
               background: `linear-gradient(135deg, ${p.from}, ${p.to})`,
               color: p.text, fontSize: '0.72rem', fontWeight: 700,
               transition: 'all 150ms ease', boxShadow: '0 2px 8px rgba(0,0,0,0.22)'
-            }}>{p.label}</button>
+            }}>{p.labelTa}</button>
           ))}
         </div>
       </div>
 
       {useCustom && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <SLabel>{language === 'ta' ? 'கலர் தேர்வு' : 'Fine-Tune Colors'}</SLabel>
+          <SLabel>{isTa ? 'கலர் தேர்வு' : 'Fine-Tune Colors'}</SLabel>
           {[
             { key: 'from',   en: 'Gradient Start', ta: 'தொடக்க கலர்' },
             { key: 'to',     en: 'Gradient End',   ta: 'இறுதி கலர்' },
@@ -1070,7 +1167,7 @@ export const VerseCardModal: React.FC = () => {
                   </div>
                 </label>
                 <div style={{ minWidth: '96px' }}>
-                  <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-primary)' }}>{language === 'ta' ? ta : en}</p>
+                  <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-primary)' }}>{isTa ? ta : en}</p>
                   <p style={{ margin: 0, fontSize: '0.67rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{val}</p>
                 </div>
               </div>
@@ -1100,7 +1197,7 @@ export const VerseCardModal: React.FC = () => {
         boxShadow: '0 4px 18px rgba(239,68,68,0.32)'
       }}>
         {didDownload ? <Check size={18}/> : <Download size={18}/>}
-        <span>{didDownload ? (language==='ta'?'பதிவிறக்கப்பட்டது!':'Downloaded!') : (language==='ta'?'PNG பதிவிறக்கு (HD)':'Download HD PNG')}</span>
+        <span>{didDownload ? (isTa ? 'பதிவிறக்கப்பட்டது!' : 'Downloaded!') : (isTa ? 'PNG பதிவிறக்கு (HD)' : 'Download HD PNG')}</span>
       </button>
       <button onClick={handleShare} disabled={isDownloading} style={{
         width: '54px', height: '54px', borderRadius: '0.875rem',
@@ -1127,7 +1224,7 @@ export const VerseCardModal: React.FC = () => {
         }}
       />
 
-      {/* ── Root Sheet — Studio modal (Wide & Tall for Desktop) ── */}
+      {/* ── Root Sheet — Studio modal ── */}
       <div
         className="vc-sheet"
         onClick={(e) => e.stopPropagation()}
@@ -1138,7 +1235,7 @@ export const VerseCardModal: React.FC = () => {
           height: '100dvh', overflow: 'hidden'
         }}
       >
-        {/* ══ PREVIEW PANEL (Left on Desktop, Top on Mobile) ══ */}
+        {/* ══ PREVIEW PANEL ══ */}
         <div className="vc-preview-panel" style={{
           background: 'linear-gradient(160deg,#090914 0%,#0f172a 100%)',
           display: 'flex', flexDirection: 'column', flexShrink: 0
@@ -1151,7 +1248,7 @@ export const VerseCardModal: React.FC = () => {
               </div>
               <div>
                 <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#f8fafc', lineHeight: 1.2 }}>
-                  {language === 'ta' ? 'வசன கார்டு ஸ்டுடியோ' : 'Verse Card Creator Studio'}
+                  {isTa ? 'வசன கார்டு ஸ்டுடியோ' : 'Verse Card Creator Studio'}
                 </p>
                 <p style={{ margin: 0, fontSize: '0.72rem', color: 'rgba(255,255,255,0.48)' }}>{refText}</p>
               </div>
@@ -1179,13 +1276,13 @@ export const VerseCardModal: React.FC = () => {
                 fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer',
                 transition: 'all 140ms ease', display: 'flex', alignItems: 'center', gap: '0.35rem'
               }}>
-                <span style={{ fontSize: '0.92rem' }}>{r.icon}</span>{r.label}
+                <span style={{ fontSize: '0.92rem' }}>{r.icon}</span>{isTa ? r.labelTa : r.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* ══ CONTROLS PANEL (Right on Desktop, Bottom on Mobile) ══ */}
+        {/* ══ CONTROLS PANEL ══ */}
         <div className="vc-controls-panel" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, background: 'var(--bg-primary)' }}>
           {/* Navigation Tabs */}
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-surface)', flexShrink: 0, overflowX: 'auto' }}>
@@ -1199,7 +1296,7 @@ export const VerseCardModal: React.FC = () => {
                 transition: 'all 140ms ease'
               }}>
                 <Icon size={16} />
-                <span>{language === 'ta' ? ta : label}</span>
+                <span>{isTa ? ta : label}</span>
               </button>
             ))}
           </div>
@@ -1236,7 +1333,7 @@ export const VerseCardModal: React.FC = () => {
           .vc-preset-grid { grid-template-columns: repeat(3, 1fr) !important; }
         }
 
-        /* ── Desktop & Laptop (≥ 768px): Large Professional Two-Column Studio Modal ── */
+        /* ── Desktop & Laptop (≥ 768px): Large Studio Modal ── */
         @media (min-width: 768px) {
           .vc-sheet {
             position: fixed !important;
@@ -1244,7 +1341,7 @@ export const VerseCardModal: React.FC = () => {
             bottom: auto !important; right: auto !important;
             transform: translate(-50%, -50%) !important;
             width: min(1180px, 94vw) !important;
-            height: min(720px, 90vh) !important;
+            height: min(740px, 90vh) !important;
             flex-direction: row !important;
             border-radius: 1.5rem !important;
             box-shadow: 0 32px 110px rgba(0,0,0,0.7) !important;
@@ -1264,7 +1361,7 @@ export const VerseCardModal: React.FC = () => {
           }
           .vc-theme-grid { grid-template-columns: repeat(5, 1fr) !important; gap: 0.625rem !important; }
           .vc-frame-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 0.625rem !important; }
-          .vc-preset-grid { grid-template-columns: repeat(5, 1fr) !important; gap: 0.5rem !important; }
+          .vc-preset-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 0.5rem !important; }
         }
 
         @keyframes vcIn {
