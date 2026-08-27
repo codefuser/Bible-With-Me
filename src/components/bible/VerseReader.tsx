@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Bookmark as BookmarkIcon, Copy, Share2, BookOpen, Highlighter } from 'lucide-react';
+import { Bookmark as BookmarkIcon, Copy, Share2, BookOpen, Highlighter, Check, Trash2 } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
 import { BibleVerse } from '../../types/bible';
@@ -355,49 +355,81 @@ export const VerseReader: React.FC = () => {
                           display: 'flex',
                           alignItems: 'center',
                           gap: '0.5rem',
-                          padding: '0.375rem 0.625rem',
+                          padding: '0.4375rem 0.75rem',
                           backgroundColor: 'var(--bg-surface)',
-                          borderRadius: '0.5rem',
+                          borderRadius: '0.625rem',
                           border: '1px solid var(--border-color)',
-                          boxShadow: 'var(--shadow-sm)'
+                          boxShadow: '0 4px 14px rgba(0, 0, 0, 0.1)'
                         }}
                       >
                         <button
-                          className="highlight-color-btn"
+                          className={`highlight-color-btn ${highlightColor === 'yellow' ? 'active' : ''}`}
                           title="Yellow Highlight"
                           onClick={() => handleSetHighlight(verseObj, 'yellow')}
                           style={{ backgroundColor: '#eab308' }}
-                        />
+                        >
+                          {highlightColor === 'yellow' && <Check size={12} color="#ffffff" />}
+                        </button>
                         <button
-                          className="highlight-color-btn"
+                          className={`highlight-color-btn ${highlightColor === 'green' ? 'active' : ''}`}
                           title="Green Highlight"
                           onClick={() => handleSetHighlight(verseObj, 'green')}
                           style={{ backgroundColor: '#22c55e' }}
-                        />
+                        >
+                          {highlightColor === 'green' && <Check size={12} color="#ffffff" />}
+                        </button>
                         <button
-                          className="highlight-color-btn"
+                          className={`highlight-color-btn ${highlightColor === 'blue' ? 'active' : ''}`}
                           title="Blue Highlight"
                           onClick={() => handleSetHighlight(verseObj, 'blue')}
                           style={{ backgroundColor: '#3b82f6' }}
-                        />
+                        >
+                          {highlightColor === 'blue' && <Check size={12} color="#ffffff" />}
+                        </button>
                         <button
-                          className="highlight-color-btn"
+                          className={`highlight-color-btn ${highlightColor === 'pink' ? 'active' : ''}`}
                           title="Pink Highlight"
                           onClick={() => handleSetHighlight(verseObj, 'pink')}
                           style={{ backgroundColor: '#ec4899' }}
-                        />
+                        >
+                          {highlightColor === 'pink' && <Check size={12} color="#ffffff" />}
+                        </button>
                         <button
-                          className="highlight-color-btn"
+                          className={`highlight-color-btn ${highlightColor === 'orange' ? 'active' : ''}`}
                           title="Orange Highlight"
                           onClick={() => handleSetHighlight(verseObj, 'orange')}
                           style={{ backgroundColor: '#f97316' }}
-                        />
+                        >
+                          {highlightColor === 'orange' && <Check size={12} color="#ffffff" />}
+                        </button>
+                        <button
+                          className={`highlight-color-btn ${highlightColor === 'purple' ? 'active' : ''}`}
+                          title="Purple Highlight"
+                          onClick={() => handleSetHighlight(verseObj, 'purple')}
+                          style={{ backgroundColor: '#a855f7' }}
+                        >
+                          {highlightColor === 'purple' && <Check size={12} color="#ffffff" />}
+                        </button>
                         {highlightColor && (
                           <button
                             onClick={() => handleSetHighlight(verseObj, null)}
-                            style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '0.25rem' }}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              fontSize: '0.75rem',
+                              color: '#ef4444',
+                              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                              border: '1px solid rgba(239, 68, 68, 0.2)',
+                              padding: '0.25rem 0.5rem',
+                              borderRadius: '0.375rem',
+                              cursor: 'pointer',
+                              marginLeft: '0.25rem',
+                              fontWeight: 500
+                            }}
                           >
-                            {language === 'en' ? 'Clear' : 'நீக்குக'}
+                            <Trash2 size={12} />
+                            <span>{language === 'en' ? 'Clear' : 'நீக்குக'}</span>
                           </button>
                         )}
                       </div>

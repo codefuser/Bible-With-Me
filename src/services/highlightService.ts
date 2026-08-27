@@ -1,7 +1,7 @@
 import { ALL_BIBLE_BOOKS } from './bibleService';
 import { upsertCloudHighlight, deleteCloudHighlight } from './userDataService';
 
-export type HighlightColor = 'yellow' | 'green' | 'blue' | 'pink' | 'orange';
+export type HighlightColor = 'yellow' | 'green' | 'blue' | 'pink' | 'orange' | 'purple';
 
 export interface VerseHighlight {
   book_id: number;
