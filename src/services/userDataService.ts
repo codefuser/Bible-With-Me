@@ -510,71 +510,16 @@ export const fetchCloudSearchData = async (
 ): Promise<{ searchHistory: string[]; openedVerses: any[] }> => {
   if (!supabase || !userId) return { searchHistory: [], openedVerses: [] };
 
-  const historySet = new Set<string>();
-  const openedList: any[] = [];
-
   try {
-    // 1. Fetch from user_activity table (guaranteed to exist across Supabase DBs)
-    const { data: actData, error: actErr } = await supabase
-      .from('user_activity')
-      .select('metadata, activity_type, created_at')
-      .eq('user_id', userId)
-      .in('activity_type', ['SEARCH_PERFORMED', 'SEARCH_RESULT_OPENED'])
-      .order('created_at', { ascending: false })
-      .limit(60);
-
-    if (!actErr && actData && actData.length > 0) {
-      actData.forEach((act) => {
-        if (act.activity_type === 'SEARCH_PERFORMED' && act.metadata?.query) {
-          const q = String(act.metadata.query).trim();
-          if (q.length >= 2) historySet.add(q);
-        } else if (act.activity_type === 'SEARCH_RESULT_OPENED' && act.metadata?.verse) {
-          const v = act.metadata.verse;
-          const exists = openedList.some(
-            (item) => item.book_id === v.book_id && item.chapter === v.chapter && item.verse === v.verse
-          );
-          if (!exists) openedList.push(v);
-        }
-      });
-    }
-
-    // 2. Fetch from user_settings table
-    const { data: setObj } = await supabase
-      .from('user_settings')
-      .select('search_history, opened_verses')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (setObj) {
-      if (Array.isArray(setObj.search_history)) {
-        setObj.search_history.forEach((term: string) => {
-          if (typeof term === 'string' && term.trim().length >= 2) {
-            historySet.add(term.trim());
-          }
-        });
-      }
-      if (Array.isArray(setObj.opened_verses)) {
-        setObj.opened_verses.forEach((v: any) => {
-          if (
-            v &&
-            v.book_id &&
-            !openedList.some(
-              (item) => item.book_id === v.book_id && item.chapter === v.chapter && item.verse === v.verse
-            )
-          ) {
-            openedList.push(v);
-          }
-        });
-      }
-    }
+    const { data: authData } = await supabase.auth.getUser();
+    const meta = authData?.user?.user_metadata || {};
+    const searchHistory = Array.isArray(meta.search_history) ? meta.search_history : [];
+    const openedVerses = Array.isArray(meta.opened_verses) ? meta.opened_verses : [];
+    return { searchHistory, openedVerses };
   } catch (err) {
     console.error('[Supabase Exception] fetchCloudSearchData threw:', err);
+    return { searchHistory: [], openedVerses: [] };
   }
-
-  return {
-    searchHistory: Array.from(historySet).slice(0, 10),
-    openedVerses: openedList.slice(0, 15)
-  };
 };
 
 export const saveCloudSearchHistory = async (
@@ -583,28 +528,14 @@ export const saveCloudSearchHistory = async (
 ): Promise<boolean> => {
   if (!supabase || !userId) return false;
   try {
-    // 1. Log latest search in user_activity
-    const latestQuery = history[0];
-    if (latestQuery) {
-      await supabase.from('user_activity').insert({
-        user_id: userId,
-        activity_type: 'SEARCH_PERFORMED',
-        metadata: { query: latestQuery, full_history: history },
-        created_at: new Date().toISOString()
-      });
+    const { error } = await supabase.auth.updateUser({
+      data: { search_history: history }
+    });
+    if (error) {
+      console.warn('[Supabase Search Sync Warning]:', error.message);
+      return false;
     }
-
-    // 2. Upsert in user_settings
-    await supabase.from('user_settings').upsert(
-      {
-        user_id: userId,
-        search_history: history,
-        updated_at: new Date().toISOString()
-      },
-      { onConflict: 'user_id' }
-    );
-
-    console.log('[Cloud Sync Success] Search history saved to Supabase for user:', userId);
+    console.log('[Cloud Sync Success] Saved search history to Supabase Auth metadata for user:', userId);
     return true;
   } catch (err) {
     console.error('[Supabase Exception] saveCloudSearchHistory failed:', err);
@@ -618,31 +549,14 @@ export const saveCloudOpenedVerses = async (
 ): Promise<boolean> => {
   if (!supabase || !userId) return false;
   try {
-    // 1. Log latest opened verse in user_activity
-    const latestVerse = openedVerses[0];
-    if (latestVerse) {
-      await supabase.from('user_activity').insert({
-        user_id: userId,
-        activity_type: 'SEARCH_RESULT_OPENED',
-        book: String(latestVerse.book_name_en || latestVerse.book_id).toUpperCase(),
-        chapter: latestVerse.chapter,
-        verse: latestVerse.verse,
-        metadata: { verse: latestVerse, full_opened: openedVerses },
-        created_at: new Date().toISOString()
-      });
+    const { error } = await supabase.auth.updateUser({
+      data: { opened_verses: openedVerses }
+    });
+    if (error) {
+      console.warn('[Supabase Opened Verses Sync Warning]:', error.message);
+      return false;
     }
-
-    // 2. Upsert in user_settings
-    await supabase.from('user_settings').upsert(
-      {
-        user_id: userId,
-        opened_verses: openedVerses,
-        updated_at: new Date().toISOString()
-      },
-      { onConflict: 'user_id' }
-    );
-
-    console.log('[Cloud Sync Success] Opened verses history saved to Supabase for user:', userId);
+    console.log('[Cloud Sync Success] Saved opened verses to Supabase Auth metadata for user:', userId);
     return true;
   } catch (err) {
     console.error('[Supabase Exception] saveCloudOpenedVerses failed:', err);
