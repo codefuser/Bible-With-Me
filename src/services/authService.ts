@@ -95,7 +95,7 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
 
 export const updateUserProfile = async (
   userId: string,
-  updates: { display_name?: string }
+  updates: { display_name?: string; avatar_url?: string }
 ): Promise<{ success: boolean; error?: string }> => {
   if (!supabase) return { success: false, error: 'Supabase client not configured.' };
   try {

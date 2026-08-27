@@ -33,6 +33,17 @@ export const AuthModal: React.FC = () => {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Prevent background body scroll when AuthModal is active
+  React.useEffect(() => {
+    if (isAuthModalOpen) {
+      const originalStyle = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
+    }
+  }, [isAuthModalOpen]);
+
   if (!isAuthModalOpen) return null;
 
   const isEn = language === 'en';
@@ -67,6 +78,10 @@ export const AuthModal: React.FC = () => {
           padding: '1rem'
         }}
         onClick={handleClose}
+        onTouchStart={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
       >
         <div
           className="auth-modal-dialog profile-dialog-wrapper"

@@ -3,7 +3,6 @@ import {
   User,
   LogOut,
   Cloud,
-  RefreshCw,
   Bookmark as BookmarkIcon,
   Highlighter,
   BookOpen,
@@ -14,7 +13,9 @@ import {
   Globe,
   Calendar,
   Flame,
-  AlertTriangle
+  Camera,
+  Upload,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useReading } from '../../context/ReadingContext';
@@ -24,15 +25,21 @@ interface UserProfileDashboardProps {
   onClose: () => void;
 }
 
+const PRESET_AVATARS = ['✝️', '🕊️', '📖', '🔥', '👑', '⭐️'];
+
 export const UserProfileDashboard: React.FC<UserProfileDashboardProps> = ({ onClose }) => {
-  const { user, profile, syncStatus, logout, triggerSync } = useAuth();
+  const { user, profile, logout } = useAuth();
   const { bookmarks, highlights, historyList, language } = useReading();
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [displayName, setDisplayName] = useState(profile?.display_name || user?.email?.split('@')[0] || '');
   const [savingName, setSavingName] = useState(false);
-  const [nameSuccess, setNameSuccess] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
+  
+  // Avatar Selection & Image Upload
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [selectedAvatar, setSelectedAvatar] = useState<string>(
+    profile?.avatar_url || localStorage.getItem('bible_app_user_avatar') || ''
+  );
 
   const isEn = language === 'en';
 
@@ -55,197 +62,218 @@ export const UserProfileDashboard: React.FC<UserProfileDashboardProps> = ({ onCl
     const res = await updateUserProfile(user.id, { display_name: displayName.trim() });
     setSavingName(false);
     if (res.success) {
-      setNameSuccess(true);
       setIsEditingName(false);
-      setTimeout(() => setNameSuccess(false), 2000);
     }
   };
 
-  const handleManualSync = async () => {
-    setIsSyncing(true);
-    await triggerSync();
-    setTimeout(() => setIsSyncing(false), 1000);
+  const handleSelectPresetAvatar = async (emoji: string) => {
+    setSelectedAvatar(emoji);
+    localStorage.setItem('bible_app_user_avatar', emoji);
+    if (user) {
+      await updateUserProfile(user.id, { avatar_url: emoji });
+    }
+    setShowAvatarPicker(false);
   };
 
-  const getSyncBadge = () => {
-    if (syncStatus === 'syncing' || isSyncing) {
-      return (
-        <span className="profile-sync-badge syncing">
-          <RefreshCw size={12} className="spin" />
-          <span>{isEn ? 'Syncing...' : 'ஒத்திசைக்கப்படுகிறது...'}</span>
-        </span>
-      );
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert(isEn ? 'Image size must be under 2MB.' : 'படம் 2MB அளவுக்குள் இருக்க வேண்டும்.');
+      return;
     }
-    if (syncStatus === 'error') {
-      return (
-        <span className="profile-sync-badge error">
-          <AlertTriangle size={12} />
-          <span>{isEn ? 'Sync Error' : 'ஒத்திசைவு பிழை'}</span>
-        </span>
-      );
-    }
-    return (
-      <span className="profile-sync-badge active">
-        <Cloud size={12} />
-        <span>{isEn ? 'Cloud Active' : 'மேகக்கணி இணைப்பில்'}</span>
-      </span>
-    );
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const dataUrl = reader.result as string;
+      setSelectedAvatar(dataUrl);
+      localStorage.setItem('bible_app_user_avatar', dataUrl);
+      if (user) {
+        await updateUserProfile(user.id, { avatar_url: dataUrl });
+      }
+      setShowAvatarPicker(false);
+    };
+    reader.readAsDataURL(file);
   };
 
   const userInitial = (displayName || user?.email || 'U')[0].toUpperCase();
 
   return (
     <div className="user-profile-modal-content">
-      {/* 1. Header Banner */}
-      <div className="profile-header-banner">
-        <button className="profile-close-btn" onClick={onClose} title={isEn ? 'Close' : 'மூடுக'}>
-          <X size={18} />
-        </button>
-
-        <div className="profile-user-avatar-container">
-          <div className="profile-avatar-circle">
-            <span>{userInitial}</span>
-          </div>
-          <div className="profile-avatar-status-dot" title="Account Active" />
+      {/* Top Bar with Title & Close */}
+      <div className="profile-top-bar">
+        <div className="profile-title-chip">
+          <Sparkles size={13} />
+          <span>{isEn ? 'User Profile' : 'பயனர் விவரம்'}</span>
         </div>
+        <button className="profile-close-btn" onClick={onClose} title={isEn ? 'Close' : 'மூடுக'}>
+          <X size={16} />
+        </button>
       </div>
 
-      {/* 2. User Main Info Card */}
-      <div className="profile-user-info-section">
-        <div className="profile-name-row">
+      {/* Hero Header Area */}
+      <div className="profile-hero-area">
+        {/* Avatar Container */}
+        <div className="profile-avatar-wrapper">
+          <div className="profile-avatar-ring">
+            {selectedAvatar ? (
+              selectedAvatar.startsWith('data:image') || selectedAvatar.startsWith('http') ? (
+                <img src={selectedAvatar} alt="Profile" className="profile-avatar-img" />
+              ) : (
+                <span className="profile-avatar-emoji">{selectedAvatar}</span>
+              )
+            ) : (
+              <span className="profile-avatar-initial">{userInitial}</span>
+            )}
+          </div>
+          <button
+            className="profile-avatar-edit-trigger"
+            onClick={() => setShowAvatarPicker(!showAvatarPicker)}
+            title={isEn ? 'Change Avatar / Photo' : 'லோகோ / படம் மாற்றுக'}
+          >
+            <Camera size={13} />
+          </button>
+        </div>
+
+        {/* User Identity */}
+        <div className="profile-identity-group">
           {isEditingName ? (
-            <div className="profile-edit-name-group">
+            <div className="profile-name-edit-inline">
               <input
                 type="text"
-                className="profile-name-input"
+                className="profile-name-input-modern"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                placeholder={isEn ? 'Enter your name...' : 'உங்கள் பெயரை உள்ளிடுக...'}
+                placeholder={isEn ? 'Enter name...' : 'உங்கள் பெயர்...'}
                 autoFocus
               />
-              <button
-                className="btn-icon save-name-btn"
-                onClick={handleSaveName}
-                disabled={savingName}
-                title="Save Name"
-              >
-                <Check size={16} />
+              <button className="btn-icon-save" onClick={handleSaveName} disabled={savingName}>
+                <Check size={15} />
               </button>
-              <button
-                className="btn-icon cancel-name-btn"
-                onClick={() => setIsEditingName(false)}
-                title="Cancel"
-              >
-                <X size={16} />
+              <button className="btn-icon-cancel" onClick={() => setIsEditingName(false)}>
+                <X size={15} />
               </button>
             </div>
           ) : (
-            <div className="profile-name-display">
-              <h2 className="profile-display-name">{displayName}</h2>
-              <button
-                className="profile-edit-trigger"
-                onClick={() => setIsEditingName(true)}
-                title={isEn ? 'Edit Name' : 'பெயரைத் திருத்துக'}
-              >
+            <div className="profile-name-headline">
+              <h2>{displayName}</h2>
+              <button className="btn-edit-pencil" onClick={() => setIsEditingName(true)} title="Edit Name">
                 <Pencil size={13} />
               </button>
+              {profile?.role === 'admin' && (
+                <span className="profile-admin-badge">
+                  <Shield size={10} /> Admin
+                </span>
+              )}
             </div>
           )}
+          <p className="profile-email-subtitle">{user?.email}</p>
 
-          {profile?.role === 'admin' && (
-            <span className="profile-role-tag admin">
-              <Shield size={11} /> Admin
+          <div className="profile-meta-pills">
+            <span className="meta-pill sync-active">
+              <Cloud size={12} />
+              <span>{isEn ? '⚡ Auto-Synced' : '⚡ தானியங்கு ஒத்திசைவு'}</span>
             </span>
-          )}
-        </div>
-
-        <p className="profile-email-text">{user?.email}</p>
-
-        <div className="profile-badges-row">
-          {getSyncBadge()}
-          {joinedDate && (
-            <span className="profile-joined-badge">
-              <Calendar size={11} />
-              <span>{isEn ? `Member since ${joinedDate}` : `இணைந்த நாள்: ${joinedDate}`}</span>
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* 3. Analytics & Progress Statistics Grid */}
-      <div className="profile-stats-grid">
-        {/* Stat 1: History / Chapters Opened */}
-        <div className="profile-stat-card">
-          <div className="stat-icon-wrapper history">
-            <BookOpen size={18} />
-          </div>
-          <div className="stat-content">
-            <span className="stat-value">{totalHistory}</span>
-            <span className="stat-label">{isEn ? 'Chapters Read' : 'வாசித்த அதிகாரங்கள்'}</span>
-          </div>
-        </div>
-
-        {/* Stat 2: Bookmarks Saved */}
-        <div className="profile-stat-card">
-          <div className="stat-icon-wrapper bookmark">
-            <BookmarkIcon size={18} />
-          </div>
-          <div className="stat-content">
-            <span className="stat-value">{totalBookmarks}</span>
-            <span className="stat-label">{isEn ? 'Bookmarks' : 'சேமித்த வசனங்கள்'}</span>
-          </div>
-        </div>
-
-        {/* Stat 3: Highlighted Verses */}
-        <div className="profile-stat-card">
-          <div className="stat-icon-wrapper highlight">
-            <Highlighter size={18} />
-          </div>
-          <div className="stat-content">
-            <span className="stat-value">{totalHighlights}</span>
-            <span className="stat-label">{isEn ? 'Highlights' : 'வண்ணமிட்டவை'}</span>
-          </div>
-        </div>
-
-        {/* Stat 4: Reading Streak / Language */}
-        <div className="profile-stat-card">
-          <div className="stat-icon-wrapper streak">
-            <Flame size={18} />
-          </div>
-          <div className="stat-content">
-            <span className="stat-value">{isEn ? 'Active' : 'இயக்கத்தில்'}</span>
-            <span className="stat-label">{isEn ? 'Cloud Backup' : 'மேகக்கணி காப்புப் பிரதி'}</span>
+            {joinedDate && (
+              <span className="meta-pill joined">
+                <Calendar size={11} />
+                <span>{joinedDate}</span>
+              </span>
+            )}
           </div>
         </div>
       </div>
 
-      {/* 4. Preference Summary & Cloud Sync Trigger Bar */}
-      <div className="profile-actions-bar">
-        <div className="profile-pref-chip">
-          <Globe size={14} />
+      {/* Avatar Selector Dropdown Popover */}
+      {showAvatarPicker && (
+        <div className="profile-avatar-popover">
+          <div className="popover-header">
+            <span>{isEn ? 'Choose Avatar Logo or Upload Photo' : 'லோகோ தேர்வு செய்ய அல்லது படம் பதிவேற்ற'}</span>
+            <button className="btn-icon-sm" onClick={() => setShowAvatarPicker(false)}>
+              <X size={13} />
+            </button>
+          </div>
+          <div className="avatar-presets-grid">
+            {PRESET_AVATARS.map((emoji) => (
+              <button
+                key={emoji}
+                className={`avatar-preset-item ${selectedAvatar === emoji ? 'active' : ''}`}
+                onClick={() => handleSelectPresetAvatar(emoji)}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+          <label className="avatar-upload-dropzone">
+            <Upload size={14} />
+            <span>{isEn ? 'Upload Photo from Device' : 'சாதனத்திலிருந்து படம் பதிவேற்ற'}</span>
+            <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
+          </label>
+        </div>
+      )}
+
+      {/* 2x2 Analytics Grid (Zero Text Clipping!) */}
+      <div className="profile-analytics-grid">
+        <div className="analytics-card history">
+          <div className="analytics-icon history">
+            <BookOpen size={16} />
+          </div>
+          <div className="analytics-text-group">
+            <span className="analytics-val">{totalHistory}</span>
+            <span className="analytics-lbl">{isEn ? 'Chapters Read' : 'வாசித்த அதிகாரங்கள்'}</span>
+          </div>
+        </div>
+
+        <div className="analytics-card bookmark">
+          <div className="analytics-icon bookmark">
+            <BookmarkIcon size={16} />
+          </div>
+          <div className="analytics-text-group">
+            <span className="analytics-val">{totalBookmarks}</span>
+            <span className="analytics-lbl">{isEn ? 'Bookmarks' : 'சேமித்த வசனங்கள்'}</span>
+          </div>
+        </div>
+
+        <div className="analytics-card highlight">
+          <div className="analytics-icon highlight">
+            <Highlighter size={16} />
+          </div>
+          <div className="analytics-text-group">
+            <span className="analytics-val">{totalHighlights}</span>
+            <span className="analytics-lbl">{isEn ? 'Highlights' : 'வண்ணமிட்டவை'}</span>
+          </div>
+        </div>
+
+        <div className="analytics-card cloud">
+          <div className="analytics-icon cloud">
+            <Flame size={16} />
+          </div>
+          <div className="analytics-text-group">
+            <span className="analytics-val">{isEn ? 'Active' : 'இயக்கத்தில்'}</span>
+            <span className="analytics-lbl">{isEn ? 'Cloud Sync' : 'மேகக்கணி இணைப்பு'}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Language / Preference Footer Strip */}
+      <div className="profile-pref-footer-strip">
+        <div className="pref-footer-chip">
+          <Globe size={13} />
           <span>{isEn ? 'Language: English' : 'மொழி: தமிழ்'}</span>
         </div>
-
-        <button
-          className="profile-sync-trigger-btn"
-          onClick={handleManualSync}
-          disabled={isSyncing}
-        >
-          <RefreshCw size={14} className={isSyncing ? 'spin' : ''} />
-          <span>{isEn ? 'Sync Cloud Data' : 'தரவை ஒத்திசைக்குக'}</span>
-        </button>
       </div>
 
-      {/* 5. Footer Sign Out Section */}
-      <div className="profile-footer-section">
+      {/* Sign Out Action Button */}
+      <div className="profile-logout-footer">
         <button
-          className="profile-logout-btn"
+          className="btn-profile-logout"
           onClick={() => {
             logout();
             onClose();
           }}
         >
-          <LogOut size={16} />
+          <LogOut size={15} />
           <span>{isEn ? 'Sign Out of Account' : 'கணக்கிலிருந்து வெளியேறுக'}</span>
         </button>
       </div>
