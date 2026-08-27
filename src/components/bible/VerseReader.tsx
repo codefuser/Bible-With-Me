@@ -90,6 +90,40 @@ export const VerseReader: React.FC = () => {
     }
   }, [currentBook.id, currentBook.code, currentChapter, selectedVerse, loading]);
 
+  const handleScrubberSelectVerse = (verseNum: number) => {
+    setActiveVerseNum(verseNum);
+    updateHashRoute(currentBook.code, currentChapter, verseNum);
+    const targetEl = verseRefs.current[verseNum];
+    if (targetEl) {
+      targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  // IntersectionObserver to auto-highlight active verse in scrubber as user scrolls
+  useEffect(() => {
+    if (loading || verses.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const vNum = Number(entry.target.getAttribute('data-verse-num'));
+            if (vNum) {
+              setActiveVerseNum(vNum);
+            }
+          }
+        });
+      },
+      { threshold: 0.4 }
+    );
+
+    Object.values(verseRefs.current).forEach((el) => {
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, [loading, verses]);
+
   // Scroll position tracking for reading progress & cloud sync
   useEffect(() => {
     if (!userId || loading) return;
@@ -219,6 +253,7 @@ export const VerseReader: React.FC = () => {
               <div
                 key={verseObj.id || verseObj.verse}
                 ref={(el) => (verseRefs.current[verseObj.verse] = el)}
+                data-verse-num={verseObj.verse}
                 className={`verse-item ${isSelected ? 'selected' : ''} ${highlightClass}`}
                 onClick={() => {
                   setActiveVerseNum(isSelected ? null : verseObj.verse);
