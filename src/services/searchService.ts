@@ -2,6 +2,8 @@ import { SearchResult, Language, Testament } from '../types/bible';
 import { loadBibleDatasets, isDatasetLoaded } from './csvBibleService';
 import { executeTanglishSearch, getBibleWordSuggestions as getSuggestions } from './tanglishSearch';
 
+export { TANGLISH_MAP } from './tanglishSearch';
+
 export const searchBibleVerses = async (
   query: string,
   language: Language = 'en',

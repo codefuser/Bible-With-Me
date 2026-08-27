@@ -43,6 +43,9 @@ interface ReadingContextType {
   isBookSelectorOpen: boolean;
   isBookmarksOpen: boolean;
   isSideNavOpen: boolean;
+  isDesktopSidebarCollapsed: boolean;
+  setIsDesktopSidebarCollapsed: (collapsed: boolean) => void;
+  toggleDesktopSidebar: () => void;
   isDailyHistoryOpen: boolean;
   isReadingHistoryOpen: boolean;
   activeStudyType: 'none' | 'verse' | 'chapter';
@@ -95,6 +98,17 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isBookSelectorOpen, setIsBookSelectorOpen] = useState<boolean>(false);
   const [isBookmarksOpen, setIsBookmarksOpen] = useState<boolean>(false);
   const [isSideNavOpen, setIsSideNavOpen] = useState<boolean>(false);
+  const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState<boolean>(
+    () => localStorage.getItem('bible_desktop_sidebar_collapsed') === 'true'
+  );
+
+  const toggleDesktopSidebar = useCallback(() => {
+    setIsDesktopSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem('bible_desktop_sidebar_collapsed', String(next));
+      return next;
+    });
+  }, []);
   const [isDailyHistoryOpen, setIsDailyHistoryOpen] = useState<boolean>(false);
   const [isReadingHistoryOpen, setIsReadingHistoryOpen] = useState<boolean>(false);
   const [isBibleDataLoading, setIsBibleDataLoading] = useState<boolean>(true);
@@ -427,6 +441,9 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setIsBookSelectorOpen,
         setIsBookmarksOpen,
         setIsSideNavOpen,
+        isDesktopSidebarCollapsed,
+        setIsDesktopSidebarCollapsed,
+        toggleDesktopSidebar,
         setIsDailyHistoryOpen,
         setIsReadingHistoryOpen,
         openVerseStudy,

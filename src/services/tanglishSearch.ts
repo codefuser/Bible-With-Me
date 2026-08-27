@@ -1,7 +1,7 @@
 import { SearchResult, Language, Testament } from '../types/bible';
-import { getAllLoadedVerses, getPreindexedBibleWords, BOOK_METADATA_LIST } from './csvBibleService';
+import { getAllLoadedVerses, getBibleWordsForPrefix, BOOK_METADATA_LIST } from './csvBibleService';
 
-// Expanded Phonetic Transliteration & Typo-Tolerance Dictionary (Tanglish -> Tamil)
+// Comprehensive Phonetic Transliteration & Typo-Tolerance Dictionary (Tanglish -> Tamil)
 export const TANGLISH_MAP: Record<string, string> = {
   // Love / Affection
   anbu: 'அன்பு',
@@ -108,27 +108,158 @@ export const TANGLISH_MAP: Record<string, string> = {
   mannippu: 'மன்னிப்பு',
   forgiveness: 'மன்னிப்பு',
 
-  // Books
+  // Expanded Bible Book Phonetic & Prefix Map (e.g., aathiyahamam, aathi, aadhi, aa -> ஆதியாகமம்)
+  aathiyahamam: 'ஆதியாகமம்',
+  aathiyagamam: 'ஆதியாகமம்',
+  aathigamam: 'ஆதியாகமம்',
+  aathiyakamam: 'ஆதியாகமம்',
+  aathi: 'ஆதியாகமம்',
+  aadhi: 'ஆதியாகமம்',
+  aadhiyagamam: 'ஆதியாகமம்',
+  aa: 'ஆதியாகமம்',
+  gen: 'ஆதியாகமம்',
+  genesis: 'ஆதியாகமம்',
+
+  yaathiraagamam: 'யாத்திராகமம்',
+  yaathiragamam: 'யாத்திராகமம்',
+  yathiragamam: 'யாத்திராகமம்',
+  yaathri: 'யாத்திராகமம்',
+  yathri: 'யாத்திராகமம்',
+  yaat: 'யாத்திராகமம்',
+  ex: 'யாத்திராகமம்',
+  exodus: 'யாத்திராகமம்',
+
+  leviyaraagmam: 'லேவியராகமம்',
+  leviyaragamam: 'லேவியராகமம்',
+  levi: 'லேவியராகமம்',
+  lev: 'லேவியராகமம்',
+  leviticus: 'லேவியராகமம்',
+
+  ennagamam: 'எண்ணாகமம்',
+  ennagmam: 'எண்ணாகமம்',
+  enni: 'எண்ணாகமம்',
+  num: 'எண்ணாகமம்',
+  numbers: 'எண்ணாகமம்',
+
+  ubaagamam: 'உபாகமம்',
+  ubagamam: 'உபாகமம்',
+  ubaa: 'உபாகமம்',
+  deut: 'உபாகமம்',
+  deuteronomy: 'உபாகமம்',
+
+  yosuva: 'யோசுவா',
+  yoshuva: 'யோசுவா',
+  joshua: 'யோசுவா',
+
+  niyayathipathigal: 'நியாயாதிபதிகள்',
+  niyaya: 'நியாயாதிபதிகள்',
+  judges: 'நியாயாதிபதிகள்',
+
+  rooth: 'ரூத்',
+  ruth: 'ரூத்',
+
+  samuel: 'சாமுவேல்',
+  samuvel: 'சாமுவேல்',
+  samvel: 'சாமுவேல்',
+  sam: 'சாமுவேல்',
+
+  rajakkal: 'இராஜாக்கள்',
+  raajakkal: 'இராஜாக்கள்',
+  kings: 'இராஜாக்கள்',
+
+  naalagamam: 'நாளாகமம்',
+  naala: 'நாளாகமம்',
+  chronicles: 'நாளாகமம்',
+
+  esra: 'எஸ்றா',
+  ezra: 'எஸ்றா',
+  negamiya: 'நெகேமியா',
+  nehemiah: 'நெகேமியா',
+  esther: 'எஸ்தர்',
+  yobu: 'யோபு',
+  job: 'யோபு',
+
+  sangitham: 'சங்கீதம்',
+  sangeetham: 'சங்கீதம்',
+  sangi: 'சங்கீதம்',
+  psalms: 'சங்கீதம்',
+  psalm: 'சங்கீதம்',
+  ps: 'சங்கீதம்',
+
+  neethimozhikal: 'நீதிமொழிகள்',
+  neethimozhi: 'நீதிமொழிகள்',
+  proverbs: 'நீதிமொழிகள்',
+
+  pirasanggi: 'பிரசங்கி',
+  pirasangi: 'பிரசங்கி',
+  ecclesiastes: 'பிரசங்கி',
+  unnathapattu: 'உன்னதப்பாட்டு',
+  esaya: 'ஏசாயா',
+  isaiah: 'ஏசாயா',
+  eremiya: 'எரேமியா',
+  jeremiah: 'எரேமியா',
+  pulambal: 'புலம்பல்',
+  lamentations: 'புலம்பல்',
+  esekiyel: 'எசேக்கியேல்',
+  ezekiel: 'எசேக்கியேல்',
+  dhaniyel: 'தானியேல்',
+  daniel: 'தானியேல்',
+
+  maththeyu: 'மத்தேயு',
+  mattheyu: 'மத்தேயு',
+  mathew: 'மத்தேயு',
+  matthew: 'மத்தேயு',
+  matt: 'மத்தேயு',
+
+  marku: 'மாற்கு',
+  mark: 'மாற்கு',
+  lookka: 'லூக்கா',
+  lukka: 'லூக்கா',
+  luke: 'லூக்கா',
+
   yovan: 'யோவான்',
   yohvan: 'யோவான்',
   yohaan: 'யோவான்',
   john: 'யோவான்',
-  maththeyu: 'மத்தேயு',
-  mmatheyya: 'மத்தேயு',
-  matthew: 'மத்தேயு',
-  marku: 'மாற்கு',
-  mark: 'மாற்கு',
-  lookka: 'லூக்கா',
-  luke: 'லூக்கா',
-  adhiyagamam: 'ஆதியாகமம்',
-  genesis: 'ஆதியாகமம்',
-  sangitham: 'சங்கீதம்',
-  sangeetham: 'சங்கீதம்',
-  psalm: 'சங்கீதம்',
-  psalms: 'சங்கீதம்',
-  neethimozhikal: 'நீதிமொழிகள்',
-  proverbs: 'நீதிமொழிகள்',
-  samuel: 'சாமுவேல்'
+
+  apposthalar: 'அப்போஸ்தலர்',
+  acts: 'அப்போஸ்தலர்',
+  romar: 'ரோமர்',
+  romans: 'ரோமர்',
+  rom: 'ரோமர்',
+
+  korinthiyar: 'கொரிந்தியர்',
+  corinthians: 'கொரிந்தியர்',
+  galathiyar: 'கலாத்தியர்',
+  galatians: 'கலாத்தியர்',
+  ephesiyar: 'எபேசியர்',
+  ephesians: 'எபேசியர்',
+  filippiayar: 'பிலிப்பியர்',
+  philippians: 'பிலிப்பியர்',
+  koloseyar: 'கொலோசெயர்',
+  colossians: 'கொலோசெயர்',
+  thesalonikeyar: 'தெசலோனிக்கேயர்',
+  thessalonians: 'தெசலோனிக்கேயர்',
+  themathayu: 'தீமோத்தேயு',
+  timothy: 'தீமோத்தேயு',
+  theethu: 'தீத்து',
+  titus: 'தீத்து',
+  pilemon: 'பிலேமோன்',
+  philemon: 'பிலேமோன்',
+  hebreyar: 'எபிரெயர்',
+  hebrews: 'எபிரெயர்',
+  yacobu: 'யாக்கோபு',
+  james: 'யாக்கோபு',
+  pedhuru: 'பேதுரு',
+  peter: 'பேதுரு',
+  yutha: 'யூதா',
+  utha: 'யூதா',
+  yuta: 'யூதா',
+  uda: 'யூதா',
+  jude: 'யூதா',
+  velippaduthina: 'வெளிப்படுத்தின',
+  revelation: 'வெளிப்படுத்தின',
+  rev: 'வெளிப்படுத்தின'
 };
 
 // Normalize Unicode strings to NFC canonical composition
@@ -142,11 +273,11 @@ interface ParsedReference {
   verse?: number;
 }
 
-// Unicode-aware Reference Parser (e.g., "John 3:16", "1 Samuel 7:1", "1 சாமுவேல் 7:1", "1sam 7", "sangitham 23 1")
+// Unicode-aware Reference Parser with Fuzzy Tanglish & Prefix Support
 export const parseBibleReference = (query: string): ParsedReference | null => {
   const normalized = normalizeString(query).toLowerCase();
 
-  // Unicode regex: optional book number (1-3) + book title (English or Tamil) + chapter + optional verse
+  // Match pattern: optional book number (1-3) + book title (English, Tamil, or Tanglish) + chapter + optional verse
   const match = normalized.match(/^((?:[1-3]\s*)?[\p{L}\s]+?)\s+(\d+)(?:[:\s]+(\d+))?$/iu);
   if (!match) return null;
 
@@ -172,7 +303,9 @@ export const parseBibleReference = (query: string): ParsedReference | null => {
       nameTa.replace(/\s+/g, '') === compactBook ||
       code === rawBook ||
       codeNoSpaces === compactBook ||
-      (mappedTanglish && (nameTa.includes(mappedTanglish) || nameEn.includes(rawBook)))
+      (mappedTanglish && (nameTa.includes(mappedTanglish) || nameEn.includes(rawBook))) ||
+      // Prefix matching for short Tanglish terms like "aathi", "aadhi", "aa" -> Genesis
+      (mappedTanglish && (nameTa.startsWith(mappedTanglish) || mappedTanglish.startsWith(nameTa)))
     );
   });
 
@@ -189,27 +322,23 @@ export const parseBibleReference = (query: string): ParsedReference | null => {
 
 /**
  * Generates live Bible word suggestions for auto-complete using pre-indexed dictionary.
- * Instant 0ms response time with 0 lag.
  */
 export const getBibleWordSuggestions = (prefix: string, limit: number = 12): string[] => {
   const norm = normalizeString(prefix);
   if (!norm || norm.length < 1) return [];
 
   const lowerPrefix = norm.toLowerCase();
-  const indexedWords = getPreindexedBibleWords();
+  const candidates = getBibleWordsForPrefix(lowerPrefix[0]);
 
   const startsMatches: string[] = [];
   const includesMatches: string[] = [];
 
-  for (const item of indexedWords) {
-    const word = item.word;
-    const wordLower = word.toLowerCase();
-
-    if (word.startsWith(norm) || wordLower.startsWith(lowerPrefix)) {
-      startsMatches.push(word);
+  for (const item of candidates) {
+    if (item.word.startsWith(norm) || item.lower.startsWith(lowerPrefix)) {
+      startsMatches.push(item.word);
       if (startsMatches.length >= limit) break;
-    } else if (word.includes(norm) || wordLower.includes(lowerPrefix)) {
-      includesMatches.push(word);
+    } else if (item.word.includes(norm) || item.lower.includes(lowerPrefix)) {
+      includesMatches.push(item.word);
     }
   }
 
@@ -219,9 +348,6 @@ export const getBibleWordSuggestions = (prefix: string, limit: number = 12): str
 
 /**
  * Executes multi-tier search across the ENTIRE Bible dataset.
- * - Never truncates results artificially (scans all 31,102 verses).
- * - Matches direct Tamil substring, English substring, Tanglish transliteration, and reference lookup.
- * - Filters by testament and optional book range if specified.
  */
 export const executeTanglishSearch = (
   query: string,
@@ -236,7 +362,7 @@ export const executeTanglishSearch = (
   const allVerses = getAllLoadedVerses();
   const lowerQuery = normQuery.toLowerCase();
 
-  // Tier 1: Reference Match ("John 3:16", "1 Samuel 7:1", "1 சாமுவேல் 7:1", "yovan 3 16")
+  // Tier 1: Reference Match ("John 3:16", "1 Samuel 7:1", "1 சாமுவேல் 7:1", "yovan 3 16", "aathi 1 1", "aathiyahamam 1:1")
   const parsedRef = parseBibleReference(normQuery);
   if (parsedRef) {
     const refResults: SearchResult[] = [];
@@ -272,6 +398,12 @@ export const executeTanglishSearch = (
   // Tier 2: Complete Dataset Search Across Every Verse
   const results: SearchResult[] = [];
   const tokens = lowerQuery.split(/\s+/).filter((t) => t.length > 0);
+  const tokenMapInfo = tokens.map((tok) => ({
+    tok,
+    mapped: TANGLISH_MAP[tok] || null
+  }));
+
+  const singleTanglishMapped = tokens.length === 1 ? TANGLISH_MAP[tokens[0]] || null : null;
 
   for (const v of allVerses) {
     const bookMeta = BOOK_METADATA_LIST[v.book_id - 1];
@@ -280,8 +412,8 @@ export const executeTanglishSearch = (
     if (fromBookId && v.book_id < fromBookId) continue;
     if (toBookId && v.book_id > toBookId) continue;
 
-    const enText = v.text_en.toLowerCase();
-    const taText = normalizeString(v.text_ta);
+    const enText = v.lower_en || v.text_en.toLowerCase();
+    const taText = v.norm_ta || normalizeString(v.text_ta);
 
     // Direct Tamil substring match (NFC normalized)
     const directTaMatch = taText.includes(normQuery);
@@ -291,16 +423,14 @@ export const executeTanglishSearch = (
     // Multi-word Token match (all tokens match in English or mapped Tamil)
     const allTokensMatch =
       tokens.length > 1 &&
-      tokens.every((tok) => {
-        const mapped = TANGLISH_MAP[tok];
+      tokenMapInfo.every(({ tok, mapped }) => {
         const matchTa = mapped ? taText.includes(mapped) : taText.includes(tok);
         const matchEn = enText.includes(tok);
         return matchTa || matchEn;
       });
 
     // Single Tanglish word match
-    const singleTanglishMatch =
-      tokens.length === 1 && TANGLISH_MAP[tokens[0]] && taText.includes(TANGLISH_MAP[tokens[0]]);
+    const singleTanglishMatch = singleTanglishMapped !== null && taText.includes(singleTanglishMapped);
 
     if (directTaMatch || directEnMatch || allTokensMatch || singleTanglishMatch) {
       results.push({

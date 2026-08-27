@@ -19,6 +19,8 @@ export interface BibleVerse {
   verse: number;
   text_en: string;
   text_ta: string;
+  norm_ta?: string;
+  lower_en?: string;
 }
 
 export interface SearchResult {
@@ -79,6 +81,7 @@ export interface UserProfile {
   id: string;
   email: string;
   display_name: string;
+  avatar_url?: string;
   role: UserRole;
   created_at: string;
   updated_at: string;

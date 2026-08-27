@@ -120,6 +120,12 @@ export const getCuratedVerseForDate = (dateStr: string): CuratedVerseRef => {
   return CURATED_DAILY_VERSES[index];
 };
 
+export const getTodayVerseRef = (): { book_id: number; chapter: number; verse: number } => {
+  const dateStr = getActiveDateString();
+  const curated = getCuratedVerseForDate(dateStr);
+  return { book_id: curated.book_id, chapter: curated.chapter, verse: curated.verse };
+};
+
 export interface LoadedDailyVerse {
   date: string;
   verse: BibleVerse;

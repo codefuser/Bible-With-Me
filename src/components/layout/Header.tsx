@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Menu, BookOpen, Search, Bookmark, Globe, Check, ChevronDown } from 'lucide-react';
+import { Menu, BookOpen, Search, Bookmark, Globe, Check, ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { Language } from '../../types/bible';
 
@@ -13,6 +13,8 @@ export const Header: React.FC = () => {
     setIsBookSelectorOpen,
     setIsBookmarksOpen,
     setIsSideNavOpen,
+    isDesktopSidebarCollapsed,
+    toggleDesktopSidebar,
     bookmarks
   } = useReading();
 
@@ -46,11 +48,11 @@ export const Header: React.FC = () => {
   return (
     <header className="header">
       <div className="header-brand">
+        {/* Mobile Hamburger Button */}
         <button
-          className="btn-icon"
+          className="btn-icon mobile-nav-trigger"
           onClick={() => setIsSideNavOpen(true)}
           title="Open Navigation Menu"
-          style={{ marginRight: '0.25rem' }}
         >
           <Menu size={20} />
         </button>

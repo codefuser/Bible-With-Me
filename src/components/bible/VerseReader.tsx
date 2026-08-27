@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Bookmark as BookmarkIcon, Copy, Share2, BookOpen, Highlighter } from 'lucide-react';
+import { Bookmark as BookmarkIcon, Copy, Share2, BookOpen, Highlighter, Check, Trash2, Sparkles } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
 import { BibleVerse } from '../../types/bible';
@@ -7,6 +7,7 @@ import { fetchChapterVerses } from '../../services/bibleService';
 import { isVerseBookmarked } from '../../services/bookmarkService';
 import { updateHashRoute } from '../../services/routerService';
 import { getVerseHighlightColor, HighlightColor } from '../../services/highlightService';
+import { getTodayVerseRef } from '../../services/dailyVerseService';
 import { trackActivity } from '../../services/activityService';
 import { upsertCloudProgress } from '../../services/userDataService';
 import { LoadingState } from '../common/LoadingState';
@@ -35,6 +36,7 @@ export const VerseReader: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
   const [activeVerseNum, setActiveVerseNum] = useState<number | null>(selectedVerse);
+  const [clickedVerseNum, setClickedVerseNum] = useState<number | null>(selectedVerse);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showHighlightPicker, setShowHighlightPicker] = useState<boolean>(false);
 
@@ -80,6 +82,7 @@ export const VerseReader: React.FC = () => {
   useEffect(() => {
     if (selectedVerse) {
       setActiveVerseNum(selectedVerse);
+      setClickedVerseNum(selectedVerse);
       updateHashRoute(currentBook.code, currentChapter, selectedVerse);
       setTimeout(() => {
         verseRefs.current[selectedVerse]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -89,6 +92,40 @@ export const VerseReader: React.FC = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [currentBook.id, currentBook.code, currentChapter, selectedVerse, loading]);
+
+  const handleScrubberSelectVerse = (verseNum: number) => {
+    setActiveVerseNum(verseNum);
+    updateHashRoute(currentBook.code, currentChapter, verseNum);
+    const targetEl = verseRefs.current[verseNum];
+    if (targetEl) {
+      targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  // IntersectionObserver to auto-highlight active verse in scrubber as user scrolls
+  useEffect(() => {
+    if (loading || verses.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const vNum = Number(entry.target.getAttribute('data-verse-num'));
+            if (vNum) {
+              setActiveVerseNum(vNum);
+            }
+          }
+        });
+      },
+      { threshold: 0.4 }
+    );
+
+    Object.values(verseRefs.current).forEach((el) => {
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, [loading, verses]);
 
   // Scroll position tracking for reading progress & cloud sync
   useEffect(() => {
@@ -210,21 +247,37 @@ export const VerseReader: React.FC = () => {
         <div className="verse-list">
           {verses.map((verseObj) => {
             const isBookmarked = isVerseBookmarked(bookmarks, currentBook.id, currentChapter, verseObj.verse);
-            const isSelected = activeVerseNum === verseObj.verse;
+            const isSelected = clickedVerseNum === verseObj.verse;
             const highlightColor = getVerseHighlightColor(highlights, currentBook.id, currentChapter, verseObj.verse);
-
             const highlightClass = highlightColor ? `highlight-${highlightColor}` : '';
+
+            const todayRef = getTodayVerseRef();
+            const isTodayDailyVerse =
+              todayRef &&
+              todayRef.book_id === currentBook.id &&
+              todayRef.chapter === currentChapter &&
+              todayRef.verse === verseObj.verse;
 
             return (
               <div
                 key={verseObj.id || verseObj.verse}
                 ref={(el) => (verseRefs.current[verseObj.verse] = el)}
-                className={`verse-item ${isSelected ? 'selected' : ''} ${highlightClass}`}
+                data-verse-num={verseObj.verse}
+                className={`verse-item ${isSelected ? 'selected' : ''} ${highlightClass} ${
+                  isTodayDailyVerse ? 'is-today-daily-verse' : ''
+                }`}
                 onClick={() => {
-                  setActiveVerseNum(isSelected ? null : verseObj.verse);
+                  setClickedVerseNum(isSelected ? null : verseObj.verse);
                   setShowHighlightPicker(false);
                 }}
               >
+                {/* Special Devotional Badge for Today's Revival Word */}
+                {isTodayDailyVerse && (
+                  <div className="today-daily-verse-badge">
+                    <Sparkles size={11} />
+                    <span>{language === 'en' ? "Today's Revival Word" : 'இன்றைய எழுப்புதல் வார்த்தை'}</span>
+                  </div>
+                )}
                 <div className="verse-content-row">
                   <span className="verse-number">{verseObj.verse}</span>
 
@@ -294,7 +347,7 @@ export const VerseReader: React.FC = () => {
                         <span>{language === 'en' ? 'Share' : 'பகிர்'}</span>
                       </button>
 
-                      {/* Verse Study Action */}
+                      {/* Verse Study Action (Disabled/Hidden - Uncomment to enable):
                       <button
                         className="verse-action-btn"
                         onClick={() => openVerseStudy(currentBook.id, currentChapter, verseObj.verse)}
@@ -302,6 +355,7 @@ export const VerseReader: React.FC = () => {
                         <BookOpen size={14} />
                         <span>{language === 'en' ? 'Study' : 'ஆராய்க'}</span>
                       </button>
+                      */}
 
                       {/* Highlight Color Palette Trigger */}
                       <button
@@ -320,49 +374,81 @@ export const VerseReader: React.FC = () => {
                           display: 'flex',
                           alignItems: 'center',
                           gap: '0.5rem',
-                          padding: '0.375rem 0.625rem',
+                          padding: '0.4375rem 0.75rem',
                           backgroundColor: 'var(--bg-surface)',
-                          borderRadius: '0.5rem',
+                          borderRadius: '0.625rem',
                           border: '1px solid var(--border-color)',
-                          boxShadow: 'var(--shadow-sm)'
+                          boxShadow: '0 4px 14px rgba(0, 0, 0, 0.1)'
                         }}
                       >
                         <button
-                          className="highlight-color-btn"
+                          className={`highlight-color-btn ${highlightColor === 'yellow' ? 'active' : ''}`}
                           title="Yellow Highlight"
                           onClick={() => handleSetHighlight(verseObj, 'yellow')}
                           style={{ backgroundColor: '#eab308' }}
-                        />
+                        >
+                          {highlightColor === 'yellow' && <Check size={12} color="#ffffff" />}
+                        </button>
                         <button
-                          className="highlight-color-btn"
+                          className={`highlight-color-btn ${highlightColor === 'green' ? 'active' : ''}`}
                           title="Green Highlight"
                           onClick={() => handleSetHighlight(verseObj, 'green')}
                           style={{ backgroundColor: '#22c55e' }}
-                        />
+                        >
+                          {highlightColor === 'green' && <Check size={12} color="#ffffff" />}
+                        </button>
                         <button
-                          className="highlight-color-btn"
+                          className={`highlight-color-btn ${highlightColor === 'blue' ? 'active' : ''}`}
                           title="Blue Highlight"
                           onClick={() => handleSetHighlight(verseObj, 'blue')}
                           style={{ backgroundColor: '#3b82f6' }}
-                        />
+                        >
+                          {highlightColor === 'blue' && <Check size={12} color="#ffffff" />}
+                        </button>
                         <button
-                          className="highlight-color-btn"
+                          className={`highlight-color-btn ${highlightColor === 'pink' ? 'active' : ''}`}
                           title="Pink Highlight"
                           onClick={() => handleSetHighlight(verseObj, 'pink')}
                           style={{ backgroundColor: '#ec4899' }}
-                        />
+                        >
+                          {highlightColor === 'pink' && <Check size={12} color="#ffffff" />}
+                        </button>
                         <button
-                          className="highlight-color-btn"
+                          className={`highlight-color-btn ${highlightColor === 'orange' ? 'active' : ''}`}
                           title="Orange Highlight"
                           onClick={() => handleSetHighlight(verseObj, 'orange')}
                           style={{ backgroundColor: '#f97316' }}
-                        />
+                        >
+                          {highlightColor === 'orange' && <Check size={12} color="#ffffff" />}
+                        </button>
+                        <button
+                          className={`highlight-color-btn ${highlightColor === 'purple' ? 'active' : ''}`}
+                          title="Purple Highlight"
+                          onClick={() => handleSetHighlight(verseObj, 'purple')}
+                          style={{ backgroundColor: '#a855f7' }}
+                        >
+                          {highlightColor === 'purple' && <Check size={12} color="#ffffff" />}
+                        </button>
                         {highlightColor && (
                           <button
                             onClick={() => handleSetHighlight(verseObj, null)}
-                            style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '0.25rem' }}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              fontSize: '0.75rem',
+                              color: '#ef4444',
+                              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                              border: '1px solid rgba(239, 68, 68, 0.2)',
+                              padding: '0.25rem 0.5rem',
+                              borderRadius: '0.375rem',
+                              cursor: 'pointer',
+                              marginLeft: '0.25rem',
+                              fontWeight: 500
+                            }}
                           >
-                            {language === 'en' ? 'Clear' : 'நீக்குக'}
+                            <Trash2 size={12} />
+                            <span>{language === 'en' ? 'Clear' : 'நீக்குக'}</span>
                           </button>
                         )}
                       </div>

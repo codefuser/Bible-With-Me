@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Mail, Lock, User, LogIn, UserPlus, AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { resetPassword } from '../../services/authService';
+import { UserProfileDashboard } from './UserProfileDashboard';
 
 // Read language preference directly from localStorage to avoid ReadingProvider dependency
 const getModalLanguage = (): 'en' | 'ta' => {
@@ -18,7 +19,7 @@ const getModalLanguage = (): 'en' | 'ta' => {
 };
 
 export const AuthModal: React.FC = () => {
-  const { isAuthModalOpen, setIsAuthModalOpen, login, signup } = useAuth();
+  const { isAuthenticated, isAuthModalOpen, setIsAuthModalOpen, login, signup } = useAuth();
   const language = getModalLanguage();
 
   const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>('login');
@@ -31,6 +32,17 @@ export const AuthModal: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Prevent background body scroll when AuthModal is active
+  React.useEffect(() => {
+    if (isAuthModalOpen) {
+      const originalStyle = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
+    }
+  }, [isAuthModalOpen]);
 
   if (!isAuthModalOpen) return null;
 
@@ -49,6 +61,37 @@ export const AuthModal: React.FC = () => {
     resetForm();
     setIsAuthModalOpen(false);
   };
+
+  if (isAuthenticated) {
+    return (
+      <div
+        className="auth-modal-overlay"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 300,
+          backgroundColor: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1rem'
+        }}
+        onClick={handleClose}
+        onTouchStart={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
+      >
+        <div
+          className="auth-modal-dialog profile-dialog-wrapper"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <UserProfileDashboard onClose={handleClose} />
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
