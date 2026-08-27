@@ -194,7 +194,7 @@ export const DailyVerseCard: React.FC = () => {
               <span>{promptText}</span>
             </p>
 
-            {/* Action Buttons: Action 1 (Verse Study) & Action 2 (Chapter Study) */}
+            {/* Action Buttons (Study Options Hidden - Uncomment to enable):
             <div
               style={{
                 display: 'flex',
@@ -237,6 +237,7 @@ export const DailyVerseCard: React.FC = () => {
                 <span>{language === 'ta' ? 'அதிகாரத்தை முழுமையாக அறிய' : 'Explore Full Chapter'}</span>
               </button>
             </div>
+            */}
           </div>
         </div>
       </div>

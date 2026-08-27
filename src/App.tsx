@@ -182,8 +182,10 @@ const MainLayout: React.FC = () => {
       <SearchModal />
       <PreferencesModal />
       <BookmarksModal />
+      {/* Study Modals (Disabled/Hidden - Uncomment to enable):
       <VerseStudyModal />
       <ChapterStudyModal />
+      */}
       <DailyHistoryModal />
       <ReadingHistoryModal />
       <AuthModal />

@@ -107,6 +107,7 @@ export const DailyHistoryModal: React.FC = () => {
                         paddingTop: '0.375rem'
                       }}
                     >
+                      {/* Study Option (Disabled/Hidden - Uncomment to enable):
                       <button
                         className="btn-pill"
                         onClick={() => handleStudyVerse(item)}
@@ -115,6 +116,7 @@ export const DailyHistoryModal: React.FC = () => {
                         <Compass size={13} />
                         <span>{language === 'ta' ? 'ஆழமாக அறிய' : 'Study'}</span>
                       </button>
+                      */}
 
                       <button
                         className="btn-pill"

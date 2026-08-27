@@ -329,7 +329,7 @@ export const VerseReader: React.FC = () => {
                         <span>{language === 'en' ? 'Share' : 'பகிர்'}</span>
                       </button>
 
-                      {/* Verse Study Action */}
+                      {/* Verse Study Action (Disabled/Hidden - Uncomment to enable):
                       <button
                         className="verse-action-btn"
                         onClick={() => openVerseStudy(currentBook.id, currentChapter, verseObj.verse)}
@@ -337,6 +337,7 @@ export const VerseReader: React.FC = () => {
                         <BookOpen size={14} />
                         <span>{language === 'en' ? 'Study' : 'ஆராய்க'}</span>
                       </button>
+                      */}
 
                       {/* Highlight Color Palette Trigger */}
                       <button
