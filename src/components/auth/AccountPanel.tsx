@@ -2,6 +2,7 @@ import React from 'react';
 import { User, LogIn, LogOut, Cloud, RefreshCw, Shield, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useReading } from '../../context/ReadingContext';
+import { UserAvatar } from '../common/UserAvatar';
 
 export const AccountPanel: React.FC = () => {
   const { user, profile, isAuthenticated, syncStatus, logout, setIsAuthModalOpen, triggerSync } = useAuth();
@@ -85,21 +86,7 @@ export const AccountPanel: React.FC = () => {
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-          <div
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--accent-soft)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--accent-color)',
-              fontWeight: 700
-            }}
-          >
-            {(profile?.display_name || user?.email || 'U')[0].toUpperCase()}
-          </div>
+          <UserAvatar avatarUrl={profile?.avatar_url} name={profile?.display_name || user?.email} size={36} />
           <div>
             <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
               <span>{profile?.display_name || user?.email?.split('@')[0]}</span>

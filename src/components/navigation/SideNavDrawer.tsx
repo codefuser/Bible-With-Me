@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Search, Bookmark, Settings, ChevronRight, History, Compass, User, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
+import { UserAvatar } from '../common/UserAvatar';
 import { Testament, BibleBook } from '../../types/bible';
 import { TANGLISH_MAP } from '../../services/tanglishSearch';
 
@@ -60,7 +61,7 @@ const SideNavContentBody: React.FC<{ onCloseNav?: () => void }> = ({ onCloseNav 
     setBookAndChapter
   } = useReading();
 
-  const { isAuthenticated, setIsAuthModalOpen } = useAuth();
+  const { user, profile, isAuthenticated, setIsAuthModalOpen } = useAuth();
 
   const [activeTestament, setActiveTestament] = useState<Testament>('OT');
   const [expandedBookId, setExpandedBookId] = useState<number | null>(currentBook.id);
@@ -137,7 +138,7 @@ const SideNavContentBody: React.FC<{ onCloseNav?: () => void }> = ({ onCloseNav 
           }}
           style={{ justifyContent: 'flex-start', fontSize: '0.8125rem', gap: '0.375rem', padding: '0.4375rem 0.625rem' }}
         >
-          <User size={15} />
+          <UserAvatar avatarUrl={profile?.avatar_url} name={profile?.display_name || user?.email} size={18} />
           <span>{isAuthenticated ? (language === 'en' ? 'Account' : 'கணக்கு') : (language === 'en' ? 'Sign In' : 'உள்நுழைக')}</span>
         </button>
       </div>
