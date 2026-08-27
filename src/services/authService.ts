@@ -79,14 +79,32 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
-    if (error || !data) {
-      console.warn('Could not fetch user profile:', error?.message);
-      return null;
+    if (error) {
+      console.warn('[Supabase Profile] fetch warning:', error.message);
     }
 
-    return data as UserProfile;
+    if (data) {
+      return data as UserProfile;
+    }
+
+    // Fallback: check Supabase Auth user metadata
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData?.user && userData.user.id === userId) {
+      const meta = userData.user.user_metadata || {};
+      return {
+        id: userId,
+        email: userData.user.email || '',
+        display_name: meta.display_name || userData.user.email?.split('@')[0] || 'User',
+        avatar_url: meta.avatar_url || localStorage.getItem('bible_app_user_avatar') || undefined,
+        role: 'user',
+        created_at: userData.user.created_at,
+        updated_at: new Date().toISOString()
+      } as UserProfile;
+    }
+
+    return null;
   } catch (err) {
     console.error('Error fetching profile:', err);
     return null;
@@ -99,13 +117,44 @@ export const updateUserProfile = async (
 ): Promise<{ success: boolean; error?: string }> => {
   if (!supabase) return { success: false, error: 'Supabase client not configured.' };
   try {
-    const { error } = await supabase
+    // 1. Try Upsert on profiles table
+    const { error: upsertErr } = await supabase
       .from('profiles')
-      .update(updates)
-      .eq('id', userId);
-    if (error) return { success: false, error: error.message };
+      .upsert(
+        {
+          id: userId,
+          ...updates,
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: 'id' }
+      );
+
+    if (upsertErr) {
+      console.warn('[Supabase Profile Upsert Warning] Trying update fallback:', upsertErr.message);
+      // 2. Try Update fallback
+      const { error: updateErr } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', userId);
+
+      if (updateErr) {
+        console.error('[Supabase Profile Update Error]:', updateErr.message);
+      }
+    }
+
+    // 3. Backup to Supabase Auth user metadata
+    try {
+      await supabase.auth.updateUser({
+        data: updates
+      });
+      console.log('[Supabase Auth] Updated user_metadata with profile updates for:', userId);
+    } catch (authErr) {
+      console.warn('[Supabase Auth Metadata Warning]:', authErr);
+    }
+
     return { success: true };
   } catch (err: any) {
+    console.error('[updateUserProfile Exception]:', err);
     return { success: false, error: err?.message || 'Failed to update profile.' };
   }
 };
