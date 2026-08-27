@@ -1170,11 +1170,15 @@ a {
 .desktop-sidebar-header {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   padding: 0 0.875rem;
   height: 3.5rem;
   border-bottom: 1px solid var(--border-color);
   background-color: var(--bg-surface);
+}
+
+.sidenav-drawer .desktop-collapse-btn {
+  display: none !important;
 }
 
 .desktop-sidebar-collapsed-inner {
