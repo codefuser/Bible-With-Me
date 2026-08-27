@@ -1391,24 +1391,35 @@ a {
 
 .profile-avatar-wrapper {
   position: relative;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.5rem;
 }
 
 .profile-avatar-ring {
-  width: 82px;
-  height: 82px;
+  width: 140px;
+  height: 140px;
+  min-width: 140px;
+  min-height: 140px;
   border-radius: 50%;
   background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 3px solid var(--bg-surface);
-  box-shadow: 0 0 0 3px var(--accent-soft), 0 8px 24px rgba(59, 130, 246, 0.25);
+  border: 4px solid var(--bg-surface);
+  box-shadow: 0 0 0 4px var(--accent-color), 0 12px 32px rgba(59, 130, 246, 0.35);
   overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-avatar-ring:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 0 5px var(--accent-color), 0 16px 40px rgba(59, 130, 246, 0.45);
 }
 
 .profile-avatar-initial {
-  font-size: 2.25rem;
+  font-size: 3.75rem;
   font-weight: 700;
   color: #ffffff;
 }
@@ -1420,25 +1431,25 @@ a {
 }
 
 .profile-avatar-emoji {
-  font-size: 2.375rem;
+  font-size: 4.25rem;
   line-height: 1;
 }
 
 .profile-avatar-edit-trigger {
   position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 1.75rem;
-  height: 1.75rem;
+  bottom: 2px;
+  right: calc(50% - 65px);
+  width: 2.25rem;
+  height: 2.25rem;
   border-radius: 50%;
   background-color: var(--accent-color);
   color: #ffffff;
-  border: 2px solid var(--bg-surface);
+  border: 3px solid var(--bg-surface);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   transition: all 0.15s ease;
 }
 

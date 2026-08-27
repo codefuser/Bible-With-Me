@@ -35,7 +35,7 @@ const compressImage = (file: File): Promise<string> => {
       img.onload = () => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        const maxDim = 160;
+        const maxDim = 400; // Sharp 400x400 HD resolution for large photo display
         let width = img.width;
         let height = img.height;
 
@@ -56,7 +56,7 @@ const compressImage = (file: File): Promise<string> => {
 
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', 0.75));
+          resolve(canvas.toDataURL('image/jpeg', 0.85));
         } else {
           resolve(e.target?.result as string);
         }

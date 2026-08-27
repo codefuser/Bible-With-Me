@@ -99,23 +99,17 @@ export const DailyVerseCard: React.FC = () => {
           userSelect: 'none'
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.375rem',
-            fontSize: '0.8125rem',
-            fontWeight: 600,
-            color: 'var(--accent-color)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em'
-          }}
-        >
-          <Sparkles size={15} />
-          <span>{language === 'ta' ? 'இன்றைய எழுப்புதல் வார்த்தை' : "Today's Revival Word"}</span>
-          <span style={{ fontWeight: 600, color: 'var(--text-muted)', marginLeft: '0.25rem' }}>
-            · {language === 'ta' ? refTa : refEn}
-          </span>
+        <div className="daily-verse-header-title-group">
+          <div className="daily-verse-title-wrapper">
+            <Sparkles size={15} className="daily-verse-sparkles-icon" />
+            <span className="daily-verse-title-text">
+              {language === 'ta' ? 'இன்றைய எழுப்புதல் வார்த்தை' : "Today's Revival Word"}
+            </span>
+          </div>
+          <div className="daily-verse-ref-text">
+            <span className="daily-verse-ref-dot">· </span>
+            <span>{language === 'ta' ? refTa : refEn}</span>
+          </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>

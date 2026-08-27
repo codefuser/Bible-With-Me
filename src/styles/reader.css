@@ -208,6 +208,60 @@
   border-color: rgba(251, 191, 36, 0.35);
 }
 
+/* Daily Verse Header Title Group Styling */
+.daily-verse-header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--accent-color);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.daily-verse-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.daily-verse-sparkles-icon {
+  transform: translateY(2px);
+  flex-shrink: 0;
+}
+
+.daily-verse-ref-text {
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-left: 0.25rem;
+}
+
+/* Mobile Responsiveness (< 640px) for Today's Revival Word Header */
+@media (max-width: 639px) {
+  .daily-verse-header-title-group {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.125rem !important;
+  }
+
+  .daily-verse-title-wrapper {
+    white-space: nowrap;
+  }
+
+  .daily-verse-ref-text {
+    margin-left: 1.3rem !important;
+    font-size: 0.8125rem !important;
+    color: var(--text-muted) !important;
+    white-space: nowrap;
+    text-transform: none;
+  }
+
+  .daily-verse-ref-dot {
+    display: none !important;
+  }
+}
+
 /* Professional Highlight Color Swatch Buttons */
 .highlight-color-btn {
   width: 1.625rem;

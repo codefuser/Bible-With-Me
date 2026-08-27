@@ -126,31 +126,18 @@ export const AccountPanel: React.FC = () => {
         style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0.375rem 0.625rem',
+          gap: '0.4375rem',
+          padding: '0.5rem 0.75rem',
           borderRadius: '0.375rem',
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border-color)',
-          fontSize: '0.75rem'
+          backgroundColor: 'rgba(16, 185, 129, 0.08)',
+          border: '1px solid rgba(16, 185, 129, 0.25)',
+          fontSize: '0.75rem',
+          color: '#10b981',
+          fontWeight: 600
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: 'var(--text-secondary)' }}>
-          {getSyncIcon()}
-          <span>{getSyncLabel()}</span>
-        </div>
-        <button
-          onClick={triggerSync}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--accent-color)',
-            fontWeight: 600,
-            fontSize: '0.75rem',
-            cursor: 'pointer'
-          }}
-        >
-          {isEn ? 'Sync Now' : 'இப்போது ஒத்திசைக்க'}
-        </button>
+        {getSyncIcon()}
+        <span>{isEn ? '⚡ Auto Cloud Sync Active' : '⚡ தானியங்கு மேகக்கணி ஒத்திசைவு இயக்கத்தில் உள்ளது'}</span>
       </div>
     </div>
   );

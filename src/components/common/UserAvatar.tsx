@@ -7,6 +7,7 @@ interface UserAvatarProps {
   size?: number;
   className?: string;
   style?: React.CSSProperties;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 export const UserAvatar: React.FC<UserAvatarProps> = ({
@@ -14,7 +15,8 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   name,
   size = 28,
   className = '',
-  style = {}
+  style = {},
+  onClick
 }) => {
   const effectiveAvatar = avatarUrl || localStorage.getItem('bible_app_user_avatar');
 
@@ -26,6 +28,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
           src={trimmed}
           alt="User Profile Avatar"
           className={className}
+          onClick={onClick}
           style={{
             width: `${size}px`,
             height: `${size}px`,
@@ -36,6 +39,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
             boxShadow: '0 2px 6px rgba(0, 0, 0, 0.12)',
             display: 'inline-block',
             flexShrink: 0,
+            cursor: onClick ? 'pointer' : undefined,
             ...style
           }}
         />
