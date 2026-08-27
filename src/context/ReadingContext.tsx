@@ -26,6 +26,12 @@ import {
 import { trackActivity } from '../services/activityService';
 import { useAuth } from './AuthContext';
 
+interface VerseCardData {
+  verse: BibleVerse;
+  book: BibleBook;
+  chapter: number;
+}
+
 interface ReadingContextType {
   books: BibleBook[];
   currentBook: BibleBook;
@@ -50,6 +56,11 @@ interface ReadingContextType {
   isReadingHistoryOpen: boolean;
   activeStudyType: 'none' | 'verse' | 'chapter';
   studyLocation: { bookId: number; chapter: number; verse?: number } | null;
+  /** Verse Card Creator modal state */
+  isVerseCardOpen: boolean;
+  verseCardData: VerseCardData | null;
+  openVerseCard: (verse: BibleVerse, book: BibleBook, chapter: number) => void;
+  closeVerseCard: () => void;
   setBookAndChapter: (book: BibleBook, chapter: number, verse?: number) => void;
   setChapter: (chapter: number) => void;
   setLanguage: (lang: Language) => void;
@@ -115,6 +126,19 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const [activeStudyType, setActiveStudyType] = useState<'none' | 'verse' | 'chapter'>('none');
   const [studyLocation, setStudyLocation] = useState<{ bookId: number; chapter: number; verse?: number } | null>(null);
+
+  // Verse Card Creator state
+  const [isVerseCardOpen, setIsVerseCardOpen] = useState<boolean>(false);
+  const [verseCardData, setVerseCardData] = useState<VerseCardData | null>(null);
+
+  const openVerseCard = (verse: BibleVerse, book: BibleBook, chapter: number) => {
+    setVerseCardData({ verse, book, chapter });
+    setIsVerseCardOpen(true);
+  };
+
+  const closeVerseCard = () => {
+    setIsVerseCardOpen(false);
+  };
 
   /**
    * Loads ALL cloud data for an authenticated user directly into React state.
@@ -428,6 +452,10 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         isReadingHistoryOpen,
         activeStudyType,
         studyLocation,
+        isVerseCardOpen,
+        verseCardData,
+        openVerseCard,
+        closeVerseCard,
         setBookAndChapter,
         setChapter,
         setLanguage,

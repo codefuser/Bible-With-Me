@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Bookmark as BookmarkIcon, Copy, Share2, BookOpen, Highlighter, Check, Trash2, Sparkles } from 'lucide-react';
+import { Bookmark as BookmarkIcon, Copy, Share2, BookOpen, Highlighter, Check, Trash2, Sparkles, Image as ImageIcon } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
 import { BibleVerse } from '../../types/bible';
@@ -26,6 +26,7 @@ export const VerseReader: React.FC = () => {
     handleToggleBookmark,
     handleSetHighlight: contextHandleSetHighlight,
     openVerseStudy,
+    openVerseCard,
     recordChapterRead
   } = useReading();
 
@@ -244,7 +245,203 @@ export const VerseReader: React.FC = () => {
         </div>
 
         {/* Verses Container */}
-        <div className="verse-list">
+        {language === 'parallel' ? (
+          /* ── Enhanced Dual-Language Parallel View ──────────────────────────── */
+          <div className="verse-list parallel-view">
+            {/* Parallel view column headers (Desktop only) */}
+            <div
+              className="verse-parallel-row"
+              style={{ cursor: 'default', pointerEvents: 'none' }}
+              aria-hidden="true"
+            >
+              <div className="verse-parallel-col lang-ta-col" style={{ paddingTop: '0.375rem', paddingBottom: '0.375rem' }}>
+                <span className="verse-parallel-lang-badge ta-badge">🕊 தமிழ் — Tamil</span>
+              </div>
+              <div className="verse-parallel-col lang-en-col" style={{ paddingTop: '0.375rem', paddingBottom: '0.375rem' }}>
+                <span className="verse-parallel-lang-badge en-badge">📖 English — KJV</span>
+              </div>
+            </div>
+
+            {verses.map((verseObj) => {
+              const isBookmarked = isVerseBookmarked(bookmarks, currentBook.id, currentChapter, verseObj.verse);
+              const isSelected = clickedVerseNum === verseObj.verse;
+              const highlightColor = getVerseHighlightColor(highlights, currentBook.id, currentChapter, verseObj.verse);
+              const todayRef = getTodayVerseRef();
+              const isTodayDailyVerse =
+                todayRef &&
+                todayRef.book_id === currentBook.id &&
+                todayRef.chapter === currentChapter &&
+                todayRef.verse === verseObj.verse;
+
+              return (
+                <div
+                  key={verseObj.id || verseObj.verse}
+                  ref={(el) => (verseRefs.current[verseObj.verse] = el)}
+                  data-verse-num={verseObj.verse}
+                  style={{ position: 'relative' }}
+                >
+                  {/* Today's Daily Verse Badge */}
+                  {isTodayDailyVerse && (
+                    <div
+                      className="today-daily-verse-badge"
+                      style={{ marginLeft: '0.5rem', marginBottom: '0.25rem' }}
+                    >
+                      <Sparkles size={11} />
+                      <span>இன்றைய எழுப்புதல் வார்த்தை · Today's Revival Word</span>
+                    </div>
+                  )}
+
+                  {/* Dual-column parallel row */}
+                  <div
+                    className={`verse-parallel-row ${isSelected ? 'selected' : ''} ${highlightColor ? `highlight-${highlightColor}` : ''}`}
+                    onClick={() => {
+                      setClickedVerseNum(isSelected ? null : verseObj.verse);
+                      setShowHighlightPicker(false);
+                    }}
+                  >
+                    {/* Tamil Column */}
+                    <div className="verse-parallel-col lang-ta-col">
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                        <span className="verse-parallel-num">{verseObj.verse}</span>
+                        <p
+                          className="verse-text lang-ta"
+                          style={{ margin: 0, flex: 1 }}
+                        >
+                          {verseObj.text_ta}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* English Column */}
+                    <div className="verse-parallel-col lang-en-col">
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                        <span className="verse-parallel-num">{verseObj.verse}</span>
+                        <p
+                          className="verse-text lang-en"
+                          style={{ margin: 0, flex: 1 }}
+                        >
+                          {verseObj.text_en}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Bookmark badge on the right (non-selected state) */}
+                    {isBookmarked && !isSelected && (
+                      <span
+                        style={{
+                          position: 'absolute',
+                          top: '0.375rem',
+                          right: '0.375rem',
+                          color: 'var(--bookmark-active)'
+                        }}
+                        title="Bookmarked"
+                      >
+                        <BookmarkIcon size={12} fill="currentColor" />
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Action toolbar spanning both columns when selected */}
+                  {isSelected && (
+                    <div
+                      className="verse-parallel-actions"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {/* Bookmark */}
+                      <button
+                        className={`verse-action-btn ${isBookmarked ? 'active' : ''}`}
+                        onClick={() => {
+                          handleToggleBookmark(verseObj);
+                          showToast(
+                            isBookmarked
+                              ? 'Bookmark removed / சேமிப்பு நீக்கப்பட்டது'
+                              : 'Verse bookmarked! / வசனம் சேமிக்கப்பட்டது!'
+                          );
+                        }}
+                      >
+                        <BookmarkIcon size={14} fill={isBookmarked ? 'currentColor' : 'none'} />
+                        <span>{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
+                      </button>
+
+                      {/* Copy */}
+                      <button className="verse-action-btn" onClick={() => handleCopyVerse(verseObj)}>
+                        <Copy size={14} />
+                        <span>Copy / நகல்</span>
+                      </button>
+
+                      {/* Share */}
+                      <button className="verse-action-btn" onClick={() => handleShareVerse(verseObj)}>
+                        <Share2 size={14} />
+                        <span>Share / பகிர்</span>
+                      </button>
+
+                      {/* Verse Card */}
+                      <button
+                        className="verse-action-btn"
+                        onClick={() => openVerseCard(verseObj, currentBook, currentChapter)}
+                      >
+                        <ImageIcon size={14} />
+                        <span>Card / கார்டு</span>
+                      </button>
+
+                      {/* Highlight */}
+                      <button
+                        className={`verse-action-btn ${highlightColor ? 'active' : ''}`}
+                        onClick={() => setShowHighlightPicker(!showHighlightPicker)}
+                      >
+                        <Highlighter size={14} />
+                        <span>Highlight / சிறப்பிக்கு</span>
+                      </button>
+
+                      {/* Highlight Picker */}
+                      {showHighlightPicker && (
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            padding: '0.4375rem 0.75rem',
+                            backgroundColor: 'var(--bg-surface)',
+                            borderRadius: '0.625rem',
+                            border: '1px solid var(--border-color)',
+                            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.1)'
+                          }}
+                        >
+                          {(['yellow', 'green', 'blue', 'pink', 'orange', 'purple'] as const).map((c) => (
+                            <button
+                              key={c}
+                              className={`highlight-color-btn ${highlightColor === c ? 'active' : ''}`}
+                              title={`${c} highlight`}
+                              onClick={() => handleSetHighlight(verseObj, c)}
+                              style={{ backgroundColor: c === 'yellow' ? '#eab308' : c === 'green' ? '#22c55e' : c === 'blue' ? '#3b82f6' : c === 'pink' ? '#ec4899' : c === 'orange' ? '#f97316' : '#a855f7' }}
+                            >
+                              {highlightColor === c && <Check size={12} color="#ffffff" />}
+                            </button>
+                          ))}
+                          {highlightColor && (
+                            <button
+                              onClick={() => handleSetHighlight(verseObj, null)}
+                              style={{
+                                display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
+                                fontSize: '0.75rem', color: '#ef4444',
+                                backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)',
+                                padding: '0.25rem 0.5rem', borderRadius: '0.375rem', cursor: 'pointer', fontWeight: 500
+                              }}
+                            >
+                              <Trash2 size={12} /><span>Clear</span>
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* ── Standard Single-Language Verse List ────────────────────────────── */
+          <div className="verse-list">
           {verses.map((verseObj) => {
             const isBookmarked = isVerseBookmarked(bookmarks, currentBook.id, currentChapter, verseObj.verse);
             const isSelected = clickedVerseNum === verseObj.verse;
@@ -284,14 +481,14 @@ export const VerseReader: React.FC = () => {
                   <div className="verse-text-container" style={{ flex: 1 }}>
                     {/* Tamil Verse Text */}
                     {language !== 'en' && (
-                      <p className="verse-text lang-ta" style={{ marginBottom: language === 'parallel' ? '0.375rem' : 0 }}>
+                      <p className="verse-text lang-ta" style={{ marginBottom: 0 }}>
                         {verseObj.text_ta}
                       </p>
                     )}
 
                     {/* English Verse Text */}
                     {language !== 'ta' && (
-                      <p className="verse-text lang-en" style={{ opacity: language === 'parallel' ? 0.85 : 1, fontSize: language === 'parallel' ? '0.9375em' : undefined }}>
+                      <p className="verse-text lang-en">
                         {verseObj.text_en}
                       </p>
                     )}
@@ -306,6 +503,7 @@ export const VerseReader: React.FC = () => {
 
                 {/* Contextual Action Toolbar Row */}
                 {isSelected && (
+
                   <div
                     className="verse-actions-bar"
                     onClick={(e) => e.stopPropagation()}
@@ -345,6 +543,16 @@ export const VerseReader: React.FC = () => {
                       <button className="verse-action-btn" onClick={() => handleShareVerse(verseObj)}>
                         <Share2 size={14} />
                         <span>{language === 'en' ? 'Share' : 'பகிர்'}</span>
+                      </button>
+
+                      {/* Verse Card Creator Action */}
+                      <button
+                        className="verse-action-btn"
+                        onClick={() => openVerseCard(verseObj, currentBook, currentChapter)}
+                        title={language === 'en' ? 'Create Image Card' : 'படம் உருவாக்கு'}
+                      >
+                        <ImageIcon size={14} />
+                        <span>{language === 'en' ? 'Card' : 'கார்டு'}</span>
                       </button>
 
                       {/* Verse Study Action (Disabled/Hidden - Uncomment to enable):
@@ -459,6 +667,7 @@ export const VerseReader: React.FC = () => {
             );
           })}
         </div>
+        )}
       </main>
 
       <Toast message={toastMessage} />

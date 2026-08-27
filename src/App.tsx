@@ -19,6 +19,7 @@ import { AuthModal } from './components/auth/AuthModal';
 import { SyncBanner } from './components/auth/SyncBanner';
 import { LandingPage } from './components/auth/LandingPage';
 import { AdminRoutePlaceholder } from './components/admin/AdminRoute';
+import { VerseCardModal } from './components/bible/VerseCardModal';
 import { BookOpen, Clock, ArrowRight } from 'lucide-react';
 
 // ─── App Init Splash (while checking session) ─────────────────────────────────
@@ -190,6 +191,7 @@ const MainLayout: React.FC = () => {
       <ReadingHistoryModal />
       <AuthModal />
       <SyncBanner />
+      <VerseCardModal />
     </div>
   );
 };
