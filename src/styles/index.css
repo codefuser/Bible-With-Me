@@ -229,17 +229,24 @@ a {
   border-color: var(--accent-color);
 }
 
-/* Search Modal Top-Aligned Full-Height Overlay */
+/* Search Modal Base Overlay */
 .search-modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 200;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 1rem 0.75rem;
+  padding: 0.75rem 0.375rem;
+  animation: fadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.search-modal-overlay.closing {
+  animation: fadeOut 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  pointer-events: none;
 }
 
 .search-modal-content {
@@ -248,25 +255,407 @@ a {
   border: 1px solid var(--border-color);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   width: 100%;
-  max-width: 780px;
-  height: min(920px, calc(95vh - 1.5rem));
+  max-width: 880px;
+  height: min(920px, calc(96vh - 1rem));
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
 }
 
-/* Floating Search Suggestions Dropdown attached to Input Box */
+.search-modal-content.closing {
+  animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Premium Filter Section */
+.search-filter-section-container {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+  width: 100%;
+  position: relative;
+  z-index: 10;
+}
+
+/* Desktop Filter Bar (Spacious 5-Pill Button Layout on Desktop > 640px) */
+.desktop-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.625rem;
+  width: 100%;
+}
+
+.desktop-filter-bar .btn-pill {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  height: 2.375rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.desktop-filter-bar .btn-pill:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.desktop-filter-bar .btn-pill.active {
+  background-color: var(--accent-color) !important;
+  color: #ffffff !important;
+  border-color: var(--accent-color) !important;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(46, 70, 186, 0.3);
+}
+
+.desktop-filter-bar .btn-pill.active svg {
+  color: #ffffff !important;
+}
+
+.desktop-filter-bar .btn-pill.language-pill {
+  background-color: var(--bg-surface);
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+  font-weight: 500;
+}
+
+/* Mobile Filter Bar (Compact Capsule Layout on Phone <= 640px) */
+.mobile-filter-bar {
+  display: none;
+}
+
+.search-filter-main-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.25rem;
+  width: 100%;
+}
+
+/* 1. All Icon Circle Button */
+.btn-filter-circle {
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: 2.25rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-secondary);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+
+.btn-filter-circle:hover {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.btn-filter-circle.active {
+  background-color: rgba(59, 130, 246, 0.12);
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+  box-shadow: none;
+}
+
+/* 2. Segmented Capsule Pill (OT | NT) */
+.segmented-testament-capsule {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--bg-secondary);
+  border-radius: 9999px;
+  padding: 0.1875rem 0.25rem;
+  border: 1px solid var(--border-color);
+  height: 2.25rem;
+}
+
+.segmented-pill-btn {
+  padding: 0.3125rem 0.5625rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.segmented-pill-btn:hover {
+  color: var(--accent-color);
+}
+
+.segmented-pill-btn.active {
+  background-color: var(--bg-surface);
+  color: var(--accent-color);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.segmented-pill-divider {
+  width: 1px;
+  height: 0.875rem;
+  background-color: var(--border-color);
+  margin: 0 0.125rem;
+}
+
+/* 3. Book Range Active Pill Button */
+.btn-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3125rem;
+  padding: 0.375rem 0.6875rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.btn-filter-pill:hover {
+  border-color: var(--accent-color);
+}
+
+.btn-filter-pill.active {
+  background-color: rgba(59, 130, 246, 0.12);
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+  font-weight: 600;
+  box-shadow: none;
+}
+
+/* 4. Language Selector Pill Button */
+.btn-language-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3125rem;
+  padding: 0.375rem 0.6875rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  background-color: var(--bg-surface);
+  color: var(--accent-color);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.btn-language-pill:hover {
+  border-color: var(--accent-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Desktop vs Mobile Text Visibility Utilities */
+.desktop-only-inline {
+  display: inline !important;
+}
+.mobile-only-inline {
+  display: none !important;
+}
+.desktop-only-flex {
+  display: flex !important;
+}
+
+/* Phone-Specific Responsive Full-Height Search UI */
+@media (max-width: 640px) {
+  .desktop-filter-bar {
+    display: none !important;
+  }
+  .mobile-filter-bar {
+    display: flex !important;
+  }
+  .desktop-only-inline {
+    display: none !important;
+  }
+  .mobile-only-inline {
+    display: inline !important;
+  }
+  .desktop-only-flex {
+    display: none !important;
+  }
+  .search-modal-overlay {
+    padding: 0;
+    align-items: stretch;
+  }
+  .search-modal-content {
+    max-width: 100vw;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    border-radius: 0;
+    border: none;
+  }
+  .search-filter-section-container {
+    padding: 0.5rem 0.375rem;
+  }
+  .search-filter-main-bar {
+    gap: 0.1875rem;
+  }
+  .segmented-pill-btn {
+    padding: 0.25rem 0.375rem;
+    font-size: 0.75rem;
+  }
+  .btn-filter-pill {
+    padding: 0.3125rem 0.4375rem;
+    font-size: 0.75rem;
+  }
+  .btn-language-pill {
+    padding: 0.3125rem 0.4375rem;
+    font-size: 0.75rem;
+  }
+  .search-suggestions-dropdown {
+    left: 0.375rem;
+    right: 0.375rem;
+  }
+}
+
+/* Premium Floating Book Dropdown UI */
+.book-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  height: 2.375rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.625rem;
+  font-size: 0.84375rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.book-dropdown-trigger:hover,
+.book-dropdown-trigger.active {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.book-dropdown-popover {
+  position: absolute;
+  top: calc(100% + 0.375rem);
+  left: 0;
+  min-width: 220px;
+  max-width: 300px;
+  z-index: 9999;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+  animation: fadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  overflow: hidden;
+}
+
+.book-dropdown-popover.align-right {
+  left: auto !important;
+  right: 0 !important;
+}
+
+.book-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.book-dropdown-item:hover {
+  background-color: var(--bg-secondary);
+  color: var(--accent-color);
+}
+
+.book-dropdown-item.selected {
+  background-color: var(--bg-secondary);
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+/* Book Range Selective Filter Box */
+.book-range-filter-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.625rem;
+  padding: 0.625rem 0.875rem;
+  margin-top: 0.5rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.875rem;
+  position: relative;
+  z-index: 100;
+  overflow: visible;
+  animation: slideDownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideDownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.btn-pill.language-pill {
+  background-color: var(--bg-secondary);
+  color: var(--accent-color);
+  border: 1px solid var(--accent-color);
+  font-weight: 600;
+  margin-left: auto;
+}
+
+.btn-pill.language-pill:hover {
+  background-color: var(--accent-color);
+  color: #ffffff;
+}
+
+/* Floating Search Suggestions Dropdown - Full Header Width */
 .search-suggestions-dropdown {
   position: absolute;
-  top: calc(100% + 0.5rem);
-  left: 0;
-  right: 0;
+  top: calc(100% - 0.25rem);
+  left: 0.75rem;
+  right: 0.75rem;
   z-index: 500;
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: 0.75rem;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.2);
-  max-height: 340px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  max-height: 360px;
   overflow-y: auto;
   padding: 0.5rem;
   animation: fadeIn 120ms ease;
@@ -395,9 +784,19 @@ a {
   to { opacity: 1; }
 }
 
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes slideDown {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(16px) scale(0.98); }
 }
 
 @keyframes spin {
