@@ -66,6 +66,7 @@ interface AuthContextType {
   signup: (email: string, pass: string, name?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   triggerSync: () => Promise<boolean>;
+  updateProfileState: (updates: Partial<UserProfile>) => void;
   /** Callback registered by ReadingContext so AuthContext can trigger cloud data refresh */
   registerCloudDataRefresh: (fn: (userId: string) => Promise<void>) => void;
 }
@@ -123,7 +124,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(newUser);
 
       // Fetch profile (non-blocking — UI updates when ready)
-      getUserProfile(newUser.id).then((prof) => setProfile(prof));
+      getUserProfile(newUser.id).then((prof) => {
+        setProfile(prof);
+        if (prof?.avatar_url) {
+          try {
+            localStorage.setItem('bible_app_user_avatar', prof.avatar_url);
+            console.log('[Auth] Restored profile avatar from cloud:', prof.avatar_url);
+          } catch {
+            // ignore
+          }
+        }
+      });
 
       // Clear any stale local/guest data before loading cloud data
       clearLocalUserData();
@@ -265,7 +276,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const isAuthenticated = Boolean(user);
+  const updateProfileState = useCallback((updates: Partial<UserProfile>) => {
+    setProfile((prev) => {
+      if (!prev) return null;
+      const updated = { ...prev, ...updates };
+      if (updates.avatar_url) {
+        try {
+          localStorage.setItem('bible_app_user_avatar', updates.avatar_url);
+        } catch {
+          // ignore
+        }
+      }
+      return updated;
+    });
+  }, []);
+
+  const isAuthenticated = !!user;
   const isAdmin = profile?.role === 'admin';
   const isGuest = !isAuthenticated;
 
@@ -287,6 +313,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signup,
         logout,
         triggerSync,
+        updateProfileState,
         registerCloudDataRefresh
       }}
     >

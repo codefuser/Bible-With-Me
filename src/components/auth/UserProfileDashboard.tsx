@@ -28,7 +28,7 @@ interface UserProfileDashboardProps {
 const PRESET_AVATARS = ['✝️', '🕊️', '📖', '🔥', '👑', '⭐️'];
 
 export const UserProfileDashboard: React.FC<UserProfileDashboardProps> = ({ onClose }) => {
-  const { user, profile, logout } = useAuth();
+  const { user, profile, logout, updateProfileState } = useAuth();
   const { bookmarks, highlights, historyList, language } = useReading();
 
   const [isEditingName, setIsEditingName] = useState(false);
@@ -40,6 +40,16 @@ export const UserProfileDashboard: React.FC<UserProfileDashboardProps> = ({ onCl
   const [selectedAvatar, setSelectedAvatar] = useState<string>(
     profile?.avatar_url || localStorage.getItem('bible_app_user_avatar') || ''
   );
+
+  // Sync avatar state when cloud profile updates
+  React.useEffect(() => {
+    if (profile?.avatar_url) {
+      setSelectedAvatar(profile.avatar_url);
+    }
+    if (profile?.display_name) {
+      setDisplayName(profile.display_name);
+    }
+  }, [profile?.avatar_url, profile?.display_name]);
 
   const isEn = language === 'en';
 
@@ -62,6 +72,7 @@ export const UserProfileDashboard: React.FC<UserProfileDashboardProps> = ({ onCl
     const res = await updateUserProfile(user.id, { display_name: displayName.trim() });
     setSavingName(false);
     if (res.success) {
+      updateProfileState({ display_name: displayName.trim() });
       setIsEditingName(false);
     }
   };
@@ -69,6 +80,7 @@ export const UserProfileDashboard: React.FC<UserProfileDashboardProps> = ({ onCl
   const handleSelectPresetAvatar = async (emoji: string) => {
     setSelectedAvatar(emoji);
     localStorage.setItem('bible_app_user_avatar', emoji);
+    updateProfileState({ avatar_url: emoji });
     if (user) {
       await updateUserProfile(user.id, { avatar_url: emoji });
     }
@@ -89,6 +101,7 @@ export const UserProfileDashboard: React.FC<UserProfileDashboardProps> = ({ onCl
       const dataUrl = reader.result as string;
       setSelectedAvatar(dataUrl);
       localStorage.setItem('bible_app_user_avatar', dataUrl);
+      updateProfileState({ avatar_url: dataUrl });
       if (user) {
         await updateUserProfile(user.id, { avatar_url: dataUrl });
       }

@@ -5,6 +5,11 @@ import { useAuth } from '../../context/AuthContext';
 import { SearchResult, Testament, BibleVerse, Language } from '../../types/bible';
 import { searchBibleVerses, getBibleWordSuggestions, TANGLISH_MAP } from '../../services/searchService';
 import { trackActivity } from '../../services/activityService';
+import {
+  fetchCloudSearchData,
+  saveCloudSearchHistory,
+  saveCloudOpenedVerses
+} from '../../services/userDataService';
 import { LoadingState } from '../common/LoadingState';
 
 const SEARCH_HISTORY_KEY = 'bible_app_search_history';
@@ -380,7 +385,7 @@ export const SearchModal: React.FC = () => {
   const searchBoxRef = useRef<HTMLDivElement | null>(null);
   const resultContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Load search history & opened verses history
+  // Load search history & opened verses history (Local + Supabase Cloud)
   useEffect(() => {
     try {
       const rawHistory = localStorage.getItem(SEARCH_HISTORY_KEY);
@@ -394,7 +399,28 @@ export const SearchModal: React.FC = () => {
     } catch (err) {
       console.error('Error loading search history / opened verses:', err);
     }
-  }, []);
+
+    if (userId) {
+      fetchCloudSearchData(userId).then(({ searchHistory: cloudHist, openedVerses: cloudOpened }) => {
+        if (cloudHist && cloudHist.length > 0) {
+          setSearchHistory(cloudHist);
+          try {
+            localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(cloudHist));
+          } catch {
+            // ignore
+          }
+        }
+        if (cloudOpened && cloudOpened.length > 0) {
+          setOpenedVerses(cloudOpened);
+          try {
+            localStorage.setItem(OPENED_VERSES_KEY, JSON.stringify(cloudOpened));
+          } catch {
+            // ignore
+          }
+        }
+      });
+    }
+  }, [userId]);
 
   // When search modal opens: reset closing state & hide suggestions popup initially
   useEffect(() => {
@@ -416,6 +442,9 @@ export const SearchModal: React.FC = () => {
       } catch (err) {
         console.error('Error saving search history:', err);
       }
+      if (userId) {
+        saveCloudSearchHistory(userId, updated);
+      }
       return updated;
     });
   };
@@ -427,6 +456,9 @@ export const SearchModal: React.FC = () => {
         localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
       } catch (err) {
         console.error('Error removing search history item:', err);
+      }
+      if (userId) {
+        saveCloudSearchHistory(userId, updated);
       }
       return updated;
     });
@@ -455,6 +487,9 @@ export const SearchModal: React.FC = () => {
         localStorage.setItem(OPENED_VERSES_KEY, JSON.stringify(updated));
       } catch (err) {
         console.error('Error saving opened verse history:', err);
+      }
+      if (userId) {
+        saveCloudOpenedVerses(userId, updated);
       }
       return updated;
     });

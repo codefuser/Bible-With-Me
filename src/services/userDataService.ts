@@ -502,3 +502,101 @@ export const upsertCloudProgress = async (
     return false;
   }
 };
+
+// ─── Search History & Opened Verses Cloud Sync ──────────────────────────────
+
+export const fetchCloudSearchData = async (
+  userId: string
+): Promise<{ searchHistory: string[]; openedVerses: any[] }> => {
+  if (!supabase || !userId) return { searchHistory: [], openedVerses: [] };
+  try {
+    // 1. Try to fetch from user_settings table
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('search_history, opened_verses')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (!error && data) {
+      const history = Array.isArray(data.search_history) ? data.search_history : [];
+      const opened = Array.isArray(data.opened_verses) ? data.opened_verses : [];
+      if (history.length > 0 || opened.length > 0) {
+        return { searchHistory: history, openedVerses: opened };
+      }
+    }
+
+    // 2. Fallback to user_activity log
+    const { data: actData } = await supabase
+      .from('user_activity')
+      .select('metadata, activity_type')
+      .eq('user_id', userId)
+      .in('activity_type', ['SEARCH_PERFORMED', 'SEARCH_RESULT_OPENED'])
+      .order('created_at', { ascending: false })
+      .limit(40);
+
+    if (actData && actData.length > 0) {
+      const historySet = new Set<string>();
+      const openedList: any[] = [];
+
+      actData.forEach((act) => {
+        if (act.activity_type === 'SEARCH_PERFORMED' && act.metadata?.query) {
+          historySet.add(act.metadata.query);
+        } else if (act.activity_type === 'SEARCH_RESULT_OPENED' && act.metadata?.verse) {
+          openedList.push(act.metadata.verse);
+        }
+      });
+
+      return {
+        searchHistory: Array.from(historySet).slice(0, 10),
+        openedVerses: openedList.slice(0, 15)
+      };
+    }
+  } catch (err) {
+    console.error('[Supabase Exception] fetchCloudSearchData threw:', err);
+  }
+  return { searchHistory: [], openedVerses: [] };
+};
+
+export const saveCloudSearchHistory = async (
+  userId: string,
+  history: string[]
+): Promise<boolean> => {
+  if (!supabase || !userId) return false;
+  try {
+    await supabase.from('user_settings').upsert(
+      {
+        user_id: userId,
+        search_history: history,
+        updated_at: new Date().toISOString()
+      },
+      { onConflict: 'user_id' }
+    );
+    console.log('[Cloud Sync Success] Saved search history to Supabase for user:', userId);
+    return true;
+  } catch (err) {
+    console.error('[Supabase Exception] saveCloudSearchHistory failed:', err);
+    return false;
+  }
+};
+
+export const saveCloudOpenedVerses = async (
+  userId: string,
+  openedVerses: any[]
+): Promise<boolean> => {
+  if (!supabase || !userId) return false;
+  try {
+    await supabase.from('user_settings').upsert(
+      {
+        user_id: userId,
+        opened_verses: openedVerses,
+        updated_at: new Date().toISOString()
+      },
+      { onConflict: 'user_id' }
+    );
+    console.log('[Cloud Sync Success] Saved opened search verses to Supabase for user:', userId);
+    return true;
+  } catch (err) {
+    console.error('[Supabase Exception] saveCloudOpenedVerses failed:', err);
+    return false;
+  }
+};
