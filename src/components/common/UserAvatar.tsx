@@ -18,9 +18,14 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   style = {},
   onClick
 }) => {
+  const [imgError, setImgError] = React.useState<boolean>(false);
   const effectiveAvatar = avatarUrl || localStorage.getItem('bible_app_user_avatar');
 
-  if (effectiveAvatar && effectiveAvatar.trim()) {
+  React.useEffect(() => {
+    setImgError(false);
+  }, [avatarUrl]);
+
+  if (!imgError && effectiveAvatar && effectiveAvatar.trim()) {
     const trimmed = effectiveAvatar.trim();
     if (trimmed.startsWith('data:image') || trimmed.startsWith('http')) {
       return (
@@ -29,6 +34,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
           alt="User Profile Avatar"
           className={className}
           onClick={onClick}
+          onError={() => setImgError(true)}
           style={{
             width: `${size}px`,
             height: `${size}px`,
@@ -59,7 +65,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: `${size * 0.55}px`,
+          fontSize: `${size * 0.72}px`,
           lineHeight: 1,
           flexShrink: 0,
           ...style

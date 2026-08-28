@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Sparkles, BookOpen, Compass, Calendar, ChevronDown, History, Image as ImageIcon } from 'lucide-react';
+import { Sparkles, BookOpen, ChevronDown, History, Image as ImageIcon, Bookmark } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
 import { getDailyVerse, LoadedDailyVerse } from '../../services/dailyVerseService';
@@ -59,7 +59,10 @@ export const DailyVerseCard: React.FC = () => {
   const refTa = `${book_name_ta} ${verse.chapter}:${verse.verse}`;
   const refEn = `${book_name_en} ${verse.chapter}:${verse.verse}`;
   const verseText = language === 'ta' ? verse.text_ta : verse.text_en;
-  const promptText = language === 'ta' ? prompt_ta : prompt_en;
+  const rawPrompt = language === 'ta' ? prompt_ta : prompt_en;
+
+  // Clean raw bullet markers (◽) from prompt text for clean presentation
+  const promptText = rawPrompt ? rawPrompt.replace(/[◽▫️▫]/g, '').trim() : '';
 
   const handleGoToChapter = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -78,13 +81,13 @@ export const DailyVerseCard: React.FC = () => {
   return (
     <div
       style={{
-        backgroundColor: 'var(--bg-surface)',
-        border: '1px solid var(--border-color)',
-        borderRadius: '0.875rem',
-        padding: '0.875rem 1.125rem',
+        background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(59, 130, 246, 0.03) 100%), var(--bg-surface)',
+        border: '1px solid rgba(245, 158, 11, 0.22)',
+        borderRadius: '1rem',
+        padding: '0.875rem 1rem',
         marginBottom: '1.25rem',
-        boxShadow: 'var(--shadow-sm)',
-        transition: 'padding 280ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 200ms ease'
+        boxShadow: '0 4px 16px -2px rgba(245, 158, 11, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03)',
+        transition: 'all 240ms cubic-bezier(0.4, 0, 0.2, 1)'
       }}
     >
       {/* Header Bar */}
@@ -99,25 +102,58 @@ export const DailyVerseCard: React.FC = () => {
           userSelect: 'none'
         }}
       >
-        <div className="daily-verse-header-title-group">
-          <div className="daily-verse-title-wrapper">
-            <Sparkles size={15} className="daily-verse-sparkles-icon" />
-            <span className="daily-verse-title-text">
-              {language === 'ta' ? 'இன்றைய எழுப்புதல் வார்த்தை' : "Today's Revival Word"}
-            </span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          {/* Devotional Badge Pill */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.3125rem',
+              padding: '0.2rem 0.55rem',
+              borderRadius: '9999px',
+              backgroundColor: 'rgba(245, 158, 11, 0.12)',
+              color: '#d97706',
+              border: '1px solid rgba(245, 158, 11, 0.25)',
+              fontSize: '0.71875rem',
+              fontWeight: 700,
+              width: 'fit-content',
+              letterSpacing: '0.01em'
+            }}
+          >
+            <Sparkles size={12} />
+            <span>{language === 'ta' ? 'இன்றைய எழுப்புதல் வார்த்தை' : "Today's Revival Word"}</span>
           </div>
-          <div className="daily-verse-ref-text">
-            <span className="daily-verse-ref-dot">· </span>
+
+          {/* Verse Reference Title */}
+          <h4
+            style={{
+              fontSize: '0.9375rem',
+              fontWeight: 700,
+              color: 'var(--accent-color)',
+              margin: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.375rem'
+            }}
+          >
+            <Bookmark size={14} style={{ opacity: 0.85 }} />
             <span>{language === 'ta' ? refTa : refEn}</span>
-          </div>
+          </h4>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+        {/* Right Header Action Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexShrink: 0 }}>
           <button
             className="btn-icon"
             onClick={handleOpenHistory}
             title={language === 'ta' ? 'முந்தைய எழுப்புதல் வார்த்தைகள்' : 'Revival Word History'}
-            style={{ width: '1.75rem', height: '1.75rem', color: 'var(--text-muted)' }}
+            style={{
+              width: '2rem',
+              height: '2rem',
+              borderRadius: '50%',
+              backgroundColor: 'var(--bg-secondary)',
+              color: 'var(--text-muted)'
+            }}
           >
             <History size={15} />
           </button>
@@ -130,7 +166,13 @@ export const DailyVerseCard: React.FC = () => {
             }}
             title={isCollapsed ? "Expand Today's Revival Word" : "Collapse Today's Revival Word"}
             aria-expanded={!isCollapsed}
-            style={{ width: '1.75rem', height: '1.75rem' }}
+            style={{
+              width: '2rem',
+              height: '2rem',
+              borderRadius: '50%',
+              backgroundColor: 'var(--bg-secondary)',
+              color: 'var(--text-muted)'
+            }}
           >
             <ChevronDown
               size={16}
@@ -160,47 +202,62 @@ export const DailyVerseCard: React.FC = () => {
               transform: isCollapsed ? 'translateY(-6px)' : 'translateY(0)'
             }}
           >
-            <p
+            {/* Verse Quote Block with Left Accent Border */}
+            <div
               style={{
-                fontFamily: language === 'ta' ? 'var(--font-tamil)' : 'var(--font-serif)',
-                fontSize: '1.0625rem',
-                lineHeight: 1.65,
-                color: 'var(--text-primary)',
-                marginBottom: '0.625rem'
+                borderLeft: '3.5px solid #f59e0b',
+                paddingLeft: '0.875rem',
+                margin: '0.25rem 0 0.75rem',
+                backgroundColor: 'rgba(245, 158, 11, 0.03)',
+                borderRadius: '0 0.5rem 0.5rem 0',
+                paddingTop: '0.375rem',
+                paddingBottom: '0.375rem'
               }}
             >
-              "{verseText}"
-            </p>
+              <p
+                style={{
+                  fontFamily: language === 'ta' ? 'var(--font-tamil)' : 'var(--font-serif)',
+                  fontSize: '1.0625rem',
+                  lineHeight: 1.65,
+                  fontWeight: 500,
+                  color: 'var(--text-primary)',
+                  margin: 0
+                }}
+              >
+                "{verseText}"
+              </p>
+            </div>
 
-            <p
-              style={{
-                fontSize: '0.8125rem',
-                fontStyle: 'italic',
-                color: 'var(--text-muted)',
-                marginBottom: '1rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.375rem'
-              }}
-            >
-              <Calendar size={13} />
-              <span>{promptText}</span>
-            </p>
+            {/* Devotional Reflection Note (if available) */}
+            {promptText && (
+              <div
+                style={{
+                  backgroundColor: 'var(--bg-secondary)',
+                  borderRadius: '0.5rem',
+                  padding: '0.5rem 0.75rem',
+                  fontSize: '0.8125rem',
+                  color: 'var(--text-secondary)',
+                  lineHeight: 1.5,
+                  marginBottom: '0.875rem'
+                }}
+              >
+                {promptText}
+              </div>
+            )}
 
-            {/* Read Chapter Primary Action Button */}
+            {/* Action Bar (Refined Responsive Devotional Pill Action Buttons) */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'flex-end',
-                gap: '0.5rem',
-                paddingTop: '0.75rem',
-                borderTop: '1px dashed var(--border-color)'
+                gap: '0.375rem',
+                paddingTop: '0.625rem',
+                borderTop: '1px dashed var(--border-color)',
+                flexWrap: 'wrap'
               }}
             >
               {/* Create Image Card Button */}
               <button
-                className="btn-pill"
                 onClick={(e) => {
                   e.stopPropagation();
                   if (dailyData) {
@@ -209,36 +266,58 @@ export const DailyVerseCard: React.FC = () => {
                   }
                 }}
                 style={{
-                  fontSize: '0.8125rem',
-                  padding: '0.4375rem 0.875rem',
-                  gap: '0.375rem',
-                  backgroundColor: 'var(--bg-secondary)',
-                  color: 'var(--text-secondary)',
+                  flex: '1 1 120px',
+                  minWidth: 0,
+                  whiteSpace: 'nowrap',
+                  height: '2.25rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.25rem',
+                  padding: '0 0.5rem',
+                  borderRadius: '9999px',
+                  backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                  color: '#d97706',
+                  fontSize: '0.78125rem',
                   fontWeight: 600,
-                  border: '1.5px solid var(--border-color)',
-                  cursor: 'pointer'
+                  border: '1px solid rgba(245, 158, 11, 0.28)',
+                  cursor: 'pointer',
+                  transition: 'all 150ms ease'
                 }}
               >
-                <ImageIcon size={13} />
-                <span>{language === 'ta' ? 'கார்டு உருவாக்கு' : 'Create Card'}</span>
+                <ImageIcon size={13} style={{ flexShrink: 0 }} />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {language === 'ta' ? 'கார்டு உருவாக்க' : 'Create Card'}
+                </span>
               </button>
 
+              {/* Read Chapter Primary Action Button */}
               <button
-                className="btn-pill"
                 onClick={handleGoToChapter}
                 style={{
-                  fontSize: '0.8125rem',
-                  padding: '0.4375rem 0.875rem',
-                  gap: '0.375rem',
-                  backgroundColor: 'var(--accent-color)',
-                  color: '#ffffff',
+                  flex: '1 1 120px',
+                  minWidth: 0,
+                  whiteSpace: 'nowrap',
+                  height: '2.25rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.25rem',
+                  padding: '0 0.5rem',
+                  borderRadius: '9999px',
+                  backgroundColor: 'var(--accent-soft)',
+                  color: 'var(--accent-color)',
+                  fontSize: '0.78125rem',
                   fontWeight: 600,
-                  boxShadow: '0 2px 8px rgba(59, 130, 246, 0.25)',
-                  cursor: 'pointer'
+                  border: '1px solid var(--accent-color)',
+                  cursor: 'pointer',
+                  transition: 'all 150ms ease'
                 }}
               >
-                <BookOpen size={14} />
-                <span>{language === 'ta' ? 'அதிகாரத்தை வாசிக்க' : 'Read Full Chapter'}</span>
+                <BookOpen size={13} style={{ flexShrink: 0 }} />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {language === 'ta' ? 'அதிகாரம் வாசிக்க' : 'Read Chapter'}
+                </span>
               </button>
             </div>
           </div>

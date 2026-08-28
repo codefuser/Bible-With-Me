@@ -1,7 +1,8 @@
 import React from 'react';
-import { Menu, BookOpen, Search, Bookmark, Globe, ChevronDown, User } from 'lucide-react';
+import { Menu, BookOpen, Search, Bookmark, Globe, ChevronDown } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
+import { UserAvatar } from '../common/UserAvatar';
 
 export const Header: React.FC = () => {
   const {
@@ -102,16 +103,9 @@ export const Header: React.FC = () => {
           className="btn-icon header-profile-btn"
           onClick={() => setIsAuthModalOpen(true)}
           title={user ? 'User Account' : 'Login / Sign In'}
+          style={{ padding: 0, overflow: 'hidden' }}
         >
-          {profile?.avatar_url ? (
-            <img
-              src={profile.avatar_url}
-              alt="Profile"
-              style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover' }}
-            />
-          ) : (
-            <User size={18} />
-          )}
+          <UserAvatar avatarUrl={profile?.avatar_url} name={profile?.display_name || user?.email} size={28} />
         </button>
       </div>
     </header>
