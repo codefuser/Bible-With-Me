@@ -17,10 +17,16 @@ export const Header: React.FC = () => {
 
   const bookName = language === 'en' ? currentBook.name_en : currentBook.name_ta;
 
-  const getLanguageLabel = () => {
+  const getMobileLanguageLabel = () => {
     if (language === 'ta') return 'த';
     if (language === 'en') return 'E';
     return 'த+E';
+  };
+
+  const getDesktopLanguageLabel = () => {
+    if (language === 'ta') return 'தமிழ்';
+    if (language === 'en') return 'EN';
+    return 'தமிழ் + EN';
   };
 
   return (
@@ -62,7 +68,12 @@ export const Header: React.FC = () => {
           style={{ gap: '0.3125rem', padding: '0.375rem 0.625rem' }}
         >
           <Globe size={14} />
-          <span style={{ fontWeight: 700 }}>{getLanguageLabel()}</span>
+          <span className="lang-label-mobile" style={{ fontWeight: 700 }}>
+            {getMobileLanguageLabel()}
+          </span>
+          <span className="lang-label-desktop" style={{ fontWeight: 600 }}>
+            {getDesktopLanguageLabel()}
+          </span>
         </button>
 
         {/* Search Action */}

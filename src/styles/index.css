@@ -152,6 +152,24 @@ a {
   flex-shrink: 0;
 }
 
+/* Responsive Header Language Labels */
+.lang-label-mobile {
+  display: inline;
+}
+
+.lang-label-desktop {
+  display: none;
+}
+
+@media (min-width: 641px) {
+  .lang-label-mobile {
+    display: none;
+  }
+  .lang-label-desktop {
+    display: inline;
+  }
+}
+
 .btn-icon {
   display: inline-flex;
   align-items: center;
