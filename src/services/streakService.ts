@@ -1,4 +1,5 @@
 import { StreakData } from '../types/bible';
+import { saveCloudStreakData } from './userDataService';
 
 const STREAK_KEY = 'bible_app_streak_data';
 
@@ -64,9 +65,12 @@ export const getStoredStreakData = (): StreakData => {
   }
 };
 
-export const saveStreakData = (data: StreakData): void => {
+export const saveStreakData = (data: StreakData, userId?: string | null): void => {
   try {
     localStorage.setItem(STREAK_KEY, JSON.stringify(data));
+    if (userId) {
+      saveCloudStreakData(userId, data);
+    }
   } catch (err) {
     console.error('Error saving streak data:', err);
   }
@@ -77,7 +81,7 @@ export const saveStreakData = (data: StreakData): void => {
  * Updates todayCount, streak, bestStreak, totalChapters, and calendarMap.
  * Returns updated StreakData object.
  */
-export const recordChapterCompletion = (): StreakData => {
+export const recordChapterCompletion = (userId?: string | null): StreakData => {
   const current = getStoredStreakData();
   const today = getTodayString();
   const yesterday = getDaysAgoString(1);
@@ -119,16 +123,17 @@ export const recordChapterCompletion = (): StreakData => {
     calendarMap: newCalendarMap,
   };
 
-  saveStreakData(updatedData);
+  saveStreakData(updatedData, userId);
   return updatedData;
 };
 
-export const updateDailyGoal = (newGoal: number): StreakData => {
+export const updateDailyGoal = (newGoal: number, userId?: string | null): StreakData => {
   const current = getStoredStreakData();
   const updated: StreakData = {
     ...current,
     dailyGoal: Math.max(1, Math.min(10, newGoal)),
   };
-  saveStreakData(updated);
+  saveStreakData(updated, userId);
   return updated;
 };
+

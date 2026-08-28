@@ -1,6 +1,18 @@
 import React from 'react';
-import { X, Flame, Calendar, Award, Target, Trophy, BookOpen } from 'lucide-react';
+import {
+  X,
+  Flame,
+  Calendar,
+  Award,
+  BookOpen,
+  CheckCircle2,
+  Sparkles,
+  ArrowRight,
+  Target,
+  Trophy
+} from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
+import { getTodayVerseRef } from '../../services/dailyVerseService';
 import '../../styles/streaks.css';
 
 interface BadgeDefinition {
@@ -19,7 +31,7 @@ const BADGES: BadgeDefinition[] = [
     icon: '🌱',
     nameTa: 'முதல் அடி',
     nameEn: 'First Step',
-    descTa: '1 அதிகாரம் வாசித்தார்',
+    descTa: '1 அதிகாரம் முடித்தார்',
     descEn: 'Read 1st chapter',
     isUnlocked: (_, __, total) => total >= 1,
   },
@@ -74,11 +86,28 @@ const WEEKDAYS_TA = ['ஞா', 'தி', 'செ', 'பு', 'வி', 'வெ',
 const WEEKDAYS_EN = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 export const StreakStatsModal: React.FC = () => {
-  const { isStreakModalOpen, setIsStreakModalOpen, streakData, handleUpdateDailyGoal, language } = useReading();
+  const {
+    isStreakModalOpen,
+    setIsStreakModalOpen,
+    streakData,
+    handleUpdateDailyGoal,
+    language,
+    currentBook,
+    currentChapter,
+    setBookAndChapter,
+    recordChapterRead,
+    books
+  } = useReading();
 
   if (!isStreakModalOpen || !streakData) return null;
 
   const isTa = language === 'ta';
+  const todayRef = getTodayVerseRef();
+
+  // Find daily revival book if available
+  const dailyRevivalBook = todayRef ? books.find((b) => b.id === todayRef.book_id) : null;
+  const isTodayGoalComplete = streakData.todayCount >= streakData.dailyGoal;
+  const progressPercent = Math.min(100, Math.round((streakData.todayCount / streakData.dailyGoal) * 100));
 
   // Build 28-day calendar array (last 4 weeks ending today)
   const todayDate = new Date();
@@ -97,23 +126,52 @@ export const StreakStatsModal: React.FC = () => {
 
   const weekHeaders = isTa ? WEEKDAYS_TA : WEEKDAYS_EN;
 
+  const handleMarkChapterCompleted = () => {
+    recordChapterRead(currentBook, currentChapter, 1);
+  };
+
+  const handleJumpToDailyRevival = () => {
+    if (dailyRevivalBook && todayRef) {
+      setBookAndChapter(dailyRevivalBook, todayRef.chapter, todayRef.verse);
+      setIsStreakModalOpen(false);
+    }
+  };
+
   return (
     <div className="modal-overlay" onClick={() => setIsStreakModalOpen(false)}>
       <div
         className="modal-content"
-        style={{ maxWidth: '500px', width: '92%' }}
+        style={{ maxWidth: '520px', width: '92%' }}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label={isTa ? 'வாசிப்பு புள்ளிவிவரங்கள்' : 'Reading Statistics'}
+        aria-label={isTa ? 'தினசரி வாசிப்புத் திட்டம்' : 'Daily Reading Plan'}
       >
         {/* Header */}
         <div className="modal-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Flame size={20} color="var(--accent-color)" />
-            <h2 className="modal-title">
-              {isTa ? 'வாசிப்புப் புள்ளிவிவரங்கள் & இலக்கு' : 'Reading Stats & Daily Goal'}
-            </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+            <div
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                backgroundColor: 'var(--accent-soft)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--accent-color)'
+              }}
+            >
+              <Target size={18} />
+            </div>
+            <div>
+              <h2 className="modal-title" style={{ fontSize: '1rem', margin: 0 }}>
+                {isTa ? 'தினசரி வேதாகம வாசிப்புத் திட்டம்' : 'Daily Bible Reading Plan'}
+              </h2>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
+                {isTa ? 'இன்றைய வாசிப்பு இலக்கு & பழக்க கண்காணிப்பு' : 'Today’s Reading Routine & Habit Tracker'}
+              </p>
+            </div>
           </div>
           <button
             className="modal-close-btn"
@@ -125,7 +183,7 @@ export const StreakStatsModal: React.FC = () => {
         </div>
 
         {/* Modal Body */}
-        <div className="modal-body" style={{ padding: '1rem 1.25rem 1.5rem' }}>
+        <div className="modal-body" style={{ padding: '1.125rem 1.25rem 1.5rem' }}>
           {/* Top 3 Stat Cards */}
           <div className="streak-stats-grid">
             <div className="streak-stat-card">
@@ -150,14 +208,85 @@ export const StreakStatsModal: React.FC = () => {
             </div>
           </div>
 
-          {/* Goal Selector */}
+          {/* ── Interactive "Today's Reading Routine" Action Tasks ───────────────── */}
+          <div className="today-tasks-container">
+            <div className="today-tasks-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                <BookOpen size={15} color="var(--accent-color)" />
+                <span className="today-tasks-title">
+                  {isTa ? 'இன்றைய வாசிப்புப் பணி' : "Today's Reading Routine"}
+                </span>
+              </div>
+              <span className="today-tasks-counter">
+                {streakData.todayCount} / {streakData.dailyGoal} {isTa ? 'அதிகாரங்கள்' : 'Chapters'}
+              </span>
+            </div>
+
+            {/* Task 1: Current Chapter */}
+            <div className="task-item-card">
+              <div className="task-item-info">
+                <span className="task-item-badge">{isTa ? 'தற்போதைய அதிகாரம்' : 'Current Chapter'}</span>
+                <h4 className="task-item-title">
+                  {isTa ? currentBook.name_ta : currentBook.name_en} {currentChapter}
+                </h4>
+              </div>
+
+              <div className="task-item-actions">
+                <button
+                  className="btn-pill"
+                  onClick={() => setIsStreakModalOpen(false)}
+                  style={{ fontSize: '0.75rem', padding: '0.375rem 0.625rem', gap: '0.25rem' }}
+                >
+                  <span>{isTa ? 'வாசிக்க' : 'Read'}</span>
+                  <ArrowRight size={13} />
+                </button>
+
+                <button
+                  className={`task-complete-btn ${isTodayGoalComplete ? 'completed' : ''}`}
+                  onClick={handleMarkChapterCompleted}
+                  title={isTa ? 'அதிகாரம் முடித்ததாகக் குறிக்கவும்' : 'Mark chapter completed'}
+                >
+                  <CheckCircle2 size={14} />
+                  <span>{isTa ? 'முடித்தேன்' : 'Mark Done'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Task 2: Daily Revival Verse */}
+            {dailyRevivalBook && todayRef && (
+              <div className="task-item-card">
+                <div className="task-item-info">
+                  <span className="task-item-badge revival">
+                    <Sparkles size={11} />
+                    <span>{isTa ? 'இன்றைய எழுப்புதல் வசனம்' : 'Today’s Revival Word'}</span>
+                  </span>
+                  <h4 className="task-item-title">
+                    {isTa ? dailyRevivalBook.name_ta : dailyRevivalBook.name_en} {todayRef.chapter}:{todayRef.verse}
+                  </h4>
+                </div>
+
+                <div className="task-item-actions">
+                  <button
+                    className="btn-pill"
+                    onClick={handleJumpToDailyRevival}
+                    style={{ fontSize: '0.75rem', padding: '0.375rem 0.625rem', gap: '0.25rem' }}
+                  >
+                    <span>{isTa ? 'தியானிக்க' : 'Meditate'}</span>
+                    <ArrowRight size={13} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Goal Target Selector */}
           <div className="streak-goal-selector">
             <div>
               <div style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--text-color)' }}>
                 {isTa ? 'தினசரி வாசிப்பு இலக்கு' : 'Daily Reading Target'}
               </div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                {isTa ? 'ஒரு நாளைக்கு எத்தனை அதிகாரங்கள்?' : 'Chapters per day'}
+                {isTa ? 'ஒரு நாளைக்கு எத்தனை அதிகாரங்கள்?' : 'Chapters to read per day'}
               </div>
             </div>
 
@@ -178,7 +307,7 @@ export const StreakStatsModal: React.FC = () => {
           <div style={{ marginBottom: '1.25rem' }}>
             <div className="calendar-heatmap-title">
               <Calendar size={14} style={{ display: 'inline', marginRight: '0.375rem', verticalAlign: '-2px' }} />
-              {isTa ? 'கடைசி 28 நாட்கள் வாசிப்பு வரைபடம்' : 'Last 28 Days Reading Activity'}
+              {isTa ? 'கடைசி 28 நாட்கள் வாசிப்பு வரைபடம்' : 'Last 28 Days Activity Grid'}
             </div>
 
             {/* Weekday headers */}
@@ -213,7 +342,7 @@ export const StreakStatsModal: React.FC = () => {
           <div>
             <div className="badges-title">
               <Award size={14} style={{ display: 'inline', marginRight: '0.375rem', verticalAlign: '-2px' }} />
-              {isTa ? 'சாதனை விருதுகள்' : 'Achievement Badges'}
+              {isTa ? 'சாதனை இலக்குகள்' : 'Reading Milestones'}
             </div>
 
             <div className="badges-grid">

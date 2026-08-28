@@ -22,7 +22,8 @@ import {
   fetchCloudHighlights,
   fetchCloudNotes,
   fetchCloudHistory,
-  fetchAllCloudHistory
+  fetchAllCloudHistory,
+  fetchCloudStreakData
 } from '../services/userDataService';
 import { getStoredStreakData, recordChapterCompletion, updateDailyGoal } from '../services/streakService';
 import { trackActivity } from '../services/activityService';
@@ -167,7 +168,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isStreakModalOpen, setIsStreakModalOpen] = useState<boolean>(false);
 
   const handleUpdateDailyGoal = (newGoal: number) => {
-    const updated = updateDailyGoal(newGoal);
+    const updated = updateDailyGoal(newGoal, userId);
     setStreakData(updated);
   };
 
@@ -271,6 +272,13 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       .filter(Boolean) as ReadingHistoryItem[];
     setHistoryList(mappedHistoryList);
     console.log(`[ReadingContext] Set ${mappedHistoryList.length} history items from cloud.`);
+
+    // 7. Load cloud streak & habit data
+    const cloudStreak = await fetchCloudStreakData(uid);
+    if (cloudStreak) {
+      setStreakData(cloudStreak);
+      localStorage.setItem('bible_app_streak_data', JSON.stringify(cloudStreak));
+    }
   }, []);
 
   /**
@@ -360,7 +368,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       });
 
         // Record chapter completion for Streak & Daily Goal tracker
-        const updatedStreak = recordChapterCompletion();
+        const updatedStreak = recordChapterCompletion(userId);
         setStreakData(updatedStreak);
     },
     [language, userId]
