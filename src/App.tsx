@@ -20,6 +20,9 @@ import { SyncBanner } from './components/auth/SyncBanner';
 import { LandingPage } from './components/auth/LandingPage';
 import { AdminRoutePlaceholder } from './components/admin/AdminRoute';
 import { VerseCardModal } from './components/bible/VerseCardModal';
+import { ExitConfirmationModal } from './components/common/ExitConfirmationModal';
+import { LanguageSelectorModal } from './components/language/LanguageSelectorModal';
+import { useMobileBackButton } from './hooks/useMobileBackButton';
 import { BookOpen, Clock, ArrowRight } from 'lucide-react';
 
 // ─── App Init Splash (while checking session) ─────────────────────────────────
@@ -108,6 +111,7 @@ const BibleLoadingScreen: React.FC = () => (
 const MainLayout: React.FC = () => {
   const { historyItem, books, language, setBookAndChapter, preferences, isBibleDataLoading } =
     useReading();
+  const { isExitModalOpen, handleConfirmExit, handleCancelExit } = useMobileBackButton();
   const [isAdminView, setIsAdminView] = useState<boolean>(
     window.location.hash.toLowerCase() === '#admin'
   );
@@ -192,6 +196,14 @@ const MainLayout: React.FC = () => {
       <AuthModal />
       <SyncBanner />
       <VerseCardModal />
+      <LanguageSelectorModal />
+
+      {/* Mobile Back Button Exit Confirmation Modal */}
+      <ExitConfirmationModal
+        isOpen={isExitModalOpen}
+        onConfirmExit={handleConfirmExit}
+        onCancelExit={handleCancelExit}
+      />
     </div>
   );
 };
