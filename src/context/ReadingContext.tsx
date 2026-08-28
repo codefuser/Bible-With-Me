@@ -63,6 +63,13 @@ interface ReadingContextType {
   verseCardData: VerseCardData | null;
   openVerseCard: (verse: BibleVerse, book: BibleBook, chapter: number) => void;
   closeVerseCard: () => void;
+  /** Fullscreen Focus Reader state */
+  isFullscreenReaderOpen: boolean;
+  fullscreenVerseList: BibleVerse[];
+  fullscreenVerseIndex: number;
+  openFullscreenReader: (verses: BibleVerse[], startVerseNum: number) => void;
+  closeFullscreenReader: () => void;
+  setFullscreenVerseIndex: (idx: number) => void;
   setBookAndChapter: (book: BibleBook, chapter: number, verse?: number) => void;
   setChapter: (chapter: number) => void;
   setLanguage: (lang: Language) => void;
@@ -141,6 +148,22 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const closeVerseCard = () => {
     setIsVerseCardOpen(false);
+  };
+
+  // Fullscreen Focus Reader state
+  const [isFullscreenReaderOpen, setIsFullscreenReaderOpen] = useState<boolean>(false);
+  const [fullscreenVerseList, setFullscreenVerseList] = useState<BibleVerse[]>([]);
+  const [fullscreenVerseIndex, setFullscreenVerseIndex] = useState<number>(0);
+
+  const openFullscreenReader = (verses: BibleVerse[], startVerseNum: number) => {
+    const idx = verses.findIndex((v) => v.verse === startVerseNum);
+    setFullscreenVerseList(verses);
+    setFullscreenVerseIndex(idx >= 0 ? idx : 0);
+    setIsFullscreenReaderOpen(true);
+  };
+
+  const closeFullscreenReader = () => {
+    setIsFullscreenReaderOpen(false);
   };
 
   /**
@@ -459,6 +482,12 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         verseCardData,
         openVerseCard,
         closeVerseCard,
+        isFullscreenReaderOpen,
+        fullscreenVerseList,
+        fullscreenVerseIndex,
+        openFullscreenReader,
+        closeFullscreenReader,
+        setFullscreenVerseIndex,
         setBookAndChapter,
         setChapter,
         setLanguage,

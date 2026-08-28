@@ -22,6 +22,7 @@ import { AdminRoutePlaceholder } from './components/admin/AdminRoute';
 import { VerseCardModal } from './components/bible/VerseCardModal';
 import { ExitConfirmationModal } from './components/common/ExitConfirmationModal';
 import { LanguageSelectorModal } from './components/language/LanguageSelectorModal';
+import { FullscreenVerseReader } from './components/bible/FullscreenVerseReader';
 import { useMobileBackButton } from './hooks/useMobileBackButton';
 import { BookOpen, Clock, ArrowRight } from 'lucide-react';
 
@@ -196,6 +197,7 @@ const MainLayout: React.FC = () => {
       <AuthModal />
       <SyncBanner />
       <VerseCardModal />
+      <FullscreenVerseReader />
       <LanguageSelectorModal />
 
       {/* Mobile Back Button Exit Confirmation Modal */}
