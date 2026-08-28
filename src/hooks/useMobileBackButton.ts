@@ -6,6 +6,8 @@ export function useMobileBackButton() {
   const {
     isSideNavOpen,
     setIsSideNavOpen,
+    isLanguageModalOpen,
+    setIsLanguageModalOpen,
     isSearchOpen,
     setIsSearchOpen,
     isBookSelectorOpen,
@@ -42,6 +44,7 @@ export function useMobileBackButton() {
   // Track modal states to detect opening vs closing transitions
   const prevModalState = useRef({
     sideNav: isSideNavOpen,
+    languageModal: isLanguageModalOpen,
     search: isSearchOpen,
     bookSelector: isBookSelectorOpen,
     preferences: isPreferencesOpen,
@@ -56,6 +59,7 @@ export function useMobileBackButton() {
 
   const isAnyModalOpen =
     isSideNavOpen ||
+    isLanguageModalOpen ||
     isSearchOpen ||
     isBookSelectorOpen ||
     isPreferencesOpen ||
@@ -83,6 +87,7 @@ export function useMobileBackButton() {
   useEffect(() => {
     const current = {
       sideNav: isSideNavOpen,
+      languageModal: isLanguageModalOpen,
       search: isSearchOpen,
       bookSelector: isBookSelectorOpen,
       preferences: isPreferencesOpen,
@@ -134,6 +139,7 @@ export function useMobileBackButton() {
     prevModalState.current = current;
   }, [
     isSideNavOpen,
+    isLanguageModalOpen,
     isSearchOpen,
     isBookSelectorOpen,
     isPreferencesOpen,
@@ -160,6 +166,8 @@ export function useMobileBackButton() {
       // Close open modals in top-to-bottom priority order
       if (isExitModalOpen) {
         setIsExitModalOpen(false);
+      } else if (isLanguageModalOpen) {
+        setIsLanguageModalOpen(false);
       } else if (isVerseCardOpen) {
         closeVerseCard();
       } else if (isAuthModalOpen) {

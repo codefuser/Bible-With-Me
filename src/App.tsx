@@ -21,6 +21,7 @@ import { LandingPage } from './components/auth/LandingPage';
 import { AdminRoutePlaceholder } from './components/admin/AdminRoute';
 import { VerseCardModal } from './components/bible/VerseCardModal';
 import { ExitConfirmationModal } from './components/common/ExitConfirmationModal';
+import { LanguageSelectorModal } from './components/language/LanguageSelectorModal';
 import { useMobileBackButton } from './hooks/useMobileBackButton';
 import { BookOpen, Clock, ArrowRight } from 'lucide-react';
 
@@ -195,6 +196,7 @@ const MainLayout: React.FC = () => {
       <AuthModal />
       <SyncBanner />
       <VerseCardModal />
+      <LanguageSelectorModal />
 
       {/* Mobile Back Button Exit Confirmation Modal */}
       <ExitConfirmationModal

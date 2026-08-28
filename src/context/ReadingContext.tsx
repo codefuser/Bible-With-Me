@@ -49,8 +49,10 @@ interface ReadingContextType {
   isBookSelectorOpen: boolean;
   isBookmarksOpen: boolean;
   isSideNavOpen: boolean;
+  isLanguageModalOpen: boolean;
   isDesktopSidebarCollapsed: boolean;
   setIsDesktopSidebarCollapsed: (collapsed: boolean) => void;
+  setIsLanguageModalOpen: (open: boolean) => void;
   toggleDesktopSidebar: () => void;
   isDailyHistoryOpen: boolean;
   isReadingHistoryOpen: boolean;
@@ -109,6 +111,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isBookSelectorOpen, setIsBookSelectorOpen] = useState<boolean>(false);
   const [isBookmarksOpen, setIsBookmarksOpen] = useState<boolean>(false);
   const [isSideNavOpen, setIsSideNavOpen] = useState<boolean>(false);
+  const [isLanguageModalOpen, setIsLanguageModalOpen] = useState<boolean>(false);
   const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState<boolean>(
     () => localStorage.getItem('bible_desktop_sidebar_collapsed') === 'true'
   );
@@ -469,6 +472,8 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setIsBookSelectorOpen,
         setIsBookmarksOpen,
         setIsSideNavOpen,
+        isLanguageModalOpen,
+        setIsLanguageModalOpen,
         isDesktopSidebarCollapsed,
         setIsDesktopSidebarCollapsed,
         toggleDesktopSidebar,

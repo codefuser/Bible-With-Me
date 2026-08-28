@@ -1812,3 +1812,32 @@ a {
     font-size: 0.6875rem;
   }
 }
+
+/* ─── Responsive Mobile Header Tweaks ────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .header-brand-icon-mobile-hidden {
+    display: none !important;
+  }
+  .header-bookmark-btn {
+    display: none !important;
+  }
+  .header-profile-btn {
+    display: inline-flex !important;
+  }
+  .header-brand-text {
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 769px) {
+  .header-brand-icon-mobile-hidden {
+    display: flex !important;
+  }
+  .header-bookmark-btn {
+    display: inline-flex !important;
+  }
+  .header-profile-btn {
+    display: none !important;
+  }
+}
