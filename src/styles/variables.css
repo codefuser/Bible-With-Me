@@ -25,9 +25,9 @@
   --transition-normal: 250ms ease;
 
   /* Layout Widths */
-  --width-compact: 640px;
-  --width-standard: 768px;
-  --width-wide: 920px;
+  --width-compact: 720px;
+  --width-standard: 840px;
+  --width-wide: 1000px;
 
   /* Font Scales */
   --font-scale-sm: 0.9375rem; /* 15px */

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, BookOpen, Search, Bookmark, Globe } from 'lucide-react';
+import { Menu, BookOpen, Search, Bookmark, Globe, Flame } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 
 export const Header: React.FC = () => {
@@ -12,15 +12,23 @@ export const Header: React.FC = () => {
     setIsBookmarksOpen,
     setIsSideNavOpen,
     setIsLanguageModalOpen,
-    bookmarks
+    bookmarks,
+    streakData,
+    setIsStreakModalOpen
   } = useReading();
 
   const bookName = language === 'en' ? currentBook.name_en : currentBook.name_ta;
 
-  const getLanguageLabel = () => {
+  const getMobileLanguageLabel = () => {
     if (language === 'ta') return 'த';
     if (language === 'en') return 'E';
     return 'த+E';
+  };
+
+  const getDesktopLanguageLabel = () => {
+    if (language === 'ta') return 'தமிழ்';
+    if (language === 'en') return 'EN';
+    return 'தமிழ் + EN';
   };
 
   return (
@@ -62,8 +70,25 @@ export const Header: React.FC = () => {
           style={{ gap: '0.3125rem', padding: '0.375rem 0.625rem' }}
         >
           <Globe size={14} />
-          <span style={{ fontWeight: 700 }}>{getLanguageLabel()}</span>
+          <span className="lang-label-mobile" style={{ fontWeight: 700 }}>
+            {getMobileLanguageLabel()}
+          </span>
+          <span className="lang-label-desktop" style={{ fontWeight: 600 }}>
+            {getDesktopLanguageLabel()}
+          </span>
         </button>
+
+        {/* Daily Streak Trigger Pill */}
+        {streakData && (
+          <button
+            className="header-streak-pill"
+            onClick={() => setIsStreakModalOpen(true)}
+            title={language === 'en' ? `Daily Streak: ${streakData.streak} days` : `வாசிப்புத் தொடர்: ${streakData.streak} நாட்கள்`}
+          >
+            <Flame size={14} color="var(--accent-color)" />
+            <span>{streakData.streak}</span>
+          </button>
+        )}
 
         {/* Search Action */}
         <button className="btn-icon" onClick={() => setIsSearchOpen(true)} title="Search Bible">

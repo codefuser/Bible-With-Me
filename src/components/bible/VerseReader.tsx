@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Bookmark as BookmarkIcon, Copy, Share2, BookOpen, Highlighter, Check, Trash2, Sparkles, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Bookmark as BookmarkIcon, Copy, Share2, BookOpen, Highlighter, Check, Trash2, Sparkles, Image as ImageIcon, ChevronLeft, ChevronRight, Expand } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
 import { BibleVerse } from '../../types/bible';
@@ -28,6 +28,7 @@ export const VerseReader: React.FC = () => {
     handleSetHighlight: contextHandleSetHighlight,
     openVerseStudy,
     openVerseCard,
+    openFullscreenReader,
     recordChapterRead
   } = useReading();
 
@@ -443,6 +444,16 @@ export const VerseReader: React.FC = () => {
                         <span>Card / கார்டு</span>
                       </button>
 
+                      {/* Fullscreen Focus Reader */}
+                      <button
+                        className="verse-action-btn"
+                        onClick={() => openFullscreenReader(verses, verseObj.verse)}
+                        title="Fullscreen Reading Mode / முழுத்திரை வாசிப்பு"
+                      >
+                        <Expand size={14} />
+                        <span>Focus / மேலும்</span>
+                      </button>
+
                       {/* Highlight */}
                       <button
                         className={`verse-action-btn ${highlightColor ? 'active' : ''}`}
@@ -615,6 +626,16 @@ export const VerseReader: React.FC = () => {
                       >
                         <ImageIcon size={14} />
                         <span>{language === 'en' ? 'Card' : 'கார்டு'}</span>
+                      </button>
+
+                      {/* Fullscreen Focus Reader */}
+                      <button
+                        className="verse-action-btn"
+                        onClick={() => openFullscreenReader(verses, verseObj.verse)}
+                        title={language === 'en' ? 'Fullscreen Reading Mode' : 'முழுத்திரை வாசிப்பு'}
+                      >
+                        <Expand size={14} />
+                        <span>{language === 'en' ? 'Focus' : 'மேலும்'}</span>
                       </button>
 
                       {/* Verse Study Action (Disabled/Hidden - Uncomment to enable):

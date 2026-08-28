@@ -561,3 +561,36 @@ export const saveCloudOpenedVerses = async (
     return false;
   }
 };
+
+// ─── Streak & Daily Reading Goal Cloud Sync ────────────────────────────────
+
+export const fetchCloudStreakData = async (userId: string): Promise<any | null> => {
+  if (!supabase || !userId) return null;
+  try {
+    const { data: authData } = await supabase.auth.getUser();
+    const meta = authData?.user?.user_metadata || {};
+    return meta.streak_data || null;
+  } catch (err) {
+    console.error('[Supabase Exception] fetchCloudStreakData failed:', err);
+    return null;
+  }
+};
+
+export const saveCloudStreakData = async (userId: string, streakData: any): Promise<boolean> => {
+  if (!supabase || !userId) return false;
+  try {
+    const { error } = await supabase.auth.updateUser({
+      data: { streak_data: streakData }
+    });
+    if (error) {
+      console.warn('[Supabase Streak Sync Warning]:', error.message);
+      return false;
+    }
+    console.log('[Cloud Sync Success] Saved streak & reading goal data to Supabase for user:', userId);
+    return true;
+  } catch (err) {
+    console.error('[Supabase Exception] saveCloudStreakData failed:', err);
+    return false;
+  }
+};
+
