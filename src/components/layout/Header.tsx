@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, BookOpen, Search, Bookmark, Globe } from 'lucide-react';
+import { Menu, BookOpen, Search, Bookmark, Globe, Flame } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 
 export const Header: React.FC = () => {
@@ -12,7 +12,9 @@ export const Header: React.FC = () => {
     setIsBookmarksOpen,
     setIsSideNavOpen,
     setIsLanguageModalOpen,
-    bookmarks
+    bookmarks,
+    streakData,
+    setIsStreakModalOpen
   } = useReading();
 
   const bookName = language === 'en' ? currentBook.name_en : currentBook.name_ta;
@@ -75,6 +77,18 @@ export const Header: React.FC = () => {
             {getDesktopLanguageLabel()}
           </span>
         </button>
+
+        {/* Daily Streak Trigger Pill */}
+        {streakData && (
+          <button
+            className="header-streak-pill"
+            onClick={() => setIsStreakModalOpen(true)}
+            title={language === 'en' ? `Daily Streak: ${streakData.streak} days` : `வாசிப்புத் தொடர்: ${streakData.streak} நாட்கள்`}
+          >
+            <Flame size={14} color="var(--accent-color)" />
+            <span>{streakData.streak}</span>
+          </button>
+        )}
 
         {/* Search Action */}
         <button className="btn-icon" onClick={() => setIsSearchOpen(true)} title="Search Bible">

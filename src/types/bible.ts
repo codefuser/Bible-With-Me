@@ -138,3 +138,14 @@ export interface UserActivity {
   metadata?: Record<string, any>;
   created_at?: string;
 }
+
+export interface StreakData {
+  streak: number;
+  bestStreak: number;
+  lastReadDate: string | null;
+  dailyGoal: number;
+  todayCount: number;
+  totalChapters: number;
+  calendarMap: Record<string, number>;
+}
+

@@ -6,7 +6,8 @@ import {
   ReadingPreferences,
   Bookmark,
   ReadingHistoryItem,
-  VerseNote
+  VerseNote,
+  StreakData
 } from '../types/bible';
 import { fetchBibleBooks, ALL_BIBLE_BOOKS } from '../services/bibleService';
 import { getStoredPreferences, savePreferences } from '../services/preferencesService';
@@ -23,6 +24,7 @@ import {
   fetchCloudHistory,
   fetchAllCloudHistory
 } from '../services/userDataService';
+import { getStoredStreakData, recordChapterCompletion, updateDailyGoal } from '../services/streakService';
 import { trackActivity } from '../services/activityService';
 import { useAuth } from './AuthContext';
 
@@ -70,6 +72,11 @@ interface ReadingContextType {
   openFullscreenReader: (verses: BibleVerse[], startVerseNum: number) => void;
   closeFullscreenReader: () => void;
   setFullscreenVerseIndex: (idx: number) => void;
+  /** Streak & Daily Goal state */
+  streakData: StreakData;
+  isStreakModalOpen: boolean;
+  setIsStreakModalOpen: (open: boolean) => void;
+  handleUpdateDailyGoal: (newGoal: number) => void;
   setBookAndChapter: (book: BibleBook, chapter: number, verse?: number) => void;
   setChapter: (chapter: number) => void;
   setLanguage: (lang: Language) => void;
@@ -154,6 +161,15 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isFullscreenReaderOpen, setIsFullscreenReaderOpen] = useState<boolean>(false);
   const [fullscreenVerseList, setFullscreenVerseList] = useState<BibleVerse[]>([]);
   const [fullscreenVerseIndex, setFullscreenVerseIndex] = useState<number>(0);
+
+  // Streak & Daily Goal state
+  const [streakData, setStreakData] = useState<StreakData>(getStoredStreakData);
+  const [isStreakModalOpen, setIsStreakModalOpen] = useState<boolean>(false);
+
+  const handleUpdateDailyGoal = (newGoal: number) => {
+    const updated = updateDailyGoal(newGoal);
+    setStreakData(updated);
+  };
 
   const openFullscreenReader = (verses: BibleVerse[], startVerseNum: number) => {
     const idx = verses.findIndex((v) => v.verse === startVerseNum);
@@ -342,6 +358,10 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
           return [item, ...filtered];
         });
       });
+
+        // Record chapter completion for Streak & Daily Goal tracker
+        const updatedStreak = recordChapterCompletion();
+        setStreakData(updatedStreak);
     },
     [language, userId]
   );
@@ -488,6 +508,10 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         openFullscreenReader,
         closeFullscreenReader,
         setFullscreenVerseIndex,
+        streakData,
+        isStreakModalOpen,
+        setIsStreakModalOpen,
+        handleUpdateDailyGoal,
         setBookAndChapter,
         setChapter,
         setLanguage,

@@ -23,6 +23,7 @@ import { VerseCardModal } from './components/bible/VerseCardModal';
 import { ExitConfirmationModal } from './components/common/ExitConfirmationModal';
 import { LanguageSelectorModal } from './components/language/LanguageSelectorModal';
 import { FullscreenVerseReader } from './components/bible/FullscreenVerseReader';
+import { StreakStatsModal } from './components/streaks/StreakStatsModal';
 import { useMobileBackButton } from './hooks/useMobileBackButton';
 import { BookOpen, Clock, ArrowRight } from 'lucide-react';
 
@@ -199,6 +200,7 @@ const MainLayout: React.FC = () => {
       <VerseCardModal />
       <FullscreenVerseReader />
       <LanguageSelectorModal />
+      <StreakStatsModal />
 
       {/* Mobile Back Button Exit Confirmation Modal */}
       <ExitConfirmationModal
