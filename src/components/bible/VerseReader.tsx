@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Bookmark as BookmarkIcon, Copy, Share2, BookOpen, Highlighter, Check, Trash2, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { Bookmark as BookmarkIcon, Copy, Share2, BookOpen, Highlighter, Check, Trash2, Sparkles, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
 import { BibleVerse } from '../../types/bible';
@@ -23,6 +23,7 @@ export const VerseReader: React.FC = () => {
     preferences,
     bookmarks,
     highlights,
+    setChapter,
     handleToggleBookmark,
     handleSetHighlight: contextHandleSetHighlight,
     openVerseStudy,
@@ -42,6 +43,26 @@ export const VerseReader: React.FC = () => {
   const [showHighlightPicker, setShowHighlightPicker] = useState<boolean>(false);
 
   const verseRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const quickChapterBarRef = useRef<HTMLDivElement | null>(null);
+  const chapterPillRefs = useRef<Record<number, HTMLButtonElement | null>>({});
+
+  const handleScrollChapterBar = (direction: 'left' | 'right') => {
+    if (quickChapterBarRef.current) {
+      const scrollAmount = direction === 'left' ? -200 : 200;
+      quickChapterBarRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  // Smoothly center the active chapter pill in the quick chapter bar
+  useEffect(() => {
+    if (chapterPillRefs.current[currentChapter]) {
+      chapterPillRefs.current[currentChapter]?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      });
+    }
+  }, [currentChapter, currentBook.id]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -242,6 +263,44 @@ export const VerseReader: React.FC = () => {
           <span className="chapter-subhead">
             {verses.length} {language === 'en' ? 'Verses' : 'வசனங்கள்'}
           </span>
+        </div>
+
+        {/* Quick Chapter Horizontal Scroll Navigation Bar with Left/Right Arrow Controls */}
+        <div className="quick-chapter-bar-container">
+          <button
+            className="quick-chapter-scroll-btn left"
+            onClick={() => handleScrollChapterBar('left')}
+            title={language === 'ta' ? 'இடதுபுறம் நகர்த்து' : 'Scroll Left'}
+            aria-label="Scroll Left"
+          >
+            <ChevronLeft size={16} />
+          </button>
+
+          <div className="quick-chapter-bar" ref={quickChapterBarRef}>
+            {Array.from({ length: currentBook.total_chapters }, (_, i) => i + 1).map((ch) => {
+              const isSelected = ch === currentChapter;
+              return (
+                <button
+                  key={ch}
+                  ref={(el) => (chapterPillRefs.current[ch] = el)}
+                  className={`quick-chapter-pill ${isSelected ? 'active' : ''}`}
+                  onClick={() => setChapter(ch)}
+                  title={language === 'ta' ? `${ch}-ஆம் அதிகாரம்` : `Chapter ${ch}`}
+                >
+                  {ch}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            className="quick-chapter-scroll-btn right"
+            onClick={() => handleScrollChapterBar('right')}
+            title={language === 'ta' ? 'வலதுபுறம் நகர்த்து' : 'Scroll Right'}
+            aria-label="Scroll Right"
+          >
+            <ChevronRight size={16} />
+          </button>
         </div>
 
         {/* Verses Container */}
