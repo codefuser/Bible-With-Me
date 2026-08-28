@@ -236,7 +236,7 @@ export const VerseReader: React.FC = () => {
         <div className="chapter-header">
           <div>
             <h1 className={`chapter-title ${language === 'ta' ? 'lang-ta' : ''}`}>
-              {bookName} {currentChapter}
+              <span>{bookName}&nbsp;{currentChapter}</span>
             </h1>
           </div>
           <span className="chapter-subhead">
@@ -301,7 +301,7 @@ export const VerseReader: React.FC = () => {
                   >
                     {/* Tamil Column */}
                     <div className="verse-parallel-col lang-ta-col">
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
                         <span className="verse-parallel-num">{verseObj.verse}</span>
                         <p
                           className="verse-text lang-ta"
@@ -314,7 +314,7 @@ export const VerseReader: React.FC = () => {
 
                     {/* English Column */}
                     <div className="verse-parallel-col lang-en-col">
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
                         <span className="verse-parallel-num">{verseObj.verse}</span>
                         <p
                           className="verse-text lang-en"
@@ -481,14 +481,17 @@ export const VerseReader: React.FC = () => {
                   <div className="verse-text-container" style={{ flex: 1 }}>
                     {/* Tamil Verse Text */}
                     {language !== 'en' && (
-                      <p className="verse-text lang-ta" style={{ marginBottom: 0 }}>
+                      <p className="verse-text lang-ta" style={{ margin: 0 }}>
                         {verseObj.text_ta}
                       </p>
                     )}
 
                     {/* English Verse Text */}
                     {language !== 'ta' && (
-                      <p className="verse-text lang-en">
+                      <p
+                        className="verse-text lang-en"
+                        style={{ margin: 0 }}
+                      >
                         {verseObj.text_en}
                       </p>
                     )}
