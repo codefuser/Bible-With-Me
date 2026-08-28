@@ -3,29 +3,21 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  RotateCcw,
-  Bookmark as BookmarkIcon,
-  Copy,
-  Share2,
-  Volume2,
-  VolumeX,
-  Image as ImageIcon,
-  Minus,
-  Plus,
-  Sun,
-  Moon
+  Palette,
+  Check,
+  RotateCw,
 } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import '../../styles/fullscreen-reader.css';
 
 type FsrTheme = 'light' | 'dark' | 'sepia' | 'midnight' | 'emerald';
 
-const THEME_DOTS: { key: FsrTheme; bg: string; label: string }[] = [
-  { key: 'light',    bg: '#f8f7f4', label: 'Light' },
-  { key: 'sepia',    bg: '#f3ead8', label: 'Sepia' },
-  { key: 'dark',     bg: '#0f172a', label: 'Dark' },
-  { key: 'midnight', bg: '#0d1b2a', label: 'Midnight' },
-  { key: 'emerald',  bg: '#0f1f13', label: 'Emerald' },
+const THEMES: { key: FsrTheme; bg: string; text: string; label: string; labelTa: string }[] = [
+  { key: 'light',    bg: '#f8f7f4', text: '#1a1a2e', label: 'Light',    labelTa: 'வெளிர்' },
+  { key: 'sepia',    bg: '#f3ead8', text: '#3b2f1e', label: 'Sepia',    labelTa: 'சேபியா' },
+  { key: 'dark',     bg: '#0f172a', text: '#f1f5f9', label: 'Dark',     labelTa: 'இருண்ட' },
+  { key: 'midnight', bg: '#0d1b2a', text: '#cfe2ff', label: 'Midnight', labelTa: 'நள்ளிரவு' },
+  { key: 'emerald',  bg: '#0f1f13', text: '#d1fae5', label: 'Emerald',  labelTa: 'பச்சை' },
 ];
 
 export const FullscreenVerseReader: React.FC = () => {
@@ -37,58 +29,52 @@ export const FullscreenVerseReader: React.FC = () => {
     closeFullscreenReader,
     language,
     currentBook,
-    currentChapter,
-    bookmarks,
-    highlights,
-    handleToggleBookmark,
-    openVerseCard,
   } = useReading();
 
   const [theme, setTheme] = useState<FsrTheme>(() => {
     return (localStorage.getItem('fsr_theme') as FsrTheme) || 'dark';
   });
   const [fontSize, setFontSize] = useState<number>(() => {
-    return Number(localStorage.getItem('fsr_fontsize')) || 22;
+    return Number(localStorage.getItem('fsr_fontsize')) || 24;
   });
   const [slideDir, setSlideDir] = useState<'next' | 'prev' | null>(null);
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isThemeOpen, setIsThemeOpen] = useState(false);
   const [isRotated, setIsRotated] = useState(false);
 
   // Touch gesture tracking
   const touchStartX = useRef<number | null>(null);
+  const themePopoverRef = useRef<HTMLDivElement | null>(null);
 
   const verse = fullscreenVerseList[fullscreenVerseIndex];
   const total = fullscreenVerseList.length;
   const progress = total > 0 ? ((fullscreenVerseIndex + 1) / total) * 100 : 0;
 
-  const isBookmarked = verse
-    ? bookmarks.some(
-        (b) =>
-          b.book_id === verse.book_id &&
-          b.chapter === verse.chapter &&
-          b.verse === verse.verse
-      )
-    : false;
-
-  // Stop speaking on unmount or verse change
+  // Close theme popover on outside click
   useEffect(() => {
-    return () => {
-      window.speechSynthesis?.cancel();
-      setIsSpeaking(false);
+    if (!isThemeOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (themePopoverRef.current && !themePopoverRef.current.contains(e.target as Node)) {
+        setIsThemeOpen(false);
+      }
     };
-  }, [fullscreenVerseIndex, isFullscreenReaderOpen]);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [isThemeOpen]);
 
   // Keyboard navigation
   useEffect(() => {
     if (!isFullscreenReaderOpen) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeFullscreenReader();
+      if (e.key === 'Escape') {
+        if (isThemeOpen) { setIsThemeOpen(false); return; }
+        closeFullscreenReader();
+      }
       if (e.key === 'ArrowRight') goNext();
       if (e.key === 'ArrowLeft') goPrev();
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [isFullscreenReaderOpen, fullscreenVerseIndex, total]);
+  }, [isFullscreenReaderOpen, fullscreenVerseIndex, total, isThemeOpen]);
 
   // Lock body scroll when open
   useEffect(() => {
@@ -96,16 +82,13 @@ export const FullscreenVerseReader: React.FC = () => {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
+      setIsRotated(false);
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
+    return () => { document.body.style.overflow = ''; };
   }, [isFullscreenReaderOpen]);
 
   const goNext = useCallback(() => {
     if (fullscreenVerseIndex < total - 1) {
-      window.speechSynthesis?.cancel();
-      setIsSpeaking(false);
       setSlideDir('next');
       setFullscreenVerseIndex(fullscreenVerseIndex + 1);
       setTimeout(() => setSlideDir(null), 320);
@@ -114,8 +97,6 @@ export const FullscreenVerseReader: React.FC = () => {
 
   const goPrev = useCallback(() => {
     if (fullscreenVerseIndex > 0) {
-      window.speechSynthesis?.cancel();
-      setIsSpeaking(false);
       setSlideDir('prev');
       setFullscreenVerseIndex(fullscreenVerseIndex - 1);
       setTimeout(() => setSlideDir(null), 320);
@@ -125,59 +106,38 @@ export const FullscreenVerseReader: React.FC = () => {
   const handleTheme = (t: FsrTheme) => {
     setTheme(t);
     localStorage.setItem('fsr_theme', t);
+    setIsThemeOpen(false);
   };
 
   const handleFontSize = (delta: number) => {
-    const next = Math.min(40, Math.max(14, fontSize + delta));
+    const next = Math.min(42, Math.max(14, fontSize + delta));
     setFontSize(next);
     localStorage.setItem('fsr_fontsize', String(next));
   };
 
-  const handleSpeech = () => {
-    if (!verse) return;
-    if (isSpeaking) {
-      window.speechSynthesis?.cancel();
-      setIsSpeaking(false);
-      return;
-    }
-    const text = language === 'en' ? verse.text_en : verse.text_ta;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = language === 'en' ? 'en-US' : 'ta-IN';
-    utterance.rate = 0.88;
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-    window.speechSynthesis.speak(utterance);
-    setIsSpeaking(true);
-  };
+  const toggleRotate = async () => {
+    const nextState = !isRotated;
+    setIsRotated(nextState);
 
-  const handleCopy = async () => {
-    if (!verse) return;
-    const text = language === 'en' ? verse.text_en : verse.text_ta;
-    const ref = `${currentBook.name_ta || currentBook.name_en} ${verse.chapter}:${verse.verse}`;
-    await navigator.clipboard.writeText(`"${text}" — ${ref}`);
-  };
-
-  const handleShare = async () => {
-    if (!verse) return;
-    const text = language === 'en' ? verse.text_en : verse.text_ta;
-    const ref = `${currentBook.name_ta || currentBook.name_en} ${verse.chapter}:${verse.verse}`;
-    const shareText = `"${text}" — ${ref}`;
-    if (navigator.share) {
-      await navigator.share({ title: ref, text: shareText });
-    } else {
-      await navigator.clipboard.writeText(shareText);
-    }
-  };
-
-  const handleRotate = () => {
-    setIsRotated((prev) => !prev);
-    // Try Screen Orientation API if available
-    if (!isRotated && screen.orientation && (screen.orientation as any).lock) {
-      (screen.orientation as any).lock('landscape').catch(() => {});
-    } else {
-      if (screen.orientation && (screen.orientation as any).unlock) {
-        (screen.orientation as any).unlock();
+    try {
+      if (nextState) {
+        // Try native orientation lock if browser supports it
+        if (document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen().catch(() => {});
+        }
+        if (screen.orientation && (screen.orientation as any).lock) {
+          await (screen.orientation as any).lock('landscape').catch(() => {});
+        }
+      } else {
+        if (document.fullscreenElement && document.exitFullscreen) {
+          await document.exitFullscreen().catch(() => {});
+        }
+        if (screen.orientation && (screen.orientation as any).unlock) {
+          (screen.orientation as any).unlock();
+        }
       }
+    } catch (err) {
+      // Fallback CSS handles visual rotation seamlessly
     }
   };
 
@@ -197,82 +157,97 @@ export const FullscreenVerseReader: React.FC = () => {
 
   if (!isFullscreenReaderOpen || !verse) return null;
 
-  const verseTextTa = verse.text_ta;
-  const verseTextEn = verse.text_en;
   const bookName = language === 'en' ? currentBook.name_en : currentBook.name_ta;
   const refLabel = `${bookName} ${verse.chapter}:${verse.verse}`;
-
-  const slideClass =
-    slideDir === 'next' ? 'slide-next' :
-    slideDir === 'prev' ? 'slide-prev' :
-    '';
+  const slideClass = slideDir === 'next' ? 'slide-next' : slideDir === 'prev' ? 'slide-prev' : '';
+  const isTa = language !== 'en';
 
   return (
     <div
-      className={`fsr-backdrop fsr-theme-${theme}`}
+      className={`fsr-backdrop fsr-theme-${theme} ${isRotated ? 'fsr-rotated-mode' : ''}`}
       role="dialog"
       aria-modal="true"
-      aria-label={language === 'ta' ? 'முழுத்திரை வசன வாசிப்பு' : 'Fullscreen Verse Reader'}
+      aria-label={isTa ? 'முழுத்திரை வசன வாசிப்பு' : 'Fullscreen Verse Reader'}
     >
-      {/* ── Header ─────────────────────────────────────────────────── */}
+      {/* ── Header ─────────────────────────────────────────── */}
       <header className="fsr-header">
         <span className="fsr-reference">{refLabel}</span>
 
         <div className="fsr-header-controls">
-          {/* Theme dots */}
-          <div className="fsr-theme-row">
-            {THEME_DOTS.map((t) => (
-              <button
-                key={t.key}
-                className={`fsr-theme-dot ${theme === t.key ? 'active' : ''}`}
-                style={{ backgroundColor: t.bg }}
-                onClick={() => handleTheme(t.key)}
-                title={t.label}
-                aria-label={`Theme: ${t.label}`}
-              />
-            ))}
-          </div>
+          {/* Font − + */}
+          <button className="fsr-font-btn" onClick={() => handleFontSize(-2)} title="Smaller">A−</button>
+          <button className="fsr-font-btn" onClick={() => handleFontSize(2)} title="Larger">A+</button>
 
-          {/* Font size controls */}
-          <div className="fsr-font-controls">
-            <button className="fsr-font-btn" onClick={() => handleFontSize(-2)} title="Smaller Text">A−</button>
-            <button className="fsr-font-btn" onClick={() => handleFontSize(2)} title="Larger Text">A+</button>
-          </div>
-
-          {/* Rotation toggle */}
+          {/* Screen Rotation Button */}
           <button
             className={`fsr-header-btn ${isRotated ? 'active' : ''}`}
-            onClick={handleRotate}
-            title={isRotated ? 'Portrait Mode' : 'Landscape Mode'}
-            aria-label="Toggle Screen Rotation"
+            onClick={toggleRotate}
+            title={isTa ? 'திரை சுழற்று' : 'Rotate Screen'}
+            aria-label="Rotate Screen"
           >
-            <RotateCcw size={15} />
+            <RotateCw size={15} />
           </button>
+
+          {/* Theme picker button + popover */}
+          <div className="fsr-theme-picker-wrap" ref={themePopoverRef}>
+            <button
+              className={`fsr-header-btn ${isThemeOpen ? 'active' : ''}`}
+              onClick={() => setIsThemeOpen((v) => !v)}
+              title={isTa ? 'தீம் மாற்று' : 'Change Theme'}
+              aria-label="Theme picker"
+            >
+              <Palette size={15} />
+            </button>
+
+            {isThemeOpen && (
+              <div className="fsr-theme-popover">
+                <p className="fsr-theme-popover-title">
+                  {isTa ? 'தோற்றம் தேர்வு' : 'Choose Theme'}
+                </p>
+                {THEMES.map((t) => (
+                  <button
+                    key={t.key}
+                    className={`fsr-theme-option ${theme === t.key ? 'active' : ''}`}
+                    onClick={() => handleTheme(t.key)}
+                  >
+                    <span
+                      className="fsr-theme-swatch"
+                      style={{ backgroundColor: t.bg, border: `2px solid ${t.text}22` }}
+                    />
+                    <span className="fsr-theme-option-label">
+                      {isTa ? t.labelTa : t.label}
+                    </span>
+                    {theme === t.key && <Check size={13} style={{ marginLeft: 'auto', flexShrink: 0 }} />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Close */}
           <button
             className="fsr-header-btn"
             onClick={closeFullscreenReader}
-            title="Close"
-            aria-label="Close Fullscreen Reader"
+            title={isTa ? 'மூடு' : 'Close'}
+            aria-label="Close"
           >
             <X size={17} />
           </button>
         </div>
       </header>
 
-      {/* ── Progress Bar ────────────────────────────────────────────── */}
+      {/* ── Progress Bar ──────────────────────────────────── */}
       <div className="fsr-progress-bar">
         <div className="fsr-progress-fill" style={{ width: `${progress}%` }} />
       </div>
 
-      {/* ── Verse Content Area ──────────────────────────────────────── */}
+      {/* ── Verse Content (Clean, Distraction Free) ───────── */}
       <main
         className="fsr-content"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Left nav arrow */}
+        {/* Prev arrow */}
         <button
           className="fsr-nav-btn prev"
           onClick={goPrev}
@@ -284,45 +259,30 @@ export const FullscreenVerseReader: React.FC = () => {
 
         {/* Verse card */}
         <div className={`fsr-verse-card ${slideClass}`}>
-          {/* Verse number badge */}
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
             <span className="fsr-verse-num">{verse.verse}</span>
           </div>
 
-          {/* Tamil text */}
           {language !== 'en' && (
-            <p
-              className="fsr-verse-text lang-ta"
-              style={{ fontSize: `${fontSize}px` }}
-            >
-              {verseTextTa}
+            <p className="fsr-verse-text lang-ta" style={{ fontSize: `${fontSize}px` }}>
+              {verse.text_ta}
             </p>
           )}
 
-          {/* Divider when both languages shown */}
-          {language === 'parallel' && (
-            <div className="fsr-verse-text-divider" />
-          )}
+          {language === 'parallel' && <div className="fsr-verse-text-divider" />}
 
-          {/* English text */}
           {language !== 'ta' && (
-            <p
-              className="fsr-verse-text lang-en"
-              style={{ fontSize: `${Math.max(16, fontSize - 2)}px` }}
-            >
-              {verseTextEn}
+            <p className="fsr-verse-text lang-en" style={{ fontSize: `${Math.max(16, fontSize - 2)}px` }}>
+              {verse.text_en}
             </p>
           )}
 
-          {/* Counter */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
-            <span className="fsr-counter">
-              {fullscreenVerseIndex + 1} / {total}
-            </span>
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2.5rem' }}>
+            <span className="fsr-counter">{fullscreenVerseIndex + 1} / {total}</span>
           </div>
         </div>
 
-        {/* Right nav arrow */}
+        {/* Next arrow */}
         <button
           className="fsr-nav-btn next"
           onClick={goNext}
@@ -332,59 +292,6 @@ export const FullscreenVerseReader: React.FC = () => {
           <ChevronRight size={22} />
         </button>
       </main>
-
-      {/* ── Footer Action Bar ─────────────────────────────────────────── */}
-      <footer className="fsr-footer">
-        {/* Audio / Speech */}
-        <button
-          className={`fsr-footer-btn ${isSpeaking ? 'speaking active' : ''}`}
-          onClick={handleSpeech}
-          title={isSpeaking ? (language === 'ta' ? 'நிறுத்து' : 'Stop') : (language === 'ta' ? 'ஒலி வாசிப்பு' : 'Read Aloud')}
-        >
-          {isSpeaking ? <VolumeX size={14} /> : <Volume2 size={14} />}
-          <span>{isSpeaking ? (language === 'ta' ? 'நிறுத்து' : 'Stop') : (language === 'ta' ? 'ஒலி' : 'Read')}</span>
-        </button>
-
-        {/* Bookmark */}
-        <button
-          className={`fsr-footer-btn ${isBookmarked ? 'active' : ''}`}
-          onClick={() => handleToggleBookmark(verse)}
-          title={language === 'ta' ? 'சேமி' : 'Bookmark'}
-        >
-          <BookmarkIcon size={14} fill={isBookmarked ? 'currentColor' : 'none'} />
-          <span>{isBookmarked ? (language === 'ta' ? 'சேமிக்கப்பட்டது' : 'Saved') : (language === 'ta' ? 'சேமி' : 'Save')}</span>
-        </button>
-
-        {/* Copy */}
-        <button
-          className="fsr-footer-btn"
-          onClick={handleCopy}
-          title={language === 'ta' ? 'நகலெடு' : 'Copy'}
-        >
-          <Copy size={14} />
-          <span>{language === 'ta' ? 'நகல்' : 'Copy'}</span>
-        </button>
-
-        {/* Share */}
-        <button
-          className="fsr-footer-btn"
-          onClick={handleShare}
-          title={language === 'ta' ? 'பகிர்' : 'Share'}
-        >
-          <Share2 size={14} />
-          <span>{language === 'ta' ? 'பகிர்' : 'Share'}</span>
-        </button>
-
-        {/* Create Verse Image Card */}
-        <button
-          className="fsr-footer-btn"
-          onClick={() => openVerseCard(verse, currentBook, currentChapter)}
-          title={language === 'ta' ? 'கார்டு உருவாக்க' : 'Create Card'}
-        >
-          <ImageIcon size={14} />
-          <span>{language === 'ta' ? 'கார்டு' : 'Card'}</span>
-        </button>
-      </footer>
     </div>
   );
 };
