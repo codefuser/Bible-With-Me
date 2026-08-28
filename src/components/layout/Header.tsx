@@ -1,7 +1,6 @@
 import React from 'react';
-import { Menu, BookOpen, Search, Bookmark, Globe, ChevronDown, User } from 'lucide-react';
+import { Menu, BookOpen, Search, Bookmark, Globe } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
-import { useAuth } from '../../context/AuthContext';
 
 export const Header: React.FC = () => {
   const {
@@ -16,14 +15,12 @@ export const Header: React.FC = () => {
     bookmarks
   } = useReading();
 
-  const { user, profile, setIsAuthModalOpen } = useAuth();
-
   const bookName = language === 'en' ? currentBook.name_en : currentBook.name_ta;
 
   const getLanguageLabel = () => {
-    if (language === 'ta') return 'தமிழ்';
-    if (language === 'en') return 'EN';
-    return 'தமிழ் + EN';
+    if (language === 'ta') return 'த';
+    if (language === 'en') return 'E';
+    return 'த+E';
   };
 
   return (
@@ -62,11 +59,10 @@ export const Header: React.FC = () => {
           className="btn-pill lang-toggle-btn"
           onClick={() => setIsLanguageModalOpen(true)}
           title="Choose Language Mode & Bible Version"
-          style={{ gap: '0.375rem', padding: '0.375rem 0.625rem' }}
+          style={{ gap: '0.3125rem', padding: '0.375rem 0.625rem' }}
         >
           <Globe size={14} />
-          <span style={{ fontWeight: 600 }}>{getLanguageLabel()}</span>
-          <ChevronDown size={13} />
+          <span style={{ fontWeight: 700 }}>{getLanguageLabel()}</span>
         </button>
 
         {/* Search Action */}
@@ -94,23 +90,6 @@ export const Header: React.FC = () => {
                 backgroundColor: 'var(--bookmark-active)'
               }}
             />
-          )}
-        </button>
-
-        {/* Mobile User Profile Action (Shown only on Mobile) */}
-        <button
-          className="btn-icon header-profile-btn"
-          onClick={() => setIsAuthModalOpen(true)}
-          title={user ? 'User Account' : 'Login / Sign In'}
-        >
-          {profile?.avatar_url ? (
-            <img
-              src={profile.avatar_url}
-              alt="Profile"
-              style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover' }}
-            />
-          ) : (
-            <User size={18} />
           )}
         </button>
       </div>

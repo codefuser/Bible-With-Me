@@ -1020,7 +1020,7 @@ a {
     gap: 0.25rem;
   }
   .header-book-btn {
-    max-width: 140px;
+    max-width: 175px;
     padding: 0.3125rem 0.5rem;
     font-size: 0.8125rem;
   }
@@ -1055,7 +1055,7 @@ a {
 
 @media (max-width: 360px) {
   .header-book-btn {
-    max-width: 110px;
+    max-width: 135px;
   }
 }
 
