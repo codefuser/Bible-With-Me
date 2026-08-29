@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Bookmark as BookmarkIcon, Copy, Share2, BookOpen, Highlighter, Check, Trash2, Sparkles, Image as ImageIcon, ChevronLeft, ChevronRight, Expand, MoreVertical } from 'lucide-react';
+import { Bookmark as BookmarkIcon, Copy, Share2, BookOpen, Highlighter, Check, Trash2, Sparkles, Image as ImageIcon, ChevronLeft, ChevronRight, Expand, MoreVertical, SlidersHorizontal } from 'lucide-react';
+import { QuickSettingsModal } from './QuickSettingsModal';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
 import { BibleVerse } from '../../types/bible';
@@ -42,6 +43,7 @@ export const VerseReader: React.FC = () => {
   const [clickedVerseNum, setClickedVerseNum] = useState<number | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showHighlightPicker, setShowHighlightPicker] = useState<boolean>(false);
+  const [isQuickSettingsOpen, setIsQuickSettingsOpen] = useState<boolean>(false);
 
   const verseRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const quickChapterBarRef = useRef<HTMLDivElement | null>(null);
@@ -301,9 +303,33 @@ export const VerseReader: React.FC = () => {
               <span>{bookName}&nbsp;{currentChapter}</span>
             </h1>
           </div>
-          <span className="chapter-subhead">
-            {verses.length} {language === 'en' ? 'Verses' : 'வசனங்கள்'}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span className="chapter-subhead">
+              {verses.length} {language === 'en' ? 'Verses' : 'வசனங்கள்'}
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsQuickSettingsOpen(true)}
+              title={language === 'ta' ? 'வாசிப்பு அமைப்புகள்' : 'Quick Reading Settings'}
+              aria-label="Quick Reading Settings"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '30px',
+                height: '30px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--accent-soft)',
+                color: 'var(--accent-color)',
+                border: '1px solid var(--accent-color)',
+                cursor: 'pointer',
+                transition: 'all 150ms ease',
+                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.06)'
+              }}
+            >
+              <SlidersHorizontal size={15} />
+            </button>
+          </div>
         </div>
 
         {/* Quick Chapter Horizontal Scroll Navigation Bar with Left/Right Arrow Controls */}
@@ -985,6 +1011,7 @@ export const VerseReader: React.FC = () => {
         )}
       </main>
 
+      <QuickSettingsModal isOpen={isQuickSettingsOpen} onClose={() => setIsQuickSettingsOpen(false)} />
       <Toast message={toastMessage} />
     </>
   );

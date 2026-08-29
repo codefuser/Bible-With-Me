@@ -83,6 +83,7 @@ interface ReadingContextType {
   setLanguage: (lang: Language) => void;
   toggleLanguage: () => void;
   updatePreferences: (newPrefs: Partial<ReadingPreferences>) => void;
+  resetPreferences: () => void;
   handleToggleBookmark: (verseObj: BibleVerse) => void;
   handleSaveNote: (bookCode: string, chapter: number, verse: number, content: string) => void;
   handleSetHighlight: (bookId: number, chapter: number, verse: number, color: HighlightColor | null) => void;
@@ -377,7 +378,25 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const fontEnVar = `var(--font-en-${preferences.fontFamilyEn || 'lora'})`;
     document.documentElement.style.setProperty('--font-tamil', fontTaVar);
     document.documentElement.style.setProperty('--font-serif', fontEnVar);
-  }, [preferences.theme, preferences.fontFamilyTa, preferences.fontFamilyEn, preferences.customThemeColors]);
+
+    if (preferences.customFontSizePx) {
+      document.documentElement.style.setProperty('--custom-font-size', `${preferences.customFontSizePx}px`);
+    } else {
+      document.documentElement.style.removeProperty('--custom-font-size');
+    }
+
+    if (preferences.customLineHeightVal) {
+      document.documentElement.style.setProperty('--custom-line-height', `${preferences.customLineHeightVal}`);
+    } else {
+      document.documentElement.style.removeProperty('--custom-line-height');
+    }
+
+    if (preferences.customMaxWidthPx) {
+      document.documentElement.style.setProperty('--custom-max-width', `${preferences.customMaxWidthPx}px`);
+    } else {
+      document.documentElement.style.removeProperty('--custom-max-width');
+    }
+  }, [preferences.theme, preferences.fontFamilyTa, preferences.fontFamilyEn, preferences.customThemeColors, preferences.customFontSizePx, preferences.customLineHeightVal, preferences.customMaxWidthPx]);
 
   const recordChapterRead = useCallback(
     (book: BibleBook, chapter: number, verse: number = 1) => {
@@ -437,6 +456,36 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       trackActivity(userId, 'SETTINGS_CHANGED', currentBook.code, currentChapter, selectedVerse || 1, newPrefs);
     }
   };
+
+  const resetPreferences = useCallback(() => {
+    const defaultPrefs: ReadingPreferences = {
+      fontSize: 'md',
+      lineHeight: 'normal',
+      maxWidth: 'standard',
+      theme: 'light',
+      language: language,
+      fontFamilyTa: 'noto',
+      fontFamilyEn: 'lora',
+      verseOptionsStyle: 'dropdown',
+      customFontSizePx: undefined,
+      customLineHeightVal: undefined,
+      customMaxWidthPx: undefined,
+      customThemeColors: undefined
+    };
+    setPreferencesState(defaultPrefs);
+    savePreferences(defaultPrefs, userId);
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.documentElement.style.removeProperty('--custom-font-size');
+    document.documentElement.style.removeProperty('--custom-line-height');
+    document.documentElement.style.removeProperty('--custom-max-width');
+    document.documentElement.style.removeProperty('--bg-primary');
+    document.documentElement.style.removeProperty('--bg-secondary');
+    document.documentElement.style.removeProperty('--bg-surface');
+    document.documentElement.style.removeProperty('--text-primary');
+    document.documentElement.style.removeProperty('--text-secondary');
+    document.documentElement.style.removeProperty('--accent-color');
+    document.documentElement.style.removeProperty('--border-color');
+  }, [language, userId]);
 
   const handleToggleBookmark = (verseObj: BibleVerse) => {
     const isExisting = bookmarks.some(
@@ -549,6 +598,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setLanguage,
         toggleLanguage,
         updatePreferences,
+        resetPreferences,
         handleToggleBookmark,
         handleSaveNote,
         handleSetHighlight,

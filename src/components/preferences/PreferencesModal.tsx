@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Sun, Moon, BookOpen, Check, Type, MoreVertical, Sliders, Globe, Layout, User, ChevronDown, Palette, Sparkles, SlidersHorizontal } from 'lucide-react';
+import { ArrowLeft, Sun, Moon, BookOpen, Check, Type, MoreVertical, Sliders, Globe, Layout, User, ChevronDown, Palette, Sparkles, SlidersHorizontal, RotateCcw } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { FontSizeOption, LineHeightOption, MaxWidthOption, TamilFontOption, EnglishFontOption, ThemeOption, CustomThemeColors } from '../../types/bible';
 import { AccountPanel } from '../auth/AccountPanel';
+import { ContinuousSnapSlider } from '../common/ContinuousSnapSlider';
 
 interface FontItem<T> {
   id: T;
@@ -352,6 +353,7 @@ export const PreferencesModal: React.FC = () => {
   const {
     preferences,
     updatePreferences,
+    resetPreferences,
     language,
     setLanguage,
     isPreferencesOpen,
@@ -508,6 +510,30 @@ export const PreferencesModal: React.FC = () => {
         >
           <ArrowLeft size={16} />
           <span>{isEn ? 'Home' : 'முகப்பு'}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={resetPreferences}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.375rem',
+            padding: '0.4375rem 0.875rem',
+            borderRadius: '9999px',
+            backgroundColor: 'var(--bg-secondary)',
+            color: 'var(--text-secondary)',
+            border: '1px solid var(--border-color)',
+            fontWeight: 600,
+            fontSize: '0.84375rem',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+            transition: 'all 180ms ease'
+          }}
+          title={isEn ? 'Reset All Preferences to Default' : 'அனைத்து அமைப்புகளையும் இயல்பு நிலைக்கு மீட்டமை'}
+        >
+          <RotateCcw size={15} />
+          <span>{isEn ? 'Reset to Defaults' : 'அமைப்புகளை மீட்டமை'}</span>
         </button>
       </div>
 
@@ -870,28 +896,56 @@ export const PreferencesModal: React.FC = () => {
             onChange={(id) => updatePreferences({ fontFamilyEn: id })}
           />
 
-          {/* Pixel-Perfect Butter-Smooth Font Size Slider */}
-          <CustomSlider
+          {/* Continuous + Magnet Font Size Slider */}
+          <ContinuousSnapSlider
             title={isEn ? 'Font Size' : 'எழுத்து அளவு'}
-            steps={fontSizeSteps}
-            currentValue={preferences.fontSize || 'md'}
-            onChange={(val) => updatePreferences({ fontSize: val })}
+            min={13}
+            max={28}
+            step={0.5}
+            value={preferences.customFontSizePx || (preferences.fontSize === 'sm' ? 15 : preferences.fontSize === 'lg' ? 21 : preferences.fontSize === 'xl' ? 24 : 18)}
+            magnetPoints={[
+              { value: 15, label: isEn ? 'Small' : 'சிறிய', sublabel: '15px' },
+              { value: 18, label: isEn ? 'Medium' : 'நடுத்தர', sublabel: '18px' },
+              { value: 21, label: isEn ? 'Large' : 'பெரிய', sublabel: '21px' },
+              { value: 24, label: isEn ? 'Extra' : 'மிகப்பெரிய', sublabel: '24px' }
+            ]}
+            unit="px"
+            cssProperty="--custom-font-size"
+            onChange={(val) => updatePreferences({ customFontSizePx: val })}
           />
 
-          {/* Pixel-Perfect Butter-Smooth Line Height Slider */}
-          <CustomSlider
+          {/* Continuous + Magnet Line Height Slider */}
+          <ContinuousSnapSlider
             title={isEn ? 'Line Spacing' : 'வரி இடைவெளி'}
-            steps={lineHeightSteps}
-            currentValue={preferences.lineHeight || 'normal'}
-            onChange={(val) => updatePreferences({ lineHeight: val })}
+            min={1.4}
+            max={2.4}
+            step={0.05}
+            value={preferences.customLineHeightVal || (preferences.lineHeight === 'relaxed' ? 1.8 : preferences.lineHeight === 'loose' ? 2.1 : 1.6)}
+            magnetPoints={[
+              { value: 1.6, label: isEn ? 'Normal' : 'சாதாரண', sublabel: '1.6x' },
+              { value: 1.8, label: isEn ? 'Relaxed' : 'சீராக', sublabel: '1.8x' },
+              { value: 2.1, label: isEn ? 'Loose' : 'அகலமாக', sublabel: '2.1x' }
+            ]}
+            unit="x"
+            cssProperty="--custom-line-height"
+            onChange={(val) => updatePreferences({ customLineHeightVal: val })}
           />
 
-          {/* Pixel-Perfect Butter-Smooth Page Width Slider */}
-          <CustomSlider
+          {/* Continuous + Magnet Page Width Slider */}
+          <ContinuousSnapSlider
             title={isEn ? 'Page Width' : 'பக்க அகலம்'}
-            steps={maxWidthSteps}
-            currentValue={preferences.maxWidth || 'standard'}
-            onChange={(val) => updatePreferences({ maxWidth: val })}
+            min={600}
+            max={1100}
+            step={10}
+            value={preferences.customMaxWidthPx || (preferences.maxWidth === 'compact' ? 720 : preferences.maxWidth === 'wide' ? 1000 : 840)}
+            magnetPoints={[
+              { value: 720, label: isEn ? 'Compact' : 'செறிவான', sublabel: '720px' },
+              { value: 840, label: isEn ? 'Standard' : 'சாதாரண', sublabel: '840px' },
+              { value: 1000, label: isEn ? 'Wide' : 'அகலமான', sublabel: '1000px' }
+            ]}
+            unit="px"
+            cssProperty="--custom-max-width"
+            onChange={(val) => updatePreferences({ customMaxWidthPx: val })}
           />
         </div>
 

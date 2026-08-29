@@ -6,18 +6,25 @@
   margin: 0 auto;
   padding-bottom: 2.5rem;
   transition: max-width var(--transition-normal);
+  max-width: var(--custom-max-width, var(--width-standard));
 }
 
 .reader-wrapper[data-width="compact"] {
-  max-width: var(--width-compact);
+  max-width: var(--custom-max-width, var(--width-compact));
 }
 
 .reader-wrapper[data-width="standard"] {
-  max-width: var(--width-standard);
+  max-width: var(--custom-max-width, var(--width-standard));
 }
 
 .reader-wrapper[data-width="wide"] {
-  max-width: var(--width-wide);
+  max-width: var(--custom-max-width, var(--width-wide));
+}
+
+/* Base verse text font size and line height with live custom property overrides */
+.verse-text {
+  font-size: var(--custom-font-size, var(--font-scale-md));
+  line-height: var(--custom-line-height, var(--line-height-normal));
 }
 
 /* Chapter Heading Header */
@@ -151,30 +158,35 @@
   box-shadow: 0 3px 10px rgba(59, 130, 246, 0.4);
 }
 
-/* Tamil Font Family Modifiers */
-.reader-wrapper[data-font-ta="noto"] .verse-text.lang-ta { font-family: var(--font-ta-noto); }
-.reader-wrapper[data-font-ta="mukta"] .verse-text.lang-ta { font-family: var(--font-ta-mukta); }
-.reader-wrapper[data-font-ta="catamaran"] .verse-text.lang-ta { font-family: var(--font-ta-catamaran); }
-.reader-wrapper[data-font-ta="arima"] .verse-text.lang-ta { font-family: var(--font-ta-arima); }
-.reader-wrapper[data-font-ta="hind"] .verse-text.lang-ta { font-family: var(--font-ta-hind); }
+/* Tamil Font Family Application */
+.verse-text.lang-ta,
+.chapter-title.lang-ta,
+.daily-verse-card-text.lang-ta {
+  font-family: var(--font-tamil) !important;
+}
 
-/* English Font Family Modifiers */
-.reader-wrapper[data-font-en="lora"] .verse-text.lang-en { font-family: var(--font-en-lora); }
-.reader-wrapper[data-font-en="inter"] .verse-text.lang-en { font-family: var(--font-en-inter); }
-.reader-wrapper[data-font-en="merriweather"] .verse-text.lang-en { font-family: var(--font-en-merriweather); }
-.reader-wrapper[data-font-en="outfit"] .verse-text.lang-en { font-family: var(--font-en-outfit); }
-.reader-wrapper[data-font-en="playfair"] .verse-text.lang-en { font-family: var(--font-en-playfair); }
+/* English Font Family Application */
+.verse-text.lang-en,
+.chapter-title.lang-en,
+.daily-verse-card-text.lang-en {
+  font-family: var(--font-serif) !important;
+}
 
 /* Font Size Modifiers */
-.reader-wrapper[data-size="sm"] .verse-text { font-size: var(--font-scale-sm); }
-.reader-wrapper[data-size="md"] .verse-text { font-size: var(--font-scale-md); }
-.reader-wrapper[data-size="lg"] .verse-text { font-size: var(--font-scale-lg); }
-.reader-wrapper[data-size="xl"] .verse-text { font-size: var(--font-scale-xl); }
+.verse-text {
+  font-size: var(--custom-font-size, var(--font-scale-md)) !important;
+  line-height: var(--custom-line-height, var(--line-height-normal)) !important;
+}
+
+.reader-wrapper[data-size="sm"] .verse-text { font-size: var(--custom-font-size, var(--font-scale-sm)) !important; }
+.reader-wrapper[data-size="md"] .verse-text { font-size: var(--custom-font-size, var(--font-scale-md)) !important; }
+.reader-wrapper[data-size="lg"] .verse-text { font-size: var(--custom-font-size, var(--font-scale-lg)) !important; }
+.reader-wrapper[data-size="xl"] .verse-text { font-size: var(--custom-font-size, var(--font-scale-xl)) !important; }
 
 /* Line Height Modifiers */
-.reader-wrapper[data-line="normal"] .verse-text { line-height: var(--line-height-normal); }
-.reader-wrapper[data-line="relaxed"] .verse-text { line-height: var(--line-height-relaxed); }
-.reader-wrapper[data-line="loose"] .verse-text { line-height: var(--line-height-loose); }
+.reader-wrapper[data-line="normal"] .verse-text { line-height: var(--custom-line-height, var(--line-height-normal)) !important; }
+.reader-wrapper[data-line="relaxed"] .verse-text { line-height: var(--custom-line-height, var(--line-height-relaxed)) !important; }
+.reader-wrapper[data-line="loose"] .verse-text { line-height: var(--custom-line-height, var(--line-height-loose)) !important; }
 
 /* Verse List Layout */
 .verse-list {

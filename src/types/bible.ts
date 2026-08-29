@@ -65,6 +65,9 @@ export interface ReadingPreferences {
   fontSize: FontSizeOption;
   lineHeight: LineHeightOption;
   maxWidth: MaxWidthOption;
+  customFontSizePx?: number;
+  customLineHeightVal?: number;
+  customMaxWidthPx?: number;
   theme: ThemeOption;
   language: Language;
   fontFamilyTa?: TamilFontOption;
