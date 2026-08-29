@@ -206,6 +206,13 @@ export const VerseReader: React.FC = () => {
   const isDropdownMode = optionsStyle === 'dropdown';
   const isButtonsMode = optionsStyle === 'buttons';
 
+  const getVersePaddingRight = (isBookmarked: boolean, isDropdown: boolean) => {
+    if (isDropdown) {
+      return isBookmarked ? '2.75rem' : '2.25rem';
+    }
+    return isBookmarked ? '1.75rem' : '0.5rem';
+  };
+
   const bookName = language === 'en' ? currentBook.name_en : currentBook.name_ta;
 
   const handleCopyVerse = (v: BibleVerse) => {
@@ -373,6 +380,7 @@ export const VerseReader: React.FC = () => {
                   className={`verse-parallel-item ${isSelected ? 'selected' : ''} ${highlightColor ? `highlight-${highlightColor}` : ''} ${
                     isTodayDailyVerse ? 'is-today-daily-verse' : ''
                   }`}
+                  style={{ '--verse-pad-right': getVersePaddingRight(isBookmarked, isDropdownMode) } as React.CSSProperties}
                   onClick={() => {
                     setClickedVerseNum(isSelected ? null : verseObj.verse);
                     setShowHighlightPicker(false);
@@ -706,7 +714,7 @@ export const VerseReader: React.FC = () => {
                 <div className="verse-content-row" style={{ position: 'relative' }}>
                   <span className="verse-number">{verseObj.verse}</span>
 
-                  <div className="verse-text-container" style={{ flex: 1 }}>
+                  <div className="verse-text-container" style={{ flex: 1, paddingRight: getVersePaddingRight(isBookmarked, isDropdownMode) }}>
                     {/* Tamil Verse Text */}
                     {language !== 'en' && (
                       <p className="verse-text lang-ta" style={{ margin: 0 }}>
@@ -867,14 +875,6 @@ export const VerseReader: React.FC = () => {
                   <div
                     className="verse-actions-bar"
                     onClick={(e) => e.stopPropagation()}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                      gap: '0.5rem',
-                      marginTop: '0.625rem',
-                      paddingLeft: '2.125rem'
-                    }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexWrap: 'wrap' }}>
                       <button
