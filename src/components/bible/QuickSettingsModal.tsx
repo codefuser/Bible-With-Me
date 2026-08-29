@@ -162,13 +162,17 @@ export const QuickSettingsModal: React.FC<QuickSettingsModalProps> = ({ isOpen, 
 
   useEffect(() => {
     if (!isOpen) return;
+    document.body.style.overflow = 'hidden';
     const handleOutsideClick = (e: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
         onClose();
       }
     };
     document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
+    return () => {
+      document.body.style.overflow = '';
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
