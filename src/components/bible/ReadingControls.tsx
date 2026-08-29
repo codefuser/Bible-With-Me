@@ -16,38 +16,7 @@ export const ReadingControls: React.FC = () => {
   } = useReading();
 
   if (isPreferencesOpen) {
-    const bookName = language === 'en' ? currentBook.name_en : currentBook.name_ta;
-    return (
-      <div className="reading-controls-wrapper">
-        <div className="reading-controls" style={{ justifyContent: 'center' }}>
-          <button
-            className="nav-btn active"
-            onClick={() => setIsPreferencesOpen(false)}
-            style={{
-              backgroundColor: 'var(--accent-color)',
-              color: '#ffffff',
-              borderColor: 'var(--accent-color)',
-              padding: '0.5rem 1.375rem',
-              borderRadius: '9999px',
-              fontWeight: 600,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4375rem',
-              fontSize: '0.84375rem',
-              cursor: 'pointer'
-            }}
-            title={language === 'ta' ? 'வாசிப்பிற்குத் திரும்புக' : 'Return to Reader'}
-          >
-            <Home size={16} />
-            <span>
-              {language === 'ta'
-                ? `முகப்பு — ${bookName} ${currentChapter}`
-                : `Home — ${bookName} ${currentChapter}`}
-            </span>
-          </button>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const isFirstChapter = currentBook.book_number === 1 && currentChapter === 1;

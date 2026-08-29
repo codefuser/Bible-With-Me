@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, X, BookOpen, ArrowRight, SlidersHorizontal, ArrowUpLeft, Globe, ChevronDown, Check, Layers, Clock } from 'lucide-react';
+import { Search, X, BookOpen, ArrowRight, ArrowLeft, SlidersHorizontal, ArrowUpLeft, Globe, ChevronDown, Check, Layers, Clock } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
 import { SearchResult, Testament, BibleVerse, Language } from '../../types/bible';
@@ -355,7 +355,8 @@ export const SearchModal: React.FC = () => {
     setLanguage,
     isSearchOpen,
     setIsSearchOpen,
-    setBookAndChapter
+    setBookAndChapter,
+    preferences
   } = useReading();
 
   const { user } = useAuth();

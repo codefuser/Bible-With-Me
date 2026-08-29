@@ -39,7 +39,7 @@ export const VerseReader: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
   const [activeVerseNum, setActiveVerseNum] = useState<number | null>(selectedVerse);
-  const [clickedVerseNum, setClickedVerseNum] = useState<number | null>(selectedVerse);
+  const [clickedVerseNum, setClickedVerseNum] = useState<number | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showHighlightPicker, setShowHighlightPicker] = useState<boolean>(false);
 
@@ -131,9 +131,10 @@ export const VerseReader: React.FC = () => {
 
   // Sync route hash and auto-scroll to selected verse
   useEffect(() => {
+    setClickedVerseNum(null);
+    setShowHighlightPicker(false);
     if (selectedVerse) {
       setActiveVerseNum(selectedVerse);
-      setClickedVerseNum(selectedVerse);
       updateHashRoute(currentBook.code, currentChapter, selectedVerse);
       setTimeout(() => {
         verseRefs.current[selectedVerse]?.scrollIntoView({ behavior: 'smooth', block: 'center' });

@@ -111,7 +111,7 @@ const BibleLoadingScreen: React.FC = () => (
 // ─── Main Bible Layout (shown after loading + auth) ───────────────────────────
 
 const MainLayout: React.FC = () => {
-  const { historyItem, books, language, setBookAndChapter, preferences, isBibleDataLoading, isPreferencesOpen } =
+  const { historyItem, books, language, setBookAndChapter, preferences, isBibleDataLoading, isPreferencesOpen, isSearchOpen } =
     useReading();
   const { isExitModalOpen, handleConfirmExit, handleCancelExit } = useMobileBackButton();
   const [isAdminView, setIsAdminView] = useState<boolean>(
