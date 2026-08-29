@@ -10,7 +10,8 @@ export const defaultPreferences: ReadingPreferences = {
   theme: 'light',
   language: 'ta',
   fontFamilyTa: 'noto',
-  fontFamilyEn: 'lora'
+  fontFamilyEn: 'lora',
+  verseOptionsStyle: 'dropdown'
 };
 
 export const getStoredPreferences = (): ReadingPreferences => {

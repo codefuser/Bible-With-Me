@@ -12,6 +12,13 @@
   --font-ta-catamaran: 'Catamaran', sans-serif;
   --font-ta-arima: 'Arima', cursive;
   --font-ta-hind: 'Hind Madurai', sans-serif;
+  --font-ta-anek: 'Anek Tamil', sans-serif;
+  --font-ta-serif: 'Noto Serif Tamil', serif;
+  --font-ta-kavi: 'Kavivanar', cursive;
+  --font-ta-baloo: 'Baloo Thambi 2', display;
+  --font-ta-coiny: 'Coiny', cursive;
+  --font-ta-pavanam: 'Pavanam', sans-serif;
+  --font-ta-system: 'Latha', 'InaiMathi', sans-serif;
 
   /* English Font Family Options */
   --font-en-lora: 'Lora', Georgia, serif;
@@ -19,6 +26,13 @@
   --font-en-merriweather: 'Merriweather', serif;
   --font-en-outfit: 'Outfit', sans-serif;
   --font-en-playfair: 'Playfair Display', serif;
+  --font-en-roboto: 'Roboto', sans-serif;
+  --font-en-georgia: 'Georgia', serif;
+  --font-en-cinzel: 'Cinzel', serif;
+  --font-en-opensans: 'Open Sans', sans-serif;
+  --font-en-montserrat: 'Montserrat', sans-serif;
+  --font-en-poppins: 'Poppins', sans-serif;
+  --font-en-baskerville: 'Libre Baskerville', serif;
 
   /* Transitions */
   --transition-fast: 150ms ease;
@@ -129,16 +143,146 @@
   --text-primary: #3b3226;
   --text-secondary: #6e6150;
   --text-muted: #9e8e7a;
-  --text-inverse: #fbf5e8;
+  --text-inverse: #ffffff;
 
-  --accent-color: #7c4d25;
-  --accent-hover: #5d381a;
-  --accent-soft: #eee2ce;
+  --accent-color: #925827;
+  --accent-hover: #78451b;
+  --accent-soft: #f4e8d3;
 
-  --verse-highlight: #ede0aa;
-  --bookmark-active: #b56e17;
+  --verse-highlight: #eed8a1;
+  --bookmark-active: #b86e28;
 
-  --shadow-sm: 0 1px 2px rgba(60, 50, 30, 0.05);
-  --shadow-md: 0 4px 12px rgba(60, 50, 30, 0.08);
-  --shadow-lg: 0 10px 25px rgba(60, 50, 30, 0.1);
+  --shadow-sm: 0 1px 2px rgba(74, 59, 44, 0.05);
+  --shadow-md: 0 4px 12px rgba(74, 59, 44, 0.08);
+  --shadow-lg: 0 10px 25px rgba(74, 59, 44, 0.12);
+}
+
+/* Nordic Blue Theme */
+[data-theme="nordic"] {
+  --bg-primary: #0b1329;
+  --bg-secondary: #131c38;
+  --bg-surface: #1a264a;
+  --bg-elevated: #23325c;
+  --border-color: #263866;
+  --border-light: #1d2b52;
+
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-inverse: #0b1329;
+
+  --accent-color: #38bdf8;
+  --accent-hover: #0284c7;
+  --accent-soft: #122b45;
+
+  --verse-highlight: #1e3a8a;
+  --bookmark-active: #38bdf8;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+/* Forest Emerald Theme */
+[data-theme="forest"] {
+  --bg-primary: #051a14;
+  --bg-secondary: #0a271f;
+  --bg-surface: #10362c;
+  --bg-elevated: #17473b;
+  --border-color: #1e594a;
+  --border-light: #134236;
+
+  --text-primary: #e6f4f1;
+  --text-secondary: #9ec5bc;
+  --text-muted: #6b998d;
+  --text-inverse: #051a14;
+
+  --accent-color: #34d399;
+  --accent-hover: #059669;
+  --accent-soft: #0c3327;
+
+  --verse-highlight: #14532d;
+  --bookmark-active: #34d399;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+/* Royal Purple Theme */
+[data-theme="royal"] {
+  --bg-primary: #120b22;
+  --bg-secondary: #1a122e;
+  --bg-surface: #24193f;
+  --bg-elevated: #302252;
+  --border-color: #3b2b63;
+  --border-light: #291d47;
+
+  --text-primary: #f1e8ff;
+  --text-secondary: #ba9fd9;
+  --text-muted: #886ea8;
+  --text-inverse: #120b22;
+
+  --accent-color: #c084fc;
+  --accent-hover: #9333ea;
+  --accent-soft: #271a45;
+
+  --verse-highlight: #581c87;
+  --bookmark-active: #c084fc;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+/* Sunset Amber Theme */
+[data-theme="sunset"] {
+  --bg-primary: #1c1417;
+  --bg-secondary: #271c21;
+  --bg-surface: #36262d;
+  --bg-elevated: #47323c;
+  --border-color: #593f4b;
+  --border-light: #3d2b33;
+
+  --text-primary: #fde8ed;
+  --text-secondary: #cf9fa9;
+  --text-muted: #9e6f7a;
+  --text-inverse: #1c1417;
+
+  --accent-color: #fb7185;
+  --accent-hover: #e11d48;
+  --accent-soft: #3d1c25;
+
+  --verse-highlight: #881337;
+  --bookmark-active: #fb7185;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+/* OLED Pitch Black Theme */
+[data-theme="oled"] {
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --bg-surface: #121212;
+  --bg-elevated: #1a1a1a;
+  --border-color: #242424;
+  --border-light: #171717;
+
+  --text-primary: #f5f5f5;
+  --text-secondary: #a3a3a3;
+  --text-muted: #737373;
+  --text-inverse: #000000;
+
+  --accent-color: #38bdf8;
+  --accent-hover: #0284c7;
+  --accent-soft: #122b45;
+
+  --verse-highlight: #172554;
+  --bookmark-active: #38bdf8;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.8);
 }

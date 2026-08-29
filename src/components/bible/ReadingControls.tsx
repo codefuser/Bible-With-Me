@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BookOpen, Home } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 
 export const ReadingControls: React.FC = () => {
@@ -10,8 +10,14 @@ export const ReadingControls: React.FC = () => {
     language,
     setBookAndChapter,
     setChapter,
-    setIsBookSelectorOpen
+    setIsBookSelectorOpen,
+    isPreferencesOpen,
+    setIsPreferencesOpen
   } = useReading();
+
+  if (isPreferencesOpen) {
+    return null;
+  }
 
   const isFirstChapter = currentBook.book_number === 1 && currentChapter === 1;
   const isLastChapter = currentBook.book_number === 66 && currentChapter === currentBook.total_chapters;
