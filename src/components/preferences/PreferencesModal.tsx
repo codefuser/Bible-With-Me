@@ -223,7 +223,7 @@ function CustomSlider<T>({ title, steps, currentValue, onChange }: CustomSliderP
         </span>
       </div>
 
-      {/* Interactive Slider Track Container */}
+      {/* Interactive Slider Outer Container */}
       <div
         ref={containerRef}
         onPointerDown={handlePointerDown}
@@ -238,82 +238,86 @@ function CustomSlider<T>({ title, steps, currentValue, onChange }: CustomSliderP
           cursor: 'pointer',
           userSelect: 'none',
           touchAction: 'none',
-          padding: '0 10px',
-          margin: '0 -10px'
+          padding: '0 11px'
         }}
       >
-        {/* Track Background Line */}
-        <div
-          style={{
-            position: 'absolute',
-            left: '10px',
-            right: '10px',
-            height: '6px',
-            backgroundColor: 'var(--border-color)',
-            borderRadius: '9999px'
-          }}
-        />
+        {/* Inner Track Wrapper */}
+        <div style={{ position: 'relative', width: '100%', height: '6px', display: 'flex', alignItems: 'center' }}>
+          {/* Track Background Line */}
+          <div
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              height: '6px',
+              backgroundColor: 'var(--border-color)',
+              borderRadius: '9999px'
+            }}
+          />
 
-        {/* Active Filled Line */}
-        <div
-          style={{
-            position: 'absolute',
-            left: '10px',
-            width: `calc(${activePercent}% * (100% - 20px) / 100)`,
-            height: '6px',
-            backgroundColor: 'var(--accent-color)',
-            borderRadius: '9999px',
-            transition: isDragging ? 'none' : 'width 180ms cubic-bezier(0.4, 0, 0.2, 1)'
-          }}
-        />
+          {/* Active Filled Line */}
+          <div
+            style={{
+              position: 'absolute',
+              left: 0,
+              width: `${activePercent}%`,
+              height: '6px',
+              backgroundColor: 'var(--accent-color)',
+              borderRadius: '9999px',
+              transition: isDragging ? 'none' : 'width 180ms cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+          />
 
-        {/* Snap Tick Dots at exact percentage locations */}
-        {steps.map((step, idx) => {
-          const pct = getPercentForIndex(idx);
-          const isPassed = idx <= currentIndex;
-          return (
-            <div
-              key={idx}
-              onClick={(e) => {
-                e.stopPropagation();
-                onChange(step.value);
-              }}
-              style={{
-                position: 'absolute',
-                left: `calc(10px + ${pct}% * (100% - 20px) / 100)`,
-                transform: 'translateX(-50%)',
-                width: '10px',
-                height: '10px',
-                borderRadius: '50%',
-                backgroundColor: isPassed ? 'var(--accent-color)' : 'var(--bg-surface)',
-                border: isPassed ? '2px solid var(--accent-color)' : '2px solid var(--border-color)',
-                zIndex: 10,
-                transition: 'all 150ms ease'
-              }}
-            />
-          );
-        })}
+          {/* Snap Tick Dots */}
+          {steps.map((step, idx) => {
+            const pct = getPercentForIndex(idx);
+            const isPassed = idx <= currentIndex;
+            return (
+              <div
+                key={idx}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChange(step.value);
+                }}
+                style={{
+                  position: 'absolute',
+                  left: `${pct}%`,
+                  top: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  backgroundColor: isPassed ? 'var(--accent-color)' : 'var(--bg-surface)',
+                  border: isPassed ? '2px solid var(--accent-color)' : '2px solid var(--border-color)',
+                  zIndex: 10,
+                  transition: 'all 150ms ease'
+                }}
+              />
+            );
+          })}
 
-        {/* Floating Draggable Thumb Circle */}
-        <div
-          style={{
-            position: 'absolute',
-            left: `calc(10px + ${activePercent}% * (100% - 20px) / 100)`,
-            transform: 'translateX(-50%)',
-            width: '22px',
-            height: '22px',
-            borderRadius: '50%',
-            backgroundColor: 'var(--accent-color)',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.25)',
-            border: '2px solid #ffffff',
-            zIndex: 20,
-            transition: isDragging ? 'none' : 'left 180ms cubic-bezier(0.4, 0, 0.2, 1)'
-          }}
-        />
+          {/* Floating Draggable Thumb Circle */}
+          <div
+            style={{
+              position: 'absolute',
+              left: `${activePercent}%`,
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '22px',
+              height: '22px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--accent-color)',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.25)',
+              border: '2px solid #ffffff',
+              zIndex: 20,
+              transition: isDragging ? 'none' : 'left 180ms cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+          />
+        </div>
       </div>
 
-      {/* Sublabel Text Indicators Perfectly Centered below each Snap Point */}
-      <div style={{ position: 'relative', height: '28px', marginTop: '0.25rem' }}>
+      {/* Sublabel Text Indicators Centered below each Snap Point */}
+      <div style={{ position: 'relative', height: '28px', marginTop: '0.375rem', padding: '0 11px' }}>
         {steps.map((step, idx) => {
           const pct = getPercentForIndex(idx);
           const isSelected = idx === currentIndex;
