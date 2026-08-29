@@ -272,15 +272,32 @@ export const SideNavDrawer: React.FC = () => {
   useEffect(() => {
     let startX = 0;
     let startY = 0;
+    let isSwipeCancelled = false;
 
     const handleTouchStart = (e: TouchEvent) => {
       if (e.touches.length === 1) {
+        const target = e.target as HTMLElement | null;
+
+        // Ignore swipe gesture if touch starts inside pagination bar or elements marked with data-no-swipe
+        if (
+          target &&
+          target.closest(
+            '.quick-chapter-bar-container, .quick-chapter-bar, .quick-chapter-pill, [data-no-swipe], input, textarea, select'
+          )
+        ) {
+          isSwipeCancelled = true;
+          return;
+        }
+
+        isSwipeCancelled = false;
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
       }
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
+      if (isSwipeCancelled) return;
+
       if (e.changedTouches.length === 1) {
         const endX = e.changedTouches[0].clientX;
         const endY = e.changedTouches[0].clientY;
@@ -289,7 +306,10 @@ export const SideNavDrawer: React.FC = () => {
 
         if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40) {
           if (deltaX > 0 && !isSideNavOpen) {
-            setIsSideNavOpen(true);
+            // Only open side nav if swipe started near left edge of screen (within 60px)
+            if (startX <= 60) {
+              setIsSideNavOpen(true);
+            }
           } else if (deltaX < 0 && isSideNavOpen) {
             setIsSideNavOpen(false);
           }

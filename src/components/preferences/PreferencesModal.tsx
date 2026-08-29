@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Sun, Moon, BookOpen, Check, Type } from 'lucide-react';
+import { X, Sun, Moon, BookOpen, Check, Type, MoreVertical, Sliders } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { FontSizeOption, LineHeightOption, MaxWidthOption, TamilFontOption, EnglishFontOption } from '../../types/bible';
 import { AccountPanel } from '../auth/AccountPanel';
@@ -391,7 +391,75 @@ export const PreferencesModal: React.FC = () => {
             </div>
           </div>
 
-          {/* Group 4: Account & Cloud Sync */}
+          {/* Group 4: Verse Options Display Style */}
+          <div>
+            <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.625rem' }}>
+              {isEn ? 'Verse Actions Display Style' : 'வசன விருப்பங்கள் காட்டும் முறை'}
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+              <button
+                className={`btn-card ${(preferences.verseOptionsStyle || 'dropdown') === 'dropdown' ? 'selected' : ''}`}
+                onClick={() => updatePreferences({ verseOptionsStyle: 'dropdown' })}
+                aria-pressed={(preferences.verseOptionsStyle || 'dropdown') === 'dropdown'}
+                style={{
+                  padding: '0.625rem 0.75rem',
+                  borderRadius: '0.5rem',
+                  border: (preferences.verseOptionsStyle || 'dropdown') === 'dropdown' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                  backgroundColor: (preferences.verseOptionsStyle || 'dropdown') === 'dropdown' ? 'var(--accent-soft)' : 'var(--bg-surface)',
+                  color: (preferences.verseOptionsStyle || 'dropdown') === 'dropdown' ? 'var(--accent-color)' : 'var(--text-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  textAlign: 'left'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <MoreVertical size={16} />
+                  <div>
+                    <span style={{ fontSize: '0.8125rem', fontWeight: (preferences.verseOptionsStyle || 'dropdown') === 'dropdown' ? 600 : 500, display: 'block' }}>
+                      {isEn ? 'Dropdown (3-Dots)' : 'Dropdown மெனு (3-Dots)'}
+                    </span>
+                    <span style={{ fontSize: '0.7188rem', opacity: 0.75, display: 'block' }}>
+                      {isEn ? 'Top-right popup list' : 'மேல் வலது Pop-up மெனு'}
+                    </span>
+                  </div>
+                </div>
+                {(preferences.verseOptionsStyle || 'dropdown') === 'dropdown' && <Check size={14} style={{ color: 'var(--accent-color)', flexShrink: 0 }} />}
+              </button>
+
+              <button
+                className={`btn-card ${preferences.verseOptionsStyle === 'buttons' ? 'selected' : ''}`}
+                onClick={() => updatePreferences({ verseOptionsStyle: 'buttons' })}
+                aria-pressed={preferences.verseOptionsStyle === 'buttons'}
+                style={{
+                  padding: '0.625rem 0.75rem',
+                  borderRadius: '0.5rem',
+                  border: preferences.verseOptionsStyle === 'buttons' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                  backgroundColor: preferences.verseOptionsStyle === 'buttons' ? 'var(--accent-soft)' : 'var(--bg-surface)',
+                  color: preferences.verseOptionsStyle === 'buttons' ? 'var(--accent-color)' : 'var(--text-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  textAlign: 'left'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Sliders size={16} />
+                  <div>
+                    <span style={{ fontSize: '0.8125rem', fontWeight: preferences.verseOptionsStyle === 'buttons' ? 600 : 500, display: 'block' }}>
+                      {isEn ? 'Bottom Buttons' : 'வசனத்தின் அடியில் பட்டன்கள்'}
+                    </span>
+                    <span style={{ fontSize: '0.7188rem', opacity: 0.75, display: 'block' }}>
+                      {isEn ? 'Inline buttons row' : 'வசனத்திற்கு கீழே பட்டன்கள்'}
+                    </span>
+                  </div>
+                </div>
+                {preferences.verseOptionsStyle === 'buttons' && <Check size={14} style={{ color: 'var(--accent-color)', flexShrink: 0 }} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Group 5: Account & Cloud Sync */}
           <div>
             <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.625rem' }}>
               {isEn ? 'Account & Cloud Sync' : 'கணக்கு & மேகக்கணி ஒத்திசைவு'}

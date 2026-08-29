@@ -40,6 +40,7 @@ export type MaxWidthOption = 'compact' | 'standard' | 'wide';
 export type ThemeOption = 'light' | 'dark' | 'sepia';
 export type TamilFontOption = 'noto' | 'mukta' | 'catamaran' | 'arima' | 'hind';
 export type EnglishFontOption = 'lora' | 'inter' | 'merriweather' | 'outfit' | 'playfair';
+export type VerseOptionsStyleOption = 'dropdown' | 'buttons';
 
 export interface ReadingPreferences {
   fontSize: FontSizeOption;
@@ -49,6 +50,7 @@ export interface ReadingPreferences {
   language: Language;
   fontFamilyTa?: TamilFontOption;
   fontFamilyEn?: EnglishFontOption;
+  verseOptionsStyle?: VerseOptionsStyleOption;
 }
 
 export interface Bookmark {
