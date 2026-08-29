@@ -16,6 +16,9 @@
   --font-ta-serif: 'Noto Serif Tamil', serif;
   --font-ta-kavi: 'Kavivanar', cursive;
   --font-ta-baloo: 'Baloo Thambi 2', display;
+  --font-ta-coiny: 'Coiny', cursive;
+  --font-ta-pavanam: 'Pavanam', sans-serif;
+  --font-ta-system: 'Latha', 'InaiMathi', sans-serif;
 
   /* English Font Family Options */
   --font-en-lora: 'Lora', Georgia, serif;
@@ -24,6 +27,12 @@
   --font-en-outfit: 'Outfit', sans-serif;
   --font-en-playfair: 'Playfair Display', serif;
   --font-en-roboto: 'Roboto', sans-serif;
+  --font-en-georgia: 'Georgia', serif;
+  --font-en-cinzel: 'Cinzel', serif;
+  --font-en-opensans: 'Open Sans', sans-serif;
+  --font-en-montserrat: 'Montserrat', sans-serif;
+  --font-en-poppins: 'Poppins', sans-serif;
+  --font-en-baskerville: 'Libre Baskerville', serif;
 
   /* Transitions */
   --transition-fast: 150ms ease;

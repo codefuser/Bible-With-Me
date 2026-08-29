@@ -60,7 +60,7 @@ function CustomFontSelect<T extends string>({ selectedId, options, label, onChan
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
-          <span style={{ fontSize: '0.90625rem', fontWeight: 700, color: 'var(--accent-color)' }}>
+          <span style={{ fontSize: '0.90625rem', fontWeight: 700, color: 'var(--accent-color)', flexShrink: 0 }}>
             {selectedFont.label}
           </span>
           <span
@@ -94,7 +94,7 @@ function CustomFontSelect<T extends string>({ selectedId, options, label, onChan
             borderRadius: '0.75rem',
             padding: '0.375rem',
             boxShadow: '0 10px 30px rgba(0, 0, 0, 0.15)',
-            maxHeight: '260px',
+            maxHeight: '280px',
             overflowY: 'auto'
           }}
         >
@@ -150,6 +150,200 @@ function CustomFontSelect<T extends string>({ selectedId, options, label, onChan
   );
 }
 
+/* Butter-Smooth Pixel-Perfect Custom Slider Component */
+interface SliderStep<T> {
+  value: T;
+  label: string;
+  sublabel: string;
+}
+
+interface CustomSliderProps<T> {
+  title: string;
+  steps: SliderStep<T>[];
+  currentValue: T;
+  onChange: (val: T) => void;
+}
+
+function CustomSlider<T>({ title, steps, currentValue, onChange }: CustomSliderProps<T>) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const currentIndex = Math.max(0, steps.findIndex((s) => s.value === currentValue));
+  const totalSteps = steps.length;
+  const activeStep = steps[currentIndex] || steps[0];
+
+  const getPercentForIndex = (idx: number) => {
+    if (totalSteps <= 1) return 0;
+    return (idx / (totalSteps - 1)) * 100;
+  };
+
+  const handlePointerAction = (e: React.PointerEvent<HTMLDivElement> | PointerEvent) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const clientX = e.clientX;
+    const relativeX = Math.max(0, Math.min(clientX - rect.left, rect.width));
+    const ratio = rect.width > 0 ? relativeX / rect.width : 0;
+    const closestIdx = Math.round(ratio * (totalSteps - 1));
+    const clampedIdx = Math.max(0, Math.min(closestIdx, totalSteps - 1));
+    if (steps[clampedIdx] && steps[clampedIdx].value !== currentValue) {
+      onChange(steps[clampedIdx].value);
+    }
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    setIsDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+    handlePointerAction(e);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isDragging) {
+      handlePointerAction(e);
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isDragging) {
+      setIsDragging(false);
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch (err) {}
+    }
+  };
+
+  const activePercent = getPercentForIndex(currentIndex);
+
+  return (
+    <div style={{ marginBottom: '1.5rem' }}>
+      {/* Title Header with Active Value Badge */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8125rem', marginBottom: '0.625rem' }}>
+        <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>{title}</span>
+        <span style={{ fontWeight: 700, color: 'var(--accent-color)', backgroundColor: 'var(--accent-soft)', padding: '0.1875rem 0.625rem', borderRadius: '9999px', fontSize: '0.78125rem' }}>
+          {activeStep.label} ({activeStep.sublabel})
+        </span>
+      </div>
+
+      {/* Interactive Slider Track Container */}
+      <div
+        ref={containerRef}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        style={{
+          position: 'relative',
+          height: '28px',
+          display: 'flex',
+          alignItems: 'center',
+          cursor: 'pointer',
+          userSelect: 'none',
+          touchAction: 'none',
+          padding: '0 10px',
+          margin: '0 -10px'
+        }}
+      >
+        {/* Track Background Line */}
+        <div
+          style={{
+            position: 'absolute',
+            left: '10px',
+            right: '10px',
+            height: '6px',
+            backgroundColor: 'var(--border-color)',
+            borderRadius: '9999px'
+          }}
+        />
+
+        {/* Active Filled Line */}
+        <div
+          style={{
+            position: 'absolute',
+            left: '10px',
+            width: `calc(${activePercent}% * (100% - 20px) / 100)`,
+            height: '6px',
+            backgroundColor: 'var(--accent-color)',
+            borderRadius: '9999px',
+            transition: isDragging ? 'none' : 'width 180ms cubic-bezier(0.4, 0, 0.2, 1)'
+          }}
+        />
+
+        {/* Snap Tick Dots at exact percentage locations */}
+        {steps.map((step, idx) => {
+          const pct = getPercentForIndex(idx);
+          const isPassed = idx <= currentIndex;
+          return (
+            <div
+              key={idx}
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange(step.value);
+              }}
+              style={{
+                position: 'absolute',
+                left: `calc(10px + ${pct}% * (100% - 20px) / 100)`,
+                transform: 'translateX(-50%)',
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                backgroundColor: isPassed ? 'var(--accent-color)' : 'var(--bg-surface)',
+                border: isPassed ? '2px solid var(--accent-color)' : '2px solid var(--border-color)',
+                zIndex: 10,
+                transition: 'all 150ms ease'
+              }}
+            />
+          );
+        })}
+
+        {/* Floating Draggable Thumb Circle */}
+        <div
+          style={{
+            position: 'absolute',
+            left: `calc(10px + ${activePercent}% * (100% - 20px) / 100)`,
+            transform: 'translateX(-50%)',
+            width: '22px',
+            height: '22px',
+            borderRadius: '50%',
+            backgroundColor: 'var(--accent-color)',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.25)',
+            border: '2px solid #ffffff',
+            zIndex: 20,
+            transition: isDragging ? 'none' : 'left 180ms cubic-bezier(0.4, 0, 0.2, 1)'
+          }}
+        />
+      </div>
+
+      {/* Sublabel Text Indicators Perfectly Centered below each Snap Point */}
+      <div style={{ position: 'relative', height: '28px', marginTop: '0.25rem' }}>
+        {steps.map((step, idx) => {
+          const pct = getPercentForIndex(idx);
+          const isSelected = idx === currentIndex;
+          return (
+            <div
+              key={idx}
+              onClick={() => onChange(step.value)}
+              style={{
+                position: 'absolute',
+                left: `${pct}%`,
+                transform: idx === 0 ? 'translateX(0%)' : idx === totalSteps - 1 ? 'translateX(-100%)' : 'translateX(-50%)',
+                textAlign: idx === 0 ? 'left' : idx === totalSteps - 1 ? 'right' : 'center',
+                fontSize: '0.71875rem',
+                color: isSelected ? 'var(--accent-color)' : 'var(--text-muted)',
+                fontWeight: isSelected ? 700 : 500,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'color 150ms ease'
+              }}
+            >
+              <div>{step.label}</div>
+              <div style={{ opacity: 0.85, fontSize: '0.65625rem' }}>{step.sublabel}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export const PreferencesModal: React.FC = () => {
   const {
     preferences,
@@ -171,7 +365,7 @@ export const PreferencesModal: React.FC = () => {
     setIsPreferencesOpen(false);
   };
 
-  // Expanded Tamil Fonts Library
+  // Expanded Tamil Fonts Library (12 Fonts)
   const tamilFonts: FontItem<TamilFontOption>[] = [
     { id: 'noto', label: 'Noto Sans Tamil', preview: 'கர்த்தர் என் மேய்ப்பராயிருக்கிறார்', fontVar: 'var(--font-ta-noto)' },
     { id: 'mukta', label: 'Mukta Malar', preview: 'கர்த்தர் என் மேய்ப்பராயிருக்கிறார்', fontVar: 'var(--font-ta-mukta)' },
@@ -181,48 +375,49 @@ export const PreferencesModal: React.FC = () => {
     { id: 'anek', label: 'Anek Tamil', preview: 'கர்த்தர் என் மேய்ப்பராயிருக்கிறார்', fontVar: 'var(--font-ta-anek)' },
     { id: 'serif', label: 'Noto Serif Tamil', preview: 'கர்த்தர் என் மேய்ப்பராயிருக்கிறார்', fontVar: 'var(--font-ta-serif)' },
     { id: 'kavi', label: 'Kavivanar Script', preview: 'கர்த்தர் என் மேய்ப்பராயிருக்கிறார்', fontVar: 'var(--font-ta-kavi)' },
-    { id: 'baloo', label: 'Baloo Thambi Bold', preview: 'கர்த்தர் என் மேய்ப்பராயிருக்கிறார்', fontVar: 'var(--font-ta-baloo)' }
+    { id: 'baloo', label: 'Baloo Thambi 2', preview: 'கர்த்தர் என் மேய்ப்பராயிருக்கிறார்', fontVar: 'var(--font-ta-baloo)' },
+    { id: 'coiny', label: 'Coiny Display', preview: 'கர்த்தர் என் மேய்ப்பராயிருக்கிறார்', fontVar: 'var(--font-ta-coiny)' },
+    { id: 'pavanam', label: 'Pavanam Clean', preview: 'கர்த்தர் என் மேய்ப்பராயிருக்கிறார்', fontVar: 'var(--font-ta-pavanam)' },
+    { id: 'system', label: 'Latha / System Tamil', preview: 'கர்த்தர் என் மேய்ப்பராயிருக்கிறார்', fontVar: 'var(--font-ta-system)' }
   ];
 
-  // Expanded English Fonts Library
+  // Expanded English Fonts Library (12 Fonts)
   const englishFonts: FontItem<EnglishFontOption>[] = [
     { id: 'lora', label: 'Lora Classic Serif', preview: 'The Lord is my shepherd; I shall not want.', fontVar: 'var(--font-en-lora)' },
     { id: 'inter', label: 'Inter Modern Sans', preview: 'The Lord is my shepherd; I shall not want.', fontVar: 'var(--font-en-inter)' },
     { id: 'merriweather', label: 'Merriweather Serif', preview: 'The Lord is my shepherd; I shall not want.', fontVar: 'var(--font-en-merriweather)' },
     { id: 'outfit', label: 'Outfit Clean Sans', preview: 'The Lord is my shepherd; I shall not want.', fontVar: 'var(--font-en-outfit)' },
     { id: 'playfair', label: 'Playfair Display Serif', preview: 'The Lord is my shepherd; I shall not want.', fontVar: 'var(--font-en-playfair)' },
-    { id: 'roboto', label: 'Roboto Sans', preview: 'The Lord is my shepherd; I shall not want.', fontVar: 'var(--font-en-roboto)' }
+    { id: 'roboto', label: 'Roboto Sans', preview: 'The Lord is my shepherd; I shall not want.', fontVar: 'var(--font-en-roboto)' },
+    { id: 'georgia', label: 'Georgia Book Serif', preview: 'The Lord is my shepherd; I shall not want.', fontVar: 'var(--font-en-georgia)' },
+    { id: 'cinzel', label: 'Cinzel Classic Capital', preview: 'THE LORD IS MY SHEPHERD; I SHALL NOT WANT.', fontVar: 'var(--font-en-cinzel)' },
+    { id: 'opensans', label: 'Open Sans Clean', preview: 'The Lord is my shepherd; I shall not want.', fontVar: 'var(--font-en-opensans)' },
+    { id: 'montserrat', label: 'Montserrat Modern', preview: 'The Lord is my shepherd; I shall not want.', fontVar: 'var(--font-en-montserrat)' },
+    { id: 'poppins', label: 'Poppins Rounded', preview: 'The Lord is my shepherd; I shall not want.', fontVar: 'var(--font-en-poppins)' },
+    { id: 'baskerville', label: 'Libre Baskerville', preview: 'The Lord is my shepherd; I shall not want.', fontVar: 'var(--font-en-baskerville)' }
   ];
 
-  // Font Size Slider Array
-  const fontSizeOptions: FontSizeOption[] = ['sm', 'md', 'lg', 'xl'];
-  const fontSizeLabels: Record<FontSizeOption, { label: string; px: string }> = {
-    sm: { label: isEn ? 'Small' : 'சிறியது', px: '15px' },
-    md: { label: isEn ? 'Medium' : 'நடுத்தரம்', px: '18px' },
-    lg: { label: isEn ? 'Large' : 'பெரியது', px: '21px' },
-    xl: { label: isEn ? 'Extra Large' : 'மிகப்பெரியது', px: '24px' }
-  };
-  const currentFontSizeIndex = fontSizeOptions.indexOf(preferences.fontSize || 'md');
+  // Font Size Steps for CustomSlider
+  const fontSizeSteps: SliderStep<FontSizeOption>[] = [
+    { value: 'sm', label: isEn ? 'Small' : 'சிறிய', sublabel: '15px' },
+    { value: 'md', label: isEn ? 'Medium' : 'நடுத்தர', sublabel: '18px' },
+    { value: 'lg', label: isEn ? 'Large' : 'பெரிய', sublabel: '21px' },
+    { value: 'xl', label: isEn ? 'Extra' : 'மிகப்பெரிய', sublabel: '24px' }
+  ];
 
-  // Line Height Slider Array
-  const lineHeightOptions: LineHeightOption[] = ['normal', 'relaxed', 'loose'];
-  const lineHeightLabels: Record<LineHeightOption, { label: string; mult: string }> = {
-    normal: { label: isEn ? 'Normal' : 'சாதாரண', mult: '1.6x' },
-    relaxed: { label: isEn ? 'Relaxed' : 'சீராக', mult: '1.8x' },
-    loose: { label: isEn ? 'Loose' : 'அகலமாக', mult: '2.1x' }
-  };
-  const currentLineHeightIndex = lineHeightOptions.indexOf(preferences.lineHeight || 'normal');
+  // Line Height Steps for CustomSlider
+  const lineHeightSteps: SliderStep<LineHeightOption>[] = [
+    { value: 'normal', label: isEn ? 'Normal' : 'சாதாரண', sublabel: '1.6x' },
+    { value: 'relaxed', label: isEn ? 'Relaxed' : 'சீராக', sublabel: '1.8x' },
+    { value: 'loose', label: isEn ? 'Loose' : 'அகலமாக', sublabel: '2.1x' }
+  ];
 
-  // Page Width Slider Array
-  const maxWidthOptions: MaxWidthOption[] = ['compact', 'standard', 'wide'];
-  const maxWidthLabels: Record<MaxWidthOption, { label: string; width: string }> = {
-    compact: { label: isEn ? 'Compact' : 'செறிவான', width: '720px' },
-    standard: { label: isEn ? 'Standard' : 'சாதாரண', width: '840px' },
-    wide: { label: isEn ? 'Wide' : 'அகலமான', width: '1000px' }
-  };
-  const currentMaxWidthIndex = maxWidthOptions.indexOf(preferences.maxWidth || 'standard');
-
-  const bookName = isEn ? currentBook.name_en : currentBook.name_ta;
+  // Page Width Steps for CustomSlider
+  const maxWidthSteps: SliderStep<MaxWidthOption>[] = [
+    { value: 'compact', label: isEn ? 'Compact' : 'செறிவான', sublabel: '720px' },
+    { value: 'standard', label: isEn ? 'Standard' : 'சாதாரண', sublabel: '840px' },
+    { value: 'wide', label: isEn ? 'Wide' : 'அகலமான', sublabel: '1000px' }
+  ];
 
   return (
     <div
@@ -310,7 +505,7 @@ export const PreferencesModal: React.FC = () => {
 
       {/* Main Settings Grouped Cards Container */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {/* Group 1: Appearance & Theme */}
+        {/* Group 1: Appearance & Theme (Minimal Apple/Linear Segmented Control) */}
         <div
           style={{
             backgroundColor: 'var(--bg-surface)',
@@ -324,70 +519,87 @@ export const PreferencesModal: React.FC = () => {
             <Sun size={15} style={{ color: 'var(--accent-color)' }} />
             <span>{isEn ? 'Appearance & Theme' : 'தோற்றம் & தீம்'}</span>
           </label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '0.25rem',
+              backgroundColor: 'var(--bg-secondary)',
+              borderRadius: '0.75rem',
+              padding: '0.25rem',
+              border: '1px solid var(--border-color)'
+            }}
+          >
             <button
-              className={`btn-card ${preferences.theme === 'light' ? 'selected' : ''}`}
+              type="button"
               onClick={() => updatePreferences({ theme: 'light' })}
-              aria-pressed={preferences.theme === 'light'}
               style={{
-                padding: '0.625rem 0.5rem',
-                borderRadius: '0.625rem',
-                border: preferences.theme === 'light' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
-                backgroundColor: preferences.theme === 'light' ? 'var(--accent-soft)' : '#ffffff',
-                color: '#1c1d1f',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.375rem',
-                fontSize: '0.875rem',
-                fontWeight: preferences.theme === 'light' ? 700 : 500
+                padding: '0.5625rem 0.5rem',
+                borderRadius: '0.5625rem',
+                border: preferences.theme === 'light' ? '1px solid var(--accent-color)' : '1px solid transparent',
+                backgroundColor: preferences.theme === 'light' ? 'var(--bg-surface)' : 'transparent',
+                color: preferences.theme === 'light' ? 'var(--accent-color)' : 'var(--text-secondary)',
+                fontWeight: preferences.theme === 'light' ? 700 : 500,
+                fontSize: '0.84375rem',
+                cursor: 'pointer',
+                boxShadow: preferences.theme === 'light' ? '0 2px 8px rgba(0, 0, 0, 0.05)' : 'none',
+                transition: 'all 180ms ease'
               }}
             >
-              {preferences.theme === 'light' ? <Check size={16} style={{ color: 'var(--accent-color)' }} /> : <Sun size={16} />}
+              <Sun size={15} />
               <span>{isEn ? 'Light' : 'வெளிச்சம்'}</span>
             </button>
 
             <button
-              className={`btn-card ${preferences.theme === 'sepia' ? 'selected' : ''}`}
+              type="button"
               onClick={() => updatePreferences({ theme: 'sepia' })}
-              aria-pressed={preferences.theme === 'sepia'}
               style={{
-                padding: '0.625rem 0.5rem',
-                borderRadius: '0.625rem',
-                border: preferences.theme === 'sepia' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
-                backgroundColor: '#fbf5e8',
-                color: '#3b3226',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.375rem',
-                fontSize: '0.875rem',
-                fontWeight: preferences.theme === 'sepia' ? 700 : 500
+                padding: '0.5625rem 0.5rem',
+                borderRadius: '0.5625rem',
+                border: preferences.theme === 'sepia' ? '1px solid var(--accent-color)' : '1px solid transparent',
+                backgroundColor: preferences.theme === 'sepia' ? 'var(--bg-surface)' : 'transparent',
+                color: preferences.theme === 'sepia' ? 'var(--accent-color)' : 'var(--text-secondary)',
+                fontWeight: preferences.theme === 'sepia' ? 700 : 500,
+                fontSize: '0.84375rem',
+                cursor: 'pointer',
+                boxShadow: preferences.theme === 'sepia' ? '0 2px 8px rgba(0, 0, 0, 0.05)' : 'none',
+                transition: 'all 180ms ease'
               }}
             >
-              {preferences.theme === 'sepia' ? <Check size={16} style={{ color: 'var(--accent-color)' }} /> : <BookOpen size={16} />}
+              <BookOpen size={15} />
               <span>{isEn ? 'Sepia' : 'செபியா'}</span>
             </button>
 
             <button
-              className={`btn-card ${preferences.theme === 'dark' ? 'selected' : ''}`}
+              type="button"
               onClick={() => updatePreferences({ theme: 'dark' })}
-              aria-pressed={preferences.theme === 'dark'}
               style={{
-                padding: '0.625rem 0.5rem',
-                borderRadius: '0.625rem',
-                border: preferences.theme === 'dark' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
-                backgroundColor: '#1e2027',
-                color: '#e6e8ec',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.375rem',
-                fontSize: '0.875rem',
-                fontWeight: preferences.theme === 'dark' ? 700 : 500
+                padding: '0.5625rem 0.5rem',
+                borderRadius: '0.5625rem',
+                border: preferences.theme === 'dark' ? '1px solid var(--accent-color)' : '1px solid transparent',
+                backgroundColor: preferences.theme === 'dark' ? 'var(--bg-surface)' : 'transparent',
+                color: preferences.theme === 'dark' ? 'var(--accent-color)' : 'var(--text-secondary)',
+                fontWeight: preferences.theme === 'dark' ? 700 : 500,
+                fontSize: '0.84375rem',
+                cursor: 'pointer',
+                boxShadow: preferences.theme === 'dark' ? '0 2px 8px rgba(0, 0, 0, 0.05)' : 'none',
+                transition: 'all 180ms ease'
               }}
             >
-              {preferences.theme === 'dark' ? <Check size={16} style={{ color: 'var(--accent-color)' }} /> : <Moon size={16} />}
+              <Moon size={15} />
               <span>{isEn ? 'Dark' : 'இருள்'}</span>
             </button>
           </div>
@@ -408,131 +620,48 @@ export const PreferencesModal: React.FC = () => {
             <span>{isEn ? 'Typography & Fonts' : 'எழுத்து பாணி & எழுத்துக்கள்'}</span>
           </label>
 
-          {/* Tamil Font Dropdown */}
-          {!isEn && (
-            <CustomFontSelect
-              selectedId={preferences.fontFamilyTa || 'noto'}
-              options={tamilFonts}
-              label={isEn ? 'Tamil Font Style' : 'தமிழ் எழுத்து பாணி (Font Dropdown)'}
-              onChange={(id) => updatePreferences({ fontFamilyTa: id })}
-            />
-          )}
+          {/* Tamil Font Dropdown (ALWAYS VISIBLE) */}
+          <CustomFontSelect
+            selectedId={preferences.fontFamilyTa || 'noto'}
+            options={tamilFonts}
+            label={isEn ? 'Tamil Font Style (Dropdown)' : 'தமிழ் எழுத்து பாணி (Tamil Font Dropdown)'}
+            onChange={(id) => updatePreferences({ fontFamilyTa: id })}
+          />
 
-          {/* English Font Dropdown */}
-          {!isTa && (
-            <CustomFontSelect
-              selectedId={preferences.fontFamilyEn || 'lora'}
-              options={englishFonts}
-              label={isEn ? 'English Font Style' : 'ஆங்கில எழுத்து பாணி (Font Dropdown)'}
-              onChange={(id) => updatePreferences({ fontFamilyEn: id })}
-            />
-          )}
+          {/* English Font Dropdown (ALWAYS VISIBLE) */}
+          <CustomFontSelect
+            selectedId={preferences.fontFamilyEn || 'lora'}
+            options={englishFonts}
+            label={isEn ? 'English Font Style (Dropdown)' : 'ஆங்கில எழுத்து பாணி (English Font Dropdown)'}
+            onChange={(id) => updatePreferences({ fontFamilyEn: id })}
+          />
 
-          {/* Font Size Slider Control */}
-          <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8125rem', marginBottom: '0.5rem' }}>
-              <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
-                {isEn ? 'Font Size' : 'எழுத்து அளவு'}
-              </span>
-              <span style={{ fontWeight: 700, color: 'var(--accent-color)' }}>
-                {fontSizeLabels[fontSizeOptions[currentFontSizeIndex]]?.label} ({fontSizeLabels[fontSizeOptions[currentFontSizeIndex]]?.px})
-              </span>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={3}
-              step={1}
-              value={currentFontSizeIndex >= 0 ? currentFontSizeIndex : 1}
-              onChange={(e) => {
-                const idx = Number(e.target.value);
-                updatePreferences({ fontSize: fontSizeOptions[idx] });
-              }}
-              style={{
-                width: '100%',
-                accentColor: 'var(--accent-color)',
-                cursor: 'pointer',
-                height: '6px'
-              }}
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.71875rem', color: 'var(--text-muted)', marginTop: '0.375rem' }}>
-              <span>{isEn ? 'Small (15px)' : 'சிறிய (15px)'}</span>
-              <span>{isEn ? 'Medium (18px)' : 'நடுத்தர (18px)'}</span>
-              <span>{isEn ? 'Large (21px)' : 'பெரிய (21px)'}</span>
-              <span>{isEn ? 'Extra (24px)' : 'மிகப்பெரிய (24px)'}</span>
-            </div>
-          </div>
+          {/* Pixel-Perfect Butter-Smooth Font Size Slider */}
+          <CustomSlider
+            title={isEn ? 'Font Size' : 'எழுத்து அளவு'}
+            steps={fontSizeSteps}
+            currentValue={preferences.fontSize || 'md'}
+            onChange={(val) => updatePreferences({ fontSize: val })}
+          />
 
-          {/* Line Height Slider Control */}
-          <div style={{ marginBottom: '1.25rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8125rem', marginBottom: '0.5rem' }}>
-              <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
-                {isEn ? 'Line Spacing' : 'வரி இடைவெளி'}
-              </span>
-              <span style={{ fontWeight: 700, color: 'var(--accent-color)' }}>
-                {lineHeightLabels[lineHeightOptions[currentLineHeightIndex]]?.label} ({lineHeightLabels[lineHeightOptions[currentLineHeightIndex]]?.mult})
-              </span>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={2}
-              step={1}
-              value={currentLineHeightIndex >= 0 ? currentLineHeightIndex : 0}
-              onChange={(e) => {
-                const idx = Number(e.target.value);
-                updatePreferences({ lineHeight: lineHeightOptions[idx] });
-              }}
-              style={{
-                width: '100%',
-                accentColor: 'var(--accent-color)',
-                cursor: 'pointer',
-                height: '6px'
-              }}
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.71875rem', color: 'var(--text-muted)', marginTop: '0.375rem' }}>
-              <span>{isEn ? 'Normal (1.6x)' : 'சாதாரண (1.6x)'}</span>
-              <span>{isEn ? 'Relaxed (1.8x)' : 'சீராக (1.8x)'}</span>
-              <span>{isEn ? 'Loose (2.1x)' : 'அகலமாக (2.1x)'}</span>
-            </div>
-          </div>
+          {/* Pixel-Perfect Butter-Smooth Line Height Slider */}
+          <CustomSlider
+            title={isEn ? 'Line Spacing' : 'வரி இடைவெளி'}
+            steps={lineHeightSteps}
+            currentValue={preferences.lineHeight || 'normal'}
+            onChange={(val) => updatePreferences({ lineHeight: val })}
+          />
 
-          {/* Page Width Slider Control */}
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8125rem', marginBottom: '0.5rem' }}>
-              <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
-                {isEn ? 'Page Width' : 'பக்க அகலம்'}
-              </span>
-              <span style={{ fontWeight: 700, color: 'var(--accent-color)' }}>
-                {maxWidthLabels[maxWidthOptions[currentMaxWidthIndex]]?.label} ({maxWidthLabels[maxWidthOptions[currentMaxWidthIndex]]?.width})
-              </span>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={2}
-              step={1}
-              value={currentMaxWidthIndex >= 0 ? currentMaxWidthIndex : 1}
-              onChange={(e) => {
-                const idx = Number(e.target.value);
-                updatePreferences({ maxWidth: maxWidthOptions[idx] });
-              }}
-              style={{
-                width: '100%',
-                accentColor: 'var(--accent-color)',
-                cursor: 'pointer',
-                height: '6px'
-              }}
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.71875rem', color: 'var(--text-muted)', marginTop: '0.375rem' }}>
-              <span>{isEn ? 'Compact (720px)' : 'செறிவான (720px)'}</span>
-              <span>{isEn ? 'Standard (840px)' : 'சாதாரண (840px)'}</span>
-              <span>{isEn ? 'Wide (1000px)' : 'அகலமான (1000px)'}</span>
-            </div>
-          </div>
+          {/* Pixel-Perfect Butter-Smooth Page Width Slider */}
+          <CustomSlider
+            title={isEn ? 'Page Width' : 'பக்க அகலம்'}
+            steps={maxWidthSteps}
+            currentValue={preferences.maxWidth || 'standard'}
+            onChange={(val) => updatePreferences({ maxWidth: val })}
+          />
         </div>
 
-        {/* Group 3: Primary Language */}
+        {/* Group 3: Primary Language (Minimal Professional Segmented Control) */}
         <div
           style={{
             backgroundColor: 'var(--bg-surface)',
@@ -546,53 +675,94 @@ export const PreferencesModal: React.FC = () => {
             <Globe size={15} style={{ color: 'var(--accent-color)' }} />
             <span>{isEn ? 'Primary Language' : 'முதன்மை மொழி'}</span>
           </label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '0.25rem',
+              backgroundColor: 'var(--bg-secondary)',
+              borderRadius: '0.75rem',
+              padding: '0.25rem',
+              border: '1px solid var(--border-color)'
+            }}
+          >
             <button
-              className={`btn-pill ${language === 'ta' ? 'active' : ''}`}
+              type="button"
               onClick={() => setLanguage('ta')}
-              aria-pressed={language === 'ta'}
               style={{
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
+                height: '38px',
+                padding: '0 0.5rem',
+                borderRadius: '0.5625rem',
+                border: '1.5px solid',
+                borderColor: language === 'ta' ? 'var(--accent-color)' : 'transparent',
+                backgroundColor: language === 'ta' ? 'var(--bg-surface)' : 'transparent',
+                color: language === 'ta' ? 'var(--accent-color)' : 'var(--text-secondary)',
+                fontWeight: language === 'ta' ? 700 : 500,
                 fontSize: '0.8125rem',
-                padding: '0.5rem 0.25rem',
-                border: language === 'ta' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
-                fontWeight: language === 'ta' ? 700 : 500
+                cursor: 'pointer',
+                boxShadow: language === 'ta' ? '0 2px 6px rgba(0, 0, 0, 0.06)' : 'none',
+                transition: 'all 150ms ease',
+                whiteSpace: 'nowrap',
+                boxSizing: 'border-box'
               }}
             >
-              {language === 'ta' && <Check size={13} />}
               <span>தமிழ்</span>
             </button>
 
             <button
-              className={`btn-pill ${language === 'en' ? 'active' : ''}`}
+              type="button"
               onClick={() => setLanguage('en')}
-              aria-pressed={language === 'en'}
               style={{
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
+                height: '38px',
+                padding: '0 0.5rem',
+                borderRadius: '0.5625rem',
+                border: '1.5px solid',
+                borderColor: language === 'en' ? 'var(--accent-color)' : 'transparent',
+                backgroundColor: language === 'en' ? 'var(--bg-surface)' : 'transparent',
+                color: language === 'en' ? 'var(--accent-color)' : 'var(--text-secondary)',
+                fontWeight: language === 'en' ? 700 : 500,
                 fontSize: '0.8125rem',
-                padding: '0.5rem 0.25rem',
-                border: language === 'en' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
-                fontWeight: language === 'en' ? 700 : 500
+                cursor: 'pointer',
+                boxShadow: language === 'en' ? '0 2px 6px rgba(0, 0, 0, 0.06)' : 'none',
+                transition: 'all 150ms ease',
+                whiteSpace: 'nowrap',
+                boxSizing: 'border-box'
               }}
             >
-              {language === 'en' && <Check size={13} />}
               <span>English</span>
             </button>
 
             <button
-              className={`btn-pill ${language === 'parallel' ? 'active' : ''}`}
+              type="button"
               onClick={() => setLanguage('parallel')}
-              aria-pressed={language === 'parallel'}
               style={{
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
+                height: '38px',
+                padding: '0 0.5rem',
+                borderRadius: '0.5625rem',
+                border: '1.5px solid',
+                borderColor: language === 'parallel' ? 'var(--accent-color)' : 'transparent',
+                backgroundColor: language === 'parallel' ? 'var(--bg-surface)' : 'transparent',
+                color: language === 'parallel' ? 'var(--accent-color)' : 'var(--text-secondary)',
+                fontWeight: language === 'parallel' ? 700 : 500,
                 fontSize: '0.8125rem',
-                padding: '0.5rem 0.25rem',
-                border: language === 'parallel' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
-                fontWeight: language === 'parallel' ? 700 : 500
+                cursor: 'pointer',
+                boxShadow: language === 'parallel' ? '0 2px 6px rgba(0, 0, 0, 0.06)' : 'none',
+                transition: 'all 150ms ease',
+                whiteSpace: 'nowrap',
+                boxSizing: 'border-box'
               }}
             >
-              {language === 'parallel' && <Check size={13} />}
-              <span>{isEn ? 'Tamil + EN' : 'தமிழ் + ஆங்கிலம்'}</span>
+              <span>தமிழ் + English</span>
             </button>
           </div>
         </div>
