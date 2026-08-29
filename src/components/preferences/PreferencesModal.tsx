@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Sun, Moon, BookOpen, Check, Type, MoreVertical, Sliders } from 'lucide-react';
+import { Home, Sun, Moon, BookOpen, Check, Type, MoreVertical, Sliders } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { FontSizeOption, LineHeightOption, MaxWidthOption, TamilFontOption, EnglishFontOption } from '../../types/bible';
 import { AccountPanel } from '../auth/AccountPanel';
@@ -11,7 +11,9 @@ export const PreferencesModal: React.FC = () => {
     language,
     setLanguage,
     isPreferencesOpen,
-    setIsPreferencesOpen
+    setIsPreferencesOpen,
+    currentBook,
+    currentChapter
   } = useReading();
 
   if (!isPreferencesOpen) return null;
@@ -20,6 +22,10 @@ export const PreferencesModal: React.FC = () => {
   const isTa = language === 'ta';
   const currentTaFont = preferences.fontFamilyTa || 'noto';
   const currentEnFont = preferences.fontFamilyEn || 'lora';
+
+  const handleReturnHome = () => {
+    setIsPreferencesOpen(false);
+  };
 
   const tamilFonts: { id: TamilFontOption; label: string; preview: string; fontVar: string }[] = [
     { id: 'noto', label: 'Noto Sans', preview: 'நவீன தமிழ்', fontVar: 'var(--font-ta-noto)' },
@@ -75,19 +81,82 @@ export const PreferencesModal: React.FC = () => {
     wide: isEn ? 'Wide' : 'அகலமான'
   };
 
+  const bookName = isEn ? currentBook.name_en : currentBook.name_ta;
+
   return (
-    <div className="modal-overlay" onClick={() => setIsPreferencesOpen(false)}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
-        <div className="modal-header">
-          <h2 className="modal-title">
+    <div
+      className="preferences-page-section"
+      style={{
+        maxWidth:
+          preferences.maxWidth === 'compact'
+            ? 'var(--width-compact)'
+            : preferences.maxWidth === 'wide'
+            ? 'var(--width-wide)'
+            : 'var(--width-standard)',
+        margin: '0 auto',
+        width: '100%',
+        padding: '0.5rem 0 3rem'
+      }}
+    >
+      {/* Top Section Navigation Header */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0.75rem 1rem',
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border-color)',
+          borderRadius: '0.875rem',
+          marginBottom: '1rem',
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.04)'
+        }}
+      >
+        {/* Navigation Home / Back Button */}
+        <button
+          onClick={handleReturnHome}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.375rem',
+            padding: '0.4375rem 0.875rem',
+            borderRadius: '9999px',
+            backgroundColor: 'var(--accent-soft)',
+            color: 'var(--accent-color)',
+            border: '1px solid var(--accent-color)',
+            fontWeight: 600,
+            fontSize: '0.84375rem',
+            cursor: 'pointer',
+            transition: 'all 180ms ease'
+          }}
+          title={isEn ? 'Return to Bible Reader' : 'வேதாகம வாசிப்பிற்குத் திரும்புக'}
+        >
+          <Home size={15} />
+          <span>{isEn ? `Home (${bookName} ${currentChapter})` : `முகப்பு (${bookName} ${currentChapter})`}</span>
+        </button>
+
+        {/* Section Title (No Close X Button) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+          <Sliders size={17} style={{ color: 'var(--accent-color)' }} />
+          <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
             {isEn ? 'Reading Preferences' : 'வாசிப்பு விருப்பத்தேர்வுகள்'}
           </h2>
-          <button className="btn-icon" onClick={() => setIsPreferencesOpen(false)} title="Close Preferences">
-            <X size={18} />
-          </button>
         </div>
+      </div>
 
-        <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      {/* Main Settings Body Container */}
+      <div
+        style={{
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border-color)',
+          borderRadius: '0.875rem',
+          padding: '1.25rem 1.25rem',
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.04)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1.5rem'
+        }}
+      >
           {/* Group 1: Appearance & Theme */}
           <div>
             <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.625rem' }}>
@@ -466,7 +535,6 @@ export const PreferencesModal: React.FC = () => {
             </label>
             <AccountPanel />
           </div>
-        </div>
       </div>
     </div>
   );

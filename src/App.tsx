@@ -111,7 +111,7 @@ const BibleLoadingScreen: React.FC = () => (
 // ─── Main Bible Layout (shown after loading + auth) ───────────────────────────
 
 const MainLayout: React.FC = () => {
-  const { historyItem, books, language, setBookAndChapter, preferences, isBibleDataLoading } =
+  const { historyItem, books, language, setBookAndChapter, preferences, isBibleDataLoading, isPreferencesOpen } =
     useReading();
   const { isExitModalOpen, handleConfirmExit, handleCancelExit } = useMobileBackButton();
   const [isAdminView, setIsAdminView] = useState<boolean>(
@@ -159,24 +159,30 @@ const MainLayout: React.FC = () => {
         <DesktopSidebar />
 
         <div className="main-content">
-          {/* Daily Verse Section */}
-          <div
-            style={{
-              maxWidth:
-                preferences.maxWidth === 'compact'
-                  ? 'var(--width-compact)'
-                  : preferences.maxWidth === 'wide'
-                  ? 'var(--width-wide)'
-                  : 'var(--width-standard)',
-              margin: '0 auto',
-              width: '100%'
-            }}
-          >
-            <DailyVerseCard />
-          </div>
+          {isPreferencesOpen ? (
+            <PreferencesModal />
+          ) : (
+            <>
+              {/* Daily Verse Section */}
+              <div
+                style={{
+                  maxWidth:
+                    preferences.maxWidth === 'compact'
+                      ? 'var(--width-compact)'
+                      : preferences.maxWidth === 'wide'
+                      ? 'var(--width-wide)'
+                      : 'var(--width-standard)',
+                  margin: '0 auto',
+                  width: '100%'
+                }}
+              >
+                <DailyVerseCard />
+              </div>
 
-          {/* Core Reader Component */}
-          <VerseReader />
+              {/* Core Reader Component */}
+              <VerseReader />
+            </>
+          )}
         </div>
       </div>
 
@@ -187,7 +193,6 @@ const MainLayout: React.FC = () => {
       <SideNavDrawer />
       <BookSelectorModal />
       <SearchModal />
-      <PreferencesModal />
       <BookmarksModal />
       {/* Study Modals (Disabled/Hidden - Uncomment to enable):
       <VerseStudyModal />
