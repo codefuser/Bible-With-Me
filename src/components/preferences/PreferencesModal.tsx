@@ -856,7 +856,7 @@ export const PreferencesModal: React.FC = () => {
         >
           <label style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.75rem' }}>
             <User size={15} style={{ color: 'var(--accent-color)' }} />
-            <span>{isEn ? 'Account & Cloud Sync' : 'கணக்கு & மேகக்கணி ஒத்திசைவு'}</span>
+            <span>{isEn ? 'Account' : 'கணக்கு'}</span>
           </label>
           <AccountPanel />
         </div>
