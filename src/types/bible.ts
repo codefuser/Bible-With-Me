@@ -38,8 +38,8 @@ export type FontSizeOption = 'sm' | 'md' | 'lg' | 'xl';
 export type LineHeightOption = 'normal' | 'relaxed' | 'loose';
 export type MaxWidthOption = 'compact' | 'standard' | 'wide';
 export type ThemeOption = 'light' | 'dark' | 'sepia';
-export type TamilFontOption = 'noto' | 'mukta' | 'catamaran' | 'arima' | 'hind';
-export type EnglishFontOption = 'lora' | 'inter' | 'merriweather' | 'outfit' | 'playfair';
+export type TamilFontOption = 'noto' | 'mukta' | 'catamaran' | 'arima' | 'hind' | 'anek' | 'serif' | 'kavi' | 'baloo';
+export type EnglishFontOption = 'lora' | 'inter' | 'merriweather' | 'outfit' | 'playfair' | 'roboto';
 export type VerseOptionsStyleOption = 'dropdown' | 'buttons';
 
 export interface ReadingPreferences {

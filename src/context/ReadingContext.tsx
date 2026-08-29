@@ -350,10 +350,14 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       .catch(() => setIsBibleDataLoading(false));
   }, []);
 
-  // Update HTML data-theme attribute whenever theme changes
+  // Update HTML data-theme attribute and font variables whenever preferences change
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', preferences.theme);
-  }, [preferences.theme]);
+    const fontTaVar = `var(--font-ta-${preferences.fontFamilyTa || 'noto'})`;
+    const fontEnVar = `var(--font-en-${preferences.fontFamilyEn || 'lora'})`;
+    document.documentElement.style.setProperty('--font-tamil', fontTaVar);
+    document.documentElement.style.setProperty('--font-serif', fontEnVar);
+  }, [preferences.theme, preferences.fontFamilyTa, preferences.fontFamilyEn]);
 
   const recordChapterRead = useCallback(
     (book: BibleBook, chapter: number, verse: number = 1) => {

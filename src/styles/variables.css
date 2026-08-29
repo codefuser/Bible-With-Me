@@ -12,6 +12,10 @@
   --font-ta-catamaran: 'Catamaran', sans-serif;
   --font-ta-arima: 'Arima', cursive;
   --font-ta-hind: 'Hind Madurai', sans-serif;
+  --font-ta-anek: 'Anek Tamil', sans-serif;
+  --font-ta-serif: 'Noto Serif Tamil', serif;
+  --font-ta-kavi: 'Kavivanar', cursive;
+  --font-ta-baloo: 'Baloo Thambi 2', display;
 
   /* English Font Family Options */
   --font-en-lora: 'Lora', Georgia, serif;
@@ -19,6 +23,7 @@
   --font-en-merriweather: 'Merriweather', serif;
   --font-en-outfit: 'Outfit', sans-serif;
   --font-en-playfair: 'Playfair Display', serif;
+  --font-en-roboto: 'Roboto', sans-serif;
 
   /* Transitions */
   --transition-fast: 150ms ease;

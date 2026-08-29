@@ -1,8 +1,154 @@
-import React from 'react';
-import { ArrowLeft, Sun, Moon, BookOpen, Check, Type, MoreVertical, Sliders, Globe, Layout, User } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ArrowLeft, Sun, Moon, BookOpen, Check, Type, MoreVertical, Sliders, Globe, Layout, User, ChevronDown } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { FontSizeOption, LineHeightOption, MaxWidthOption, TamilFontOption, EnglishFontOption } from '../../types/bible';
 import { AccountPanel } from '../auth/AccountPanel';
+
+interface FontItem<T> {
+  id: T;
+  label: string;
+  preview: string;
+  fontVar: string;
+}
+
+interface CustomFontSelectProps<T> {
+  selectedId: T;
+  options: FontItem<T>[];
+  label: string;
+  onChange: (id: T) => void;
+}
+
+function CustomFontSelect<T extends string>({ selectedId, options, label, onChange }: CustomFontSelectProps<T>) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const selectedFont = options.find((o) => o.id === selectedId) || options[0];
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={dropdownRef} style={{ position: 'relative', width: '100%', marginBottom: '1rem' }}>
+      <label style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '0.4375rem' }}>
+        {label}
+      </label>
+
+      {/* Trigger Button */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0.625rem 0.875rem',
+          borderRadius: '0.625rem',
+          border: '1.5px solid var(--accent-color)',
+          backgroundColor: 'var(--bg-surface)',
+          color: 'var(--text-primary)',
+          cursor: 'pointer',
+          transition: 'all 150ms ease',
+          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.03)'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
+          <span style={{ fontSize: '0.90625rem', fontWeight: 700, color: 'var(--accent-color)' }}>
+            {selectedFont.label}
+          </span>
+          <span
+            style={{
+              fontFamily: selectedFont.fontVar,
+              fontSize: '0.9375rem',
+              color: 'var(--text-primary)',
+              opacity: 0.9,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}
+          >
+            — {selectedFont.preview}
+          </span>
+        </div>
+        <ChevronDown size={18} style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 200ms ease', color: 'var(--accent-color)', flexShrink: 0 }} />
+      </button>
+
+      {/* MS Word / PowerPoint Style Font Dropdown Menu */}
+      {isOpen && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 0.375rem)',
+            left: 0,
+            right: 0,
+            zIndex: 300,
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '0.75rem',
+            padding: '0.375rem',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.15)',
+            maxHeight: '260px',
+            overflowY: 'auto'
+          }}
+        >
+          {options.map((font) => {
+            const isSelected = font.id === selectedId;
+            return (
+              <button
+                key={font.id}
+                type="button"
+                onClick={() => {
+                  onChange(font.id);
+                  setIsOpen(false);
+                }}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.625rem 0.75rem',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  backgroundColor: isSelected ? 'var(--accent-soft)' : 'transparent',
+                  color: isSelected ? 'var(--accent-color)' : 'var(--text-primary)',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'background-color 120ms ease',
+                  marginBottom: '0.125rem'
+                }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
+                  <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: isSelected ? 'var(--accent-color)' : 'var(--text-muted)' }}>
+                    {font.label}
+                  </span>
+                  {/* Real Font Face Preview inside Dropdown List */}
+                  <span
+                    style={{
+                      fontFamily: font.fontVar,
+                      fontSize: '1rem',
+                      color: 'var(--text-primary)',
+                      lineHeight: 1.3
+                    }}
+                  >
+                    {font.preview}
+                  </span>
+                </div>
+                {isSelected && <Check size={16} style={{ color: 'var(--accent-color)', flexShrink: 0 }} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export const PreferencesModal: React.FC = () => {
   const {
@@ -20,66 +166,61 @@ export const PreferencesModal: React.FC = () => {
 
   const isEn = language === 'en';
   const isTa = language === 'ta';
-  const currentTaFont = preferences.fontFamilyTa || 'noto';
-  const currentEnFont = preferences.fontFamilyEn || 'lora';
 
   const handleReturnHome = () => {
     setIsPreferencesOpen(false);
   };
 
-  const tamilFonts: { id: TamilFontOption; label: string; preview: string; fontVar: string }[] = [
-    { id: 'noto', label: 'Noto Sans', preview: 'நவீன தமிழ்', fontVar: 'var(--font-ta-noto)' },
-    { id: 'mukta', label: 'Mukta Malar', preview: 'மரபுத் தமிழ்', fontVar: 'var(--font-ta-mukta)' },
-    { id: 'catamaran', label: 'Catamaran', preview: 'நேர்த்தியான தமிழ்', fontVar: 'var(--font-ta-catamaran)' },
-    { id: 'arima', label: 'Arima', preview: 'அலங்காரத் தமிழ்', fontVar: 'var(--font-ta-arima)' },
-    { id: 'hind', label: 'Hind Madurai', preview: 'எளிய தமிழ்', fontVar: 'var(--font-ta-hind)' }
+  // Expanded Tamil Fonts Library
+  const tamilFonts: FontItem<TamilFontOption>[] = [
+    { id: 'noto', label: 'Noto Sans Tamil', preview: 'கர்த்தர் என் மேய்ப்பராயிருக்கிறார்', fontVar: 'var(--font-ta-noto)' },
+    { id: 'mukta', label: 'Mukta Malar', preview: 'கர்த்தர் என் மேய்ப்பராயிருக்கிறார்', fontVar: 'var(--font-ta-mukta)' },
+    { id: 'catamaran', label: 'Catamaran', preview: 'கர்த்தர் என் மேய்ப்பராயிருக்கிறார்', fontVar: 'var(--font-ta-catamaran)' },
+    { id: 'arima', label: 'Arima Display', preview: 'கர்த்தர் என் மேய்ப்பராயிருக்கிறார்', fontVar: 'var(--font-ta-arima)' },
+    { id: 'hind', label: 'Hind Madurai', preview: 'கர்த்தர் என் மேய்ப்பராயிருக்கிறார்', fontVar: 'var(--font-ta-hind)' },
+    { id: 'anek', label: 'Anek Tamil', preview: 'கர்த்தர் என் மேய்ப்பராயிருக்கிறார்', fontVar: 'var(--font-ta-anek)' },
+    { id: 'serif', label: 'Noto Serif Tamil', preview: 'கர்த்தர் என் மேய்ப்பராயிருக்கிறார்', fontVar: 'var(--font-ta-serif)' },
+    { id: 'kavi', label: 'Kavivanar Script', preview: 'கர்த்தர் என் மேய்ப்பராயிருக்கிறார்', fontVar: 'var(--font-ta-kavi)' },
+    { id: 'baloo', label: 'Baloo Thambi Bold', preview: 'கர்த்தர் என் மேய்ப்பராயிருக்கிறார்', fontVar: 'var(--font-ta-baloo)' }
   ];
 
-  const englishFonts: { id: EnglishFontOption; label: string; preview: string; fontVar: string }[] = [
-    { id: 'lora', label: 'Lora', preview: 'Classic Serif', fontVar: 'var(--font-en-lora)' },
-    { id: 'inter', label: 'Inter', preview: 'Modern Sans', fontVar: 'var(--font-en-inter)' },
-    { id: 'merriweather', label: 'Merriweather', preview: 'Editorial Serif', fontVar: 'var(--font-en-merriweather)' },
-    { id: 'outfit', label: 'Outfit', preview: 'Clean Sans', fontVar: 'var(--font-en-outfit)' },
-    { id: 'playfair', label: 'Playfair', preview: 'Heritage Serif', fontVar: 'var(--font-en-playfair)' }
+  // Expanded English Fonts Library
+  const englishFonts: FontItem<EnglishFontOption>[] = [
+    { id: 'lora', label: 'Lora Classic Serif', preview: 'The Lord is my shepherd; I shall not want.', fontVar: 'var(--font-en-lora)' },
+    { id: 'inter', label: 'Inter Modern Sans', preview: 'The Lord is my shepherd; I shall not want.', fontVar: 'var(--font-en-inter)' },
+    { id: 'merriweather', label: 'Merriweather Serif', preview: 'The Lord is my shepherd; I shall not want.', fontVar: 'var(--font-en-merriweather)' },
+    { id: 'outfit', label: 'Outfit Clean Sans', preview: 'The Lord is my shepherd; I shall not want.', fontVar: 'var(--font-en-outfit)' },
+    { id: 'playfair', label: 'Playfair Display Serif', preview: 'The Lord is my shepherd; I shall not want.', fontVar: 'var(--font-en-playfair)' },
+    { id: 'roboto', label: 'Roboto Sans', preview: 'The Lord is my shepherd; I shall not want.', fontVar: 'var(--font-en-roboto)' }
   ];
 
-  const fontSizeLabels: Record<FontSizeOption, string> = {
-    sm: isEn ? 'Small' : 'சிறியது',
-    md: isEn ? 'Medium' : 'நடுத்தரம்',
-    lg: isEn ? 'Large' : 'பெரியது',
-    xl: isEn ? 'Extra Large' : 'மிகப்பெரியது'
+  // Font Size Slider Array
+  const fontSizeOptions: FontSizeOption[] = ['sm', 'md', 'lg', 'xl'];
+  const fontSizeLabels: Record<FontSizeOption, { label: string; px: string }> = {
+    sm: { label: isEn ? 'Small' : 'சிறியது', px: '15px' },
+    md: { label: isEn ? 'Medium' : 'நடுத்தரம்', px: '18px' },
+    lg: { label: isEn ? 'Large' : 'பெரியது', px: '21px' },
+    xl: { label: isEn ? 'Extra Large' : 'மிகப்பெரியது', px: '24px' }
   };
+  const currentFontSizeIndex = fontSizeOptions.indexOf(preferences.fontSize || 'md');
 
-  const fontSizeBtnLabels: Record<FontSizeOption, string> = {
-    sm: isEn ? 'SM' : 'சிறிய',
-    md: isEn ? 'MD' : 'நடுத்தர',
-    lg: isEn ? 'LG' : 'பெரிய',
-    xl: isEn ? 'XL' : 'மிகப்பெரிய'
+  // Line Height Slider Array
+  const lineHeightOptions: LineHeightOption[] = ['normal', 'relaxed', 'loose'];
+  const lineHeightLabels: Record<LineHeightOption, { label: string; mult: string }> = {
+    normal: { label: isEn ? 'Normal' : 'சாதாரண', mult: '1.6x' },
+    relaxed: { label: isEn ? 'Relaxed' : 'சீராக', mult: '1.8x' },
+    loose: { label: isEn ? 'Loose' : 'அகலமாக', mult: '2.1x' }
   };
+  const currentLineHeightIndex = lineHeightOptions.indexOf(preferences.lineHeight || 'normal');
 
-  const lineHeightLabels: Record<LineHeightOption, string> = {
-    normal: isEn ? 'Normal' : 'சாதாரண',
-    relaxed: isEn ? 'Relaxed' : 'சீராக',
-    loose: isEn ? 'Loose' : 'அகலமாக'
+  // Page Width Slider Array
+  const maxWidthOptions: MaxWidthOption[] = ['compact', 'standard', 'wide'];
+  const maxWidthLabels: Record<MaxWidthOption, { label: string; width: string }> = {
+    compact: { label: isEn ? 'Compact' : 'செறிவான', width: '720px' },
+    standard: { label: isEn ? 'Standard' : 'சாதாரண', width: '840px' },
+    wide: { label: isEn ? 'Wide' : 'அகலமான', width: '1000px' }
   };
-
-  const lineHeightBtnLabels: Record<LineHeightOption, string> = {
-    normal: isEn ? 'Normal' : 'சாதாரண',
-    relaxed: isEn ? 'Relaxed' : 'சீராக',
-    loose: isEn ? 'Loose' : 'அகலமாக'
-  };
-
-  const maxWidthLabels: Record<MaxWidthOption, string> = {
-    compact: isEn ? 'Compact' : 'செறிவான',
-    standard: isEn ? 'Standard' : 'சாதாரண',
-    wide: isEn ? 'Wide' : 'அகலமான'
-  };
-
-  const maxWidthBtnLabels: Record<MaxWidthOption, string> = {
-    compact: isEn ? 'Compact' : 'செறிவான',
-    standard: isEn ? 'Standard' : 'சாதாரண',
-    wide: isEn ? 'Wide' : 'அகலமான'
-  };
+  const currentMaxWidthIndex = maxWidthOptions.indexOf(preferences.maxWidth || 'standard');
 
   const bookName = isEn ? currentBook.name_en : currentBook.name_ta;
 
@@ -252,7 +393,7 @@ export const PreferencesModal: React.FC = () => {
           </div>
         </div>
 
-        {/* Group 2: Typography & Fonts */}
+        {/* Group 2: Typography & Font Family Dropdowns */}
         <div
           style={{
             backgroundColor: 'var(--bg-surface)',
@@ -267,171 +408,126 @@ export const PreferencesModal: React.FC = () => {
             <span>{isEn ? 'Typography & Fonts' : 'எழுத்து பாணி & எழுத்துக்கள்'}</span>
           </label>
 
-          {/* Tamil Fonts Selection */}
+          {/* Tamil Font Dropdown */}
           {!isEn && (
-            <div style={{ marginBottom: '1.125rem' }}>
-              <label style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
-                {isEn ? 'Tamil Font Style' : 'தமிழ் எழுத்து பாணி'}
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(135px, 1fr))', gap: '0.5rem' }}>
-                {tamilFonts.map((font) => {
-                  const isSelected = currentTaFont === font.id;
-                  return (
-                    <button
-                      key={font.id}
-                      onClick={() => updatePreferences({ fontFamilyTa: font.id })}
-                      aria-pressed={isSelected}
-                      style={{
-                        padding: '0.5rem 0.625rem',
-                        borderRadius: '0.5rem',
-                        border: isSelected ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
-                        backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--bg-surface)',
-                        color: isSelected ? 'var(--accent-color)' : 'var(--text-primary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        textAlign: 'left'
-                      }}
-                    >
-                      <div>
-                        <span style={{ fontSize: '0.8125rem', fontWeight: isSelected ? 700 : 500, display: 'block' }}>{font.label}</span>
-                        <span style={{ fontFamily: font.fontVar, fontSize: '0.84375rem', opacity: 0.85 }}>{font.preview}</span>
-                      </div>
-                      {isSelected && <Check size={14} style={{ color: 'var(--accent-color)', flexShrink: 0 }} />}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            <CustomFontSelect
+              selectedId={preferences.fontFamilyTa || 'noto'}
+              options={tamilFonts}
+              label={isEn ? 'Tamil Font Style' : 'தமிழ் எழுத்து பாணி (Font Dropdown)'}
+              onChange={(id) => updatePreferences({ fontFamilyTa: id })}
+            />
           )}
 
-          {/* English Fonts Selection */}
+          {/* English Font Dropdown */}
           {!isTa && (
-            <div style={{ marginBottom: '1.125rem' }}>
-              <label style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
-                {isEn ? 'English Font Style' : 'ஆங்கில எழுத்து பாணி'}
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(135px, 1fr))', gap: '0.5rem' }}>
-                {englishFonts.map((font) => {
-                  const isSelected = currentEnFont === font.id;
-                  return (
-                    <button
-                      key={font.id}
-                      onClick={() => updatePreferences({ fontFamilyEn: font.id })}
-                      aria-pressed={isSelected}
-                      style={{
-                        padding: '0.5rem 0.625rem',
-                        borderRadius: '0.5rem',
-                        border: isSelected ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
-                        backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--bg-surface)',
-                        color: isSelected ? 'var(--accent-color)' : 'var(--text-primary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        textAlign: 'left'
-                      }}
-                    >
-                      <div>
-                        <span style={{ fontSize: '0.8125rem', fontWeight: isSelected ? 700 : 500, display: 'block' }}>{font.label}</span>
-                        <span style={{ fontFamily: font.fontVar, fontSize: '0.84375rem', opacity: 0.85 }}>{font.preview}</span>
-                      </div>
-                      {isSelected && <Check size={14} style={{ color: 'var(--accent-color)', flexShrink: 0 }} />}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            <CustomFontSelect
+              selectedId={preferences.fontFamilyEn || 'lora'}
+              options={englishFonts}
+              label={isEn ? 'English Font Style' : 'ஆங்கில எழுத்து பாணி (Font Dropdown)'}
+              onChange={(id) => updatePreferences({ fontFamilyEn: id })}
+            />
           )}
 
-          {/* Font Size Selector */}
-          <div style={{ marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '0.375rem' }}>
-              <span>{isEn ? 'Font Size' : 'எழுத்து அளவு'}</span>
-              <span style={{ fontWeight: 600 }}>{fontSizeLabels[preferences.fontSize]}</span>
+          {/* Font Size Slider Control */}
+          <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8125rem', marginBottom: '0.5rem' }}>
+              <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
+                {isEn ? 'Font Size' : 'எழுத்து அளவு'}
+              </span>
+              <span style={{ fontWeight: 700, color: 'var(--accent-color)' }}>
+                {fontSizeLabels[fontSizeOptions[currentFontSizeIndex]]?.label} ({fontSizeLabels[fontSizeOptions[currentFontSizeIndex]]?.px})
+              </span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
-              {(['sm', 'md', 'lg', 'xl'] as FontSizeOption[]).map((size) => {
-                const isSelected = preferences.fontSize === size;
-                return (
-                  <button
-                    key={size}
-                    className={`btn-pill ${isSelected ? 'active' : ''}`}
-                    onClick={() => updatePreferences({ fontSize: size })}
-                    aria-pressed={isSelected}
-                    style={{
-                      justifyContent: 'center',
-                      fontSize: '0.8125rem',
-                      padding: '0.4375rem 0.25rem',
-                      gap: '0.25rem',
-                      border: isSelected ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
-                      fontWeight: isSelected ? 700 : 500
-                    }}
-                  >
-                    {isSelected && <Check size={13} />}
-                    <span>{fontSizeBtnLabels[size]}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Line Height Selector */}
-          <div style={{ marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '0.375rem' }}>
-              <span>{isEn ? 'Line Spacing' : 'வரி இடைவெளி'}</span>
-              <span style={{ fontWeight: 600 }}>{lineHeightLabels[preferences.lineHeight]}</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
-              {(['normal', 'relaxed', 'loose'] as LineHeightOption[]).map((line) => {
-                const isSelected = preferences.lineHeight === line;
-                return (
-                  <button
-                    key={line}
-                    className={`btn-pill ${isSelected ? 'active' : ''}`}
-                    onClick={() => updatePreferences({ lineHeight: line })}
-                    aria-pressed={isSelected}
-                    style={{
-                      justifyContent: 'center',
-                      fontSize: '0.8125rem',
-                      border: isSelected ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
-                      fontWeight: isSelected ? 700 : 500
-                    }}
-                  >
-                    {isSelected && <Check size={13} />}
-                    <span>{lineHeightBtnLabels[line]}</span>
-                  </button>
-                );
-              })}
+            <input
+              type="range"
+              min={0}
+              max={3}
+              step={1}
+              value={currentFontSizeIndex >= 0 ? currentFontSizeIndex : 1}
+              onChange={(e) => {
+                const idx = Number(e.target.value);
+                updatePreferences({ fontSize: fontSizeOptions[idx] });
+              }}
+              style={{
+                width: '100%',
+                accentColor: 'var(--accent-color)',
+                cursor: 'pointer',
+                height: '6px'
+              }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.71875rem', color: 'var(--text-muted)', marginTop: '0.375rem' }}>
+              <span>{isEn ? 'Small (15px)' : 'சிறிய (15px)'}</span>
+              <span>{isEn ? 'Medium (18px)' : 'நடுத்தர (18px)'}</span>
+              <span>{isEn ? 'Large (21px)' : 'பெரிய (21px)'}</span>
+              <span>{isEn ? 'Extra (24px)' : 'மிகப்பெரிய (24px)'}</span>
             </div>
           </div>
 
-          {/* Reading Container Width */}
+          {/* Line Height Slider Control */}
+          <div style={{ marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8125rem', marginBottom: '0.5rem' }}>
+              <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
+                {isEn ? 'Line Spacing' : 'வரி இடைவெளி'}
+              </span>
+              <span style={{ fontWeight: 700, color: 'var(--accent-color)' }}>
+                {lineHeightLabels[lineHeightOptions[currentLineHeightIndex]]?.label} ({lineHeightLabels[lineHeightOptions[currentLineHeightIndex]]?.mult})
+              </span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={2}
+              step={1}
+              value={currentLineHeightIndex >= 0 ? currentLineHeightIndex : 0}
+              onChange={(e) => {
+                const idx = Number(e.target.value);
+                updatePreferences({ lineHeight: lineHeightOptions[idx] });
+              }}
+              style={{
+                width: '100%',
+                accentColor: 'var(--accent-color)',
+                cursor: 'pointer',
+                height: '6px'
+              }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.71875rem', color: 'var(--text-muted)', marginTop: '0.375rem' }}>
+              <span>{isEn ? 'Normal (1.6x)' : 'சாதாரண (1.6x)'}</span>
+              <span>{isEn ? 'Relaxed (1.8x)' : 'சீராக (1.8x)'}</span>
+              <span>{isEn ? 'Loose (2.1x)' : 'அகலமாக (2.1x)'}</span>
+            </div>
+          </div>
+
+          {/* Page Width Slider Control */}
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '0.375rem' }}>
-              <span>{isEn ? 'Page Width' : 'பக்க அகலம்'}</span>
-              <span style={{ fontWeight: 600 }}>{maxWidthLabels[preferences.maxWidth]}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8125rem', marginBottom: '0.5rem' }}>
+              <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
+                {isEn ? 'Page Width' : 'பக்க அகலம்'}
+              </span>
+              <span style={{ fontWeight: 700, color: 'var(--accent-color)' }}>
+                {maxWidthLabels[maxWidthOptions[currentMaxWidthIndex]]?.label} ({maxWidthLabels[maxWidthOptions[currentMaxWidthIndex]]?.width})
+              </span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
-              {(['compact', 'standard', 'wide'] as MaxWidthOption[]).map((width) => {
-                const isSelected = preferences.maxWidth === width;
-                return (
-                  <button
-                    key={width}
-                    className={`btn-pill ${isSelected ? 'active' : ''}`}
-                    onClick={() => updatePreferences({ maxWidth: width })}
-                    aria-pressed={isSelected}
-                    style={{
-                      justifyContent: 'center',
-                      fontSize: '0.8125rem',
-                      border: isSelected ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
-                      fontWeight: isSelected ? 700 : 500
-                    }}
-                  >
-                    {isSelected && <Check size={13} />}
-                    <span>{maxWidthBtnLabels[width]}</span>
-                  </button>
-                );
-              })}
+            <input
+              type="range"
+              min={0}
+              max={2}
+              step={1}
+              value={currentMaxWidthIndex >= 0 ? currentMaxWidthIndex : 1}
+              onChange={(e) => {
+                const idx = Number(e.target.value);
+                updatePreferences({ maxWidth: maxWidthOptions[idx] });
+              }}
+              style={{
+                width: '100%',
+                accentColor: 'var(--accent-color)',
+                cursor: 'pointer',
+                height: '6px'
+              }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.71875rem', color: 'var(--text-muted)', marginTop: '0.375rem' }}>
+              <span>{isEn ? 'Compact (720px)' : 'செறிவான (720px)'}</span>
+              <span>{isEn ? 'Standard (840px)' : 'சாதாரண (840px)'}</span>
+              <span>{isEn ? 'Wide (1000px)' : 'அகலமான (1000px)'}</span>
             </div>
           </div>
         </div>
