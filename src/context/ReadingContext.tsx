@@ -350,14 +350,34 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       .catch(() => setIsBibleDataLoading(false));
   }, []);
 
-  // Update HTML data-theme attribute and font variables whenever preferences change
+  // Update HTML data-theme attribute, custom colors, and font variables whenever preferences change
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', preferences.theme);
+
+    if (preferences.theme === 'custom' && preferences.customThemeColors) {
+      const c = preferences.customThemeColors;
+      document.documentElement.style.setProperty('--bg-primary', c.bgPrimary);
+      document.documentElement.style.setProperty('--bg-secondary', c.bgSecondary);
+      document.documentElement.style.setProperty('--bg-surface', c.bgSurface);
+      document.documentElement.style.setProperty('--text-primary', c.textPrimary);
+      document.documentElement.style.setProperty('--text-secondary', c.textSecondary);
+      document.documentElement.style.setProperty('--accent-color', c.accentColor);
+      document.documentElement.style.setProperty('--border-color', c.bgSecondary);
+    } else {
+      document.documentElement.style.removeProperty('--bg-primary');
+      document.documentElement.style.removeProperty('--bg-secondary');
+      document.documentElement.style.removeProperty('--bg-surface');
+      document.documentElement.style.removeProperty('--text-primary');
+      document.documentElement.style.removeProperty('--text-secondary');
+      document.documentElement.style.removeProperty('--accent-color');
+      document.documentElement.style.removeProperty('--border-color');
+    }
+
     const fontTaVar = `var(--font-ta-${preferences.fontFamilyTa || 'noto'})`;
     const fontEnVar = `var(--font-en-${preferences.fontFamilyEn || 'lora'})`;
     document.documentElement.style.setProperty('--font-tamil', fontTaVar);
     document.documentElement.style.setProperty('--font-serif', fontEnVar);
-  }, [preferences.theme, preferences.fontFamilyTa, preferences.fontFamilyEn]);
+  }, [preferences.theme, preferences.fontFamilyTa, preferences.fontFamilyEn, preferences.customThemeColors]);
 
   const recordChapterRead = useCallback(
     (book: BibleBook, chapter: number, verse: number = 1) => {

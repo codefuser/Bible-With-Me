@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Sun, Moon, BookOpen, Check, Type, MoreVertical, Sliders, Globe, Layout, User, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Sun, Moon, BookOpen, Check, Type, MoreVertical, Sliders, Globe, Layout, User, ChevronDown, Palette, Sparkles, SlidersHorizontal } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
-import { FontSizeOption, LineHeightOption, MaxWidthOption, TamilFontOption, EnglishFontOption } from '../../types/bible';
+import { FontSizeOption, LineHeightOption, MaxWidthOption, TamilFontOption, EnglishFontOption, ThemeOption, CustomThemeColors } from '../../types/bible';
 import { AccountPanel } from '../auth/AccountPanel';
 
 interface FontItem<T> {
@@ -356,6 +356,8 @@ export const PreferencesModal: React.FC = () => {
     currentChapter
   } = useReading();
 
+  const [showMoreThemes, setShowMoreThemes] = useState(false);
+
   if (!isPreferencesOpen) return null;
 
   const isEn = language === 'en';
@@ -364,6 +366,43 @@ export const PreferencesModal: React.FC = () => {
   const handleReturnHome = () => {
     setIsPreferencesOpen(false);
   };
+
+  // Instant Zero-Lag Synchronous Theme Switcher
+  const handleThemeChange = (newTheme: ThemeOption, customColors?: CustomThemeColors) => {
+    document.documentElement.setAttribute('data-theme', newTheme);
+    if (newTheme === 'custom' && customColors) {
+      document.documentElement.style.setProperty('--bg-primary', customColors.bgPrimary);
+      document.documentElement.style.setProperty('--bg-secondary', customColors.bgSecondary);
+      document.documentElement.style.setProperty('--bg-surface', customColors.bgSurface);
+      document.documentElement.style.setProperty('--text-primary', customColors.textPrimary);
+      document.documentElement.style.setProperty('--text-secondary', customColors.textSecondary);
+      document.documentElement.style.setProperty('--accent-color', customColors.accentColor);
+      document.documentElement.style.setProperty('--border-color', customColors.bgSecondary);
+    }
+    updatePreferences({ theme: newTheme, ...(customColors ? { customThemeColors: customColors } : {}) });
+  };
+
+  // Default Custom Color State
+  const customColors: CustomThemeColors = preferences.customThemeColors || {
+    bgPrimary: '#0f172a',
+    bgSecondary: '#1e293b',
+    bgSurface: '#1e293b',
+    textPrimary: '#f8fafc',
+    textSecondary: '#cbd5e1',
+    accentColor: '#38bdf8'
+  };
+
+  // Preset Color Palettes Library
+  const themePresets: { id: ThemeOption; name: string; bg: string; surface: string; accent: string }[] = [
+    { id: 'light', name: isEn ? 'Classic Light' : 'வெளிச்சம்', bg: '#f8fafc', surface: '#ffffff', accent: '#1e40af' },
+    { id: 'sepia', name: isEn ? 'Comfort Sepia' : 'செபியா', bg: '#f4ebd9', surface: '#fbf5e8', accent: '#925827' },
+    { id: 'dark', name: isEn ? 'Midnight Dark' : 'இருள்', bg: '#121316', surface: '#1e2027', accent: '#5c88c7' },
+    { id: 'nordic', name: isEn ? 'Nordic Blue' : 'நார்டிக் நீலம்', bg: '#0b1329', surface: '#1a264a', accent: '#38bdf8' },
+    { id: 'forest', name: isEn ? 'Forest Emerald' : 'மரக்காடு', bg: '#051a14', surface: '#10362c', accent: '#34d399' },
+    { id: 'royal', name: isEn ? 'Royal Purple' : 'இராஜ ஊதா', bg: '#120b22', surface: '#24193f', accent: '#c084fc' },
+    { id: 'sunset', name: isEn ? 'Sunset Amber' : 'சூரிய அஸ்தமனம்', bg: '#1c1417', surface: '#36262d', accent: '#fb7185' },
+    { id: 'oled', name: isEn ? 'OLED Black' : 'அடர்ந்த இருள்', bg: '#000000', surface: '#121212', accent: '#38bdf8' }
+  ];
 
   // Expanded Tamil Fonts Library (12 Fonts)
   const tamilFonts: FontItem<TamilFontOption>[] = [
@@ -505,7 +544,7 @@ export const PreferencesModal: React.FC = () => {
 
       {/* Main Settings Grouped Cards Container */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {/* Group 1: Appearance & Theme (Minimal Apple/Linear Segmented Control) */}
+        {/* Group 1: Appearance & Theme (Instant Zero-Lag Switcher + Color Presets + Custom Color Picker) */}
         <div
           style={{
             backgroundColor: 'var(--bg-surface)',
@@ -515,11 +554,34 @@ export const PreferencesModal: React.FC = () => {
             boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)'
           }}
         >
-          <label style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.75rem' }}>
-            <Sun size={15} style={{ color: 'var(--accent-color)' }} />
-            <span>{isEn ? 'Appearance & Theme' : 'தோற்றம் & தீம்'}</span>
-          </label>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <label style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+              <Sun size={15} style={{ color: 'var(--accent-color)' }} />
+              <span>{isEn ? 'Appearance & Theme' : 'தோற்றம் & தீம்'}</span>
+            </label>
 
+            <button
+              type="button"
+              onClick={() => setShowMoreThemes(!showMoreThemes)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                fontSize: '0.78125rem',
+                color: 'var(--accent-color)',
+                backgroundColor: 'transparent',
+                border: 'none',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              <Palette size={14} />
+              <span>{showMoreThemes ? (isEn ? 'Hide Palette' : 'குறைவான தீம்கள்') : (isEn ? 'More Colors & Custom Theme' : 'மேலும் பல தீம்கள் & சொந்த வண்ணம்')}</span>
+              <ChevronDown size={14} style={{ transform: showMoreThemes ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 180ms ease' }} />
+            </button>
+          </div>
+
+          {/* Primary 3 Theme Buttons (Zero Lag Instant Switch) */}
           <div
             style={{
               display: 'grid',
@@ -528,27 +590,32 @@ export const PreferencesModal: React.FC = () => {
               backgroundColor: 'var(--bg-secondary)',
               borderRadius: '0.75rem',
               padding: '0.25rem',
-              border: '1px solid var(--border-color)'
+              border: '1px solid var(--border-color)',
+              marginBottom: showMoreThemes ? '0.875rem' : 0
             }}
           >
             <button
               type="button"
-              onClick={() => updatePreferences({ theme: 'light' })}
+              onClick={() => handleThemeChange('light')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.375rem',
-                padding: '0.5625rem 0.5rem',
+                height: '38px',
+                padding: '0 0.5rem',
                 borderRadius: '0.5625rem',
-                border: preferences.theme === 'light' ? '1px solid var(--accent-color)' : '1px solid transparent',
+                border: '1.5px solid',
+                borderColor: preferences.theme === 'light' ? 'var(--accent-color)' : 'transparent',
                 backgroundColor: preferences.theme === 'light' ? 'var(--bg-surface)' : 'transparent',
                 color: preferences.theme === 'light' ? 'var(--accent-color)' : 'var(--text-secondary)',
                 fontWeight: preferences.theme === 'light' ? 700 : 500,
-                fontSize: '0.84375rem',
+                fontSize: '0.8125rem',
                 cursor: 'pointer',
-                boxShadow: preferences.theme === 'light' ? '0 2px 8px rgba(0, 0, 0, 0.05)' : 'none',
-                transition: 'all 180ms ease'
+                boxShadow: preferences.theme === 'light' ? '0 2px 6px rgba(0, 0, 0, 0.06)' : 'none',
+                transition: 'all 150ms ease',
+                whiteSpace: 'nowrap',
+                boxSizing: 'border-box'
               }}
             >
               <Sun size={15} />
@@ -557,22 +624,26 @@ export const PreferencesModal: React.FC = () => {
 
             <button
               type="button"
-              onClick={() => updatePreferences({ theme: 'sepia' })}
+              onClick={() => handleThemeChange('sepia')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.375rem',
-                padding: '0.5625rem 0.5rem',
+                height: '38px',
+                padding: '0 0.5rem',
                 borderRadius: '0.5625rem',
-                border: preferences.theme === 'sepia' ? '1px solid var(--accent-color)' : '1px solid transparent',
+                border: '1.5px solid',
+                borderColor: preferences.theme === 'sepia' ? 'var(--accent-color)' : 'transparent',
                 backgroundColor: preferences.theme === 'sepia' ? 'var(--bg-surface)' : 'transparent',
                 color: preferences.theme === 'sepia' ? 'var(--accent-color)' : 'var(--text-secondary)',
                 fontWeight: preferences.theme === 'sepia' ? 700 : 500,
-                fontSize: '0.84375rem',
+                fontSize: '0.8125rem',
                 cursor: 'pointer',
-                boxShadow: preferences.theme === 'sepia' ? '0 2px 8px rgba(0, 0, 0, 0.05)' : 'none',
-                transition: 'all 180ms ease'
+                boxShadow: preferences.theme === 'sepia' ? '0 2px 6px rgba(0, 0, 0, 0.06)' : 'none',
+                transition: 'all 150ms ease',
+                whiteSpace: 'nowrap',
+                boxSizing: 'border-box'
               }}
             >
               <BookOpen size={15} />
@@ -581,27 +652,186 @@ export const PreferencesModal: React.FC = () => {
 
             <button
               type="button"
-              onClick={() => updatePreferences({ theme: 'dark' })}
+              onClick={() => handleThemeChange('dark')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.375rem',
-                padding: '0.5625rem 0.5rem',
+                height: '38px',
+                padding: '0 0.5rem',
                 borderRadius: '0.5625rem',
-                border: preferences.theme === 'dark' ? '1px solid var(--accent-color)' : '1px solid transparent',
+                border: '1.5px solid',
+                borderColor: preferences.theme === 'dark' ? 'var(--accent-color)' : 'transparent',
                 backgroundColor: preferences.theme === 'dark' ? 'var(--bg-surface)' : 'transparent',
                 color: preferences.theme === 'dark' ? 'var(--accent-color)' : 'var(--text-secondary)',
                 fontWeight: preferences.theme === 'dark' ? 700 : 500,
-                fontSize: '0.84375rem',
+                fontSize: '0.8125rem',
                 cursor: 'pointer',
-                boxShadow: preferences.theme === 'dark' ? '0 2px 8px rgba(0, 0, 0, 0.05)' : 'none',
-                transition: 'all 180ms ease'
+                boxShadow: preferences.theme === 'dark' ? '0 2px 6px rgba(0, 0, 0, 0.06)' : 'none',
+                transition: 'all 150ms ease',
+                whiteSpace: 'nowrap',
+                boxSizing: 'border-box'
               }}
             >
               <Moon size={15} />
               <span>{isEn ? 'Dark' : 'இருள்'}</span>
             </button>
+          </div>
+
+          {/* Smooth Hardware-Accelerated Accordion Expand/Collapse Container */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateRows: showMoreThemes ? '1fr' : '0fr',
+              opacity: showMoreThemes ? 1 : 0,
+              transition: 'grid-template-rows 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 250ms ease, margin-top 300ms ease',
+              overflow: 'hidden',
+              marginTop: showMoreThemes ? '0.75rem' : '0'
+            }}
+          >
+            <div style={{ minHeight: 0, overflow: 'hidden' }}>
+              <div style={{ paddingTop: '0.625rem', borderTop: '1px solid var(--border-color)' }}>
+                <div style={{ fontSize: '0.78125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.625rem' }}>
+                  {isEn ? 'Rich Color Theme Presets' : 'பிரத்யேக வண்ணத் தீம்கள்'}
+                </div>
+
+                {/* Presets Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
+                  {themePresets.map((preset) => {
+                    const isSelected = preferences.theme === preset.id;
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => handleThemeChange(preset.id)}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '0.375rem',
+                          padding: '0.5rem 0.25rem',
+                          borderRadius: '0.625rem',
+                          border: isSelected ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                          backgroundColor: preset.surface,
+                          cursor: 'pointer',
+                          transition: 'transform 120ms ease',
+                          boxShadow: isSelected ? '0 4px 10px rgba(0, 0, 0, 0.15)' : 'none'
+                        }}
+                      >
+                        {/* Dual Color Swatch Circle */}
+                        <div
+                          style={{
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '50%',
+                            backgroundColor: preset.bg,
+                            border: `3px solid ${preset.accent}`,
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                          }}
+                        />
+                        <span style={{ fontSize: '0.71875rem', fontWeight: isSelected ? 700 : 500, color: preset.accent, textAlign: 'center', lineHeight: 1.1 }}>
+                          {preset.name}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Custom Theme Color Picker Controls */}
+                <div
+                  style={{
+                    backgroundColor: 'var(--bg-secondary)',
+                    border: preferences.theme === 'custom' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                    borderRadius: '0.75rem',
+                    padding: '0.875rem 1rem'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                      <Palette size={16} style={{ color: 'var(--accent-color)' }} />
+                      <span>{isEn ? 'Custom Color Palette' : 'சொந்த வண்ணத் தேர்வு (Custom Theme)'}</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleThemeChange('custom', customColors)}
+                      style={{
+                        padding: '0.3125rem 0.625rem',
+                        borderRadius: '0.375rem',
+                        backgroundColor: preferences.theme === 'custom' ? 'var(--accent-color)' : 'transparent',
+                        color: preferences.theme === 'custom' ? '#ffffff' : 'var(--accent-color)',
+                        border: '1px solid var(--accent-color)',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {preferences.theme === 'custom' ? (isEn ? 'Active' : 'பயன்பாட்டில்') : (isEn ? 'Apply Custom' : 'பயன்படுத்து')}
+                    </button>
+                  </div>
+
+                  {/* Color Pickers Inputs */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+                    {/* Background Color */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78125rem', color: 'var(--text-secondary)' }}>
+                      <span>{isEn ? 'Background' : 'பின்னணி நிறம்'}:</span>
+                      <input
+                        type="color"
+                        value={customColors.bgPrimary}
+                        onChange={(e) => {
+                          const updated = { ...customColors, bgPrimary: e.target.value, bgSecondary: e.target.value };
+                          handleThemeChange('custom', updated);
+                        }}
+                        style={{ width: '28px', height: '28px', padding: 0, border: 'none', borderRadius: '50%', cursor: 'pointer', backgroundColor: 'transparent' }}
+                      />
+                    </div>
+
+                    {/* Surface Card Color */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78125rem', color: 'var(--text-secondary)' }}>
+                      <span>{isEn ? 'Surface Card' : 'அட்டை நிறம்'}:</span>
+                      <input
+                        type="color"
+                        value={customColors.bgSurface}
+                        onChange={(e) => {
+                          const updated = { ...customColors, bgSurface: e.target.value };
+                          handleThemeChange('custom', updated);
+                        }}
+                        style={{ width: '28px', height: '28px', padding: 0, border: 'none', borderRadius: '50%', cursor: 'pointer', backgroundColor: 'transparent' }}
+                      />
+                    </div>
+
+                    {/* Text Color */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78125rem', color: 'var(--text-secondary)' }}>
+                      <span>{isEn ? 'Text Color' : 'எழுத்து நிறம்'}:</span>
+                      <input
+                        type="color"
+                        value={customColors.textPrimary}
+                        onChange={(e) => {
+                          const updated = { ...customColors, textPrimary: e.target.value, textSecondary: e.target.value };
+                          handleThemeChange('custom', updated);
+                        }}
+                        style={{ width: '28px', height: '28px', padding: 0, border: 'none', borderRadius: '50%', cursor: 'pointer', backgroundColor: 'transparent' }}
+                      />
+                    </div>
+
+                    {/* Accent Color */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78125rem', color: 'var(--text-secondary)' }}>
+                      <span>{isEn ? 'Accent Color' : 'சிறப்பு நிறம்'}:</span>
+                      <input
+                        type="color"
+                        value={customColors.accentColor}
+                        onChange={(e) => {
+                          const updated = { ...customColors, accentColor: e.target.value };
+                          handleThemeChange('custom', updated);
+                        }}
+                        style={{ width: '28px', height: '28px', padding: 0, border: 'none', borderRadius: '50%', cursor: 'pointer', backgroundColor: 'transparent' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -844,7 +1074,7 @@ export const PreferencesModal: React.FC = () => {
           </div>
         </div>
 
-        {/* Group 5: Account & Cloud Sync */}
+        {/* Group 5: Account */}
         <div
           style={{
             backgroundColor: 'var(--bg-surface)',

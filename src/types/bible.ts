@@ -37,7 +37,26 @@ export interface SearchResult {
 export type FontSizeOption = 'sm' | 'md' | 'lg' | 'xl';
 export type LineHeightOption = 'normal' | 'relaxed' | 'loose';
 export type MaxWidthOption = 'compact' | 'standard' | 'wide';
-export type ThemeOption = 'light' | 'dark' | 'sepia';
+export type ThemeOption =
+  | 'light'
+  | 'dark'
+  | 'sepia'
+  | 'nordic'
+  | 'forest'
+  | 'royal'
+  | 'sunset'
+  | 'oled'
+  | 'custom';
+
+export interface CustomThemeColors {
+  bgPrimary: string;
+  bgSecondary: string;
+  bgSurface: string;
+  textPrimary: string;
+  textSecondary: string;
+  accentColor: string;
+}
+
 export type TamilFontOption = 'noto' | 'mukta' | 'catamaran' | 'arima' | 'hind' | 'anek' | 'serif' | 'kavi' | 'baloo' | 'coiny' | 'pavanam' | 'system';
 export type EnglishFontOption = 'lora' | 'inter' | 'merriweather' | 'outfit' | 'playfair' | 'roboto' | 'georgia' | 'cinzel' | 'opensans' | 'montserrat' | 'poppins' | 'baskerville';
 export type VerseOptionsStyleOption = 'dropdown' | 'buttons';
@@ -51,6 +70,7 @@ export interface ReadingPreferences {
   fontFamilyTa?: TamilFontOption;
   fontFamilyEn?: EnglishFontOption;
   verseOptionsStyle?: VerseOptionsStyleOption;
+  customThemeColors?: CustomThemeColors;
 }
 
 export interface Bookmark {
