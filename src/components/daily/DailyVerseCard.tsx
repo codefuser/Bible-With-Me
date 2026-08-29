@@ -55,14 +55,10 @@ export const DailyVerseCard: React.FC = () => {
 
   if (loading || !dailyData) return null;
 
-  const { verse, book_name_ta, book_name_en, prompt_ta, prompt_en } = dailyData;
+  const { verse, book_name_ta, book_name_en } = dailyData;
   const refTa = `${book_name_ta} ${verse.chapter}:${verse.verse}`;
   const refEn = `${book_name_en} ${verse.chapter}:${verse.verse}`;
   const verseText = language === 'ta' ? verse.text_ta : verse.text_en;
-  const rawPrompt = language === 'ta' ? prompt_ta : prompt_en;
-
-  // Clean raw bullet markers (◽) from prompt text for clean presentation
-  const promptText = rawPrompt ? rawPrompt.replace(/[◽▫️▫]/g, '').trim() : '';
 
   const handleGoToChapter = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -81,12 +77,12 @@ export const DailyVerseCard: React.FC = () => {
   return (
     <div
       style={{
-        background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(59, 130, 246, 0.03) 100%), var(--bg-surface)',
-        border: '1px solid rgba(245, 158, 11, 0.22)',
-        borderRadius: '1rem',
+        backgroundColor: 'var(--bg-surface)',
+        border: '1px solid var(--border-color)',
+        borderRadius: '0.875rem',
         padding: '0.875rem 1rem',
         marginBottom: '1.25rem',
-        boxShadow: '0 4px 16px -2px rgba(245, 158, 11, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03)',
+        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.04)',
         transition: 'all 240ms cubic-bezier(0.4, 0, 0.2, 1)'
       }}
     >
@@ -111,9 +107,9 @@ export const DailyVerseCard: React.FC = () => {
               gap: '0.3125rem',
               padding: '0.2rem 0.55rem',
               borderRadius: '9999px',
-              backgroundColor: 'rgba(245, 158, 11, 0.12)',
-              color: '#d97706',
-              border: '1px solid rgba(245, 158, 11, 0.25)',
+              backgroundColor: 'var(--accent-soft)',
+              color: 'var(--accent-color)',
+              border: '1px solid var(--border-color)',
               fontSize: '0.71875rem',
               fontWeight: 700,
               width: 'fit-content',
@@ -129,14 +125,14 @@ export const DailyVerseCard: React.FC = () => {
             style={{
               fontSize: '0.9375rem',
               fontWeight: 700,
-              color: 'var(--accent-color)',
+              color: 'var(--text-primary)',
               margin: 0,
               display: 'flex',
               alignItems: 'center',
               gap: '0.375rem'
             }}
           >
-            <Bookmark size={14} style={{ opacity: 0.85 }} />
+            <Bookmark size={14} style={{ color: 'var(--accent-color)' }} />
             <span>{language === 'ta' ? refTa : refEn}</span>
           </h4>
         </div>
@@ -205,13 +201,13 @@ export const DailyVerseCard: React.FC = () => {
             {/* Verse Quote Block with Left Accent Border */}
             <div
               style={{
-                borderLeft: '3.5px solid #f59e0b',
+                borderLeft: '3px solid var(--accent-color)',
                 paddingLeft: '0.875rem',
-                margin: '0.25rem 0 0.75rem',
-                backgroundColor: 'rgba(245, 158, 11, 0.03)',
+                margin: '0.25rem 0 0.875rem',
+                backgroundColor: 'var(--bg-secondary)',
                 borderRadius: '0 0.5rem 0.5rem 0',
-                paddingTop: '0.375rem',
-                paddingBottom: '0.375rem'
+                paddingTop: '0.5rem',
+                paddingBottom: '0.5rem'
               }}
             >
               <p
@@ -228,23 +224,6 @@ export const DailyVerseCard: React.FC = () => {
               </p>
             </div>
 
-            {/* Devotional Reflection Note (if available) */}
-            {promptText && (
-              <div
-                style={{
-                  backgroundColor: 'var(--bg-secondary)',
-                  borderRadius: '0.5rem',
-                  padding: '0.5rem 0.75rem',
-                  fontSize: '0.8125rem',
-                  color: 'var(--text-secondary)',
-                  lineHeight: 1.5,
-                  marginBottom: '0.875rem'
-                }}
-              >
-                {promptText}
-              </div>
-            )}
-
             {/* Action Bar (Refined Responsive Devotional Pill Action Buttons) */}
             <div
               style={{
@@ -252,7 +231,7 @@ export const DailyVerseCard: React.FC = () => {
                 alignItems: 'center',
                 gap: '0.375rem',
                 paddingTop: '0.625rem',
-                borderTop: '1px dashed var(--border-color)',
+                borderTop: '1px solid var(--border-color)',
                 flexWrap: 'wrap'
               }}
             >
@@ -276,11 +255,11 @@ export const DailyVerseCard: React.FC = () => {
                   gap: '0.25rem',
                   padding: '0 0.5rem',
                   borderRadius: '9999px',
-                  backgroundColor: 'rgba(245, 158, 11, 0.08)',
-                  color: '#d97706',
+                  backgroundColor: 'var(--bg-surface)',
+                  color: 'var(--text-secondary)',
                   fontSize: '0.78125rem',
                   fontWeight: 600,
-                  border: '1px solid rgba(245, 158, 11, 0.28)',
+                  border: '1px solid var(--border-color)',
                   cursor: 'pointer',
                   transition: 'all 150ms ease'
                 }}
