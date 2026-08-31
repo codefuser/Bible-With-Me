@@ -476,7 +476,7 @@ export const PreferencesModal: React.FC = () => {
             : 'var(--width-standard)',
         margin: '0 auto',
         width: '100%',
-        padding: '0.25rem 0 3rem'
+        padding: '0.25rem 0 0.5rem'
       }}
     >
       {/* Top Header Navigation Bar */}
@@ -540,36 +540,25 @@ export const PreferencesModal: React.FC = () => {
       {/* Large Page Hero Header */}
       <div
         style={{
-          marginBottom: '1.25rem',
+          marginBottom: '1rem',
           padding: '0 0.125rem'
         }}
       >
         <h1
           style={{
-            fontSize: '1.3125rem',
+            fontSize: '1.25rem',
             fontWeight: 800,
             color: 'var(--text-primary)',
-            margin: '0 0 0.25rem',
+            margin: 0,
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem',
             letterSpacing: '-0.01em'
           }}
         >
-          <Sliders size={22} style={{ color: 'var(--accent-color)' }} />
+          <Sliders size={20} style={{ color: 'var(--accent-color)' }} />
           <span>{isEn ? 'Reading Preferences' : 'வாசிப்பு விருப்பத்தேர்வுகள்'}</span>
         </h1>
-        <p
-          style={{
-            fontSize: '0.8125rem',
-            color: 'var(--text-muted)',
-            margin: 0
-          }}
-        >
-          {isEn
-            ? 'Customize theme, font styles, sizes, and verse action layouts'
-            : 'வேதாகமத் தோற்றம், எழுத்து பாணி, அளவு மற்றும் வசன அமைப்புகளை மாற்றியமைக்கவும்'}
-        </p>
       </div>
 
       {/* Main Settings Grouped Cards Container */}
@@ -584,8 +573,8 @@ export const PreferencesModal: React.FC = () => {
             boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)'
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-            <label style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', gap: '0.5rem' }}>
+            <label style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.375rem', whiteSpace: 'nowrap' }}>
               <Sun size={15} style={{ color: 'var(--accent-color)' }} />
               <span>{isEn ? 'Appearance & Theme' : 'தோற்றம் & தீம்'}</span>
             </label>
@@ -602,11 +591,13 @@ export const PreferencesModal: React.FC = () => {
                 backgroundColor: 'transparent',
                 border: 'none',
                 fontWeight: 600,
-                cursor: 'pointer'
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                flexShrink: 0
               }}
             >
               <Palette size={14} />
-              <span>{showMoreThemes ? (isEn ? 'Hide Palette' : 'குறைவான தீம்கள்') : (isEn ? 'More Colors & Custom Theme' : 'மேலும் பல தீம்கள் & சொந்த வண்ணம்')}</span>
+              <span>{showMoreThemes ? (isEn ? 'Hide Palette' : 'குறைவாக') : (isEn ? 'More Themes' : 'கூடுதல் தீம்கள்')}</span>
               <ChevronDown size={14} style={{ transform: showMoreThemes ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 180ms ease' }} />
             </button>
           </div>
