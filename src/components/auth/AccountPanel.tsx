@@ -106,8 +106,8 @@ export const AccountPanel: React.FC = () => {
       }}
     >
       {/* Profile Header Row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0 }}>
           {/* Refined Vector Avatar Initial Circle */}
           {profile?.avatar_url && (profile.avatar_url.startsWith('http') || profile.avatar_url.startsWith('data:')) ? (
             <img
@@ -143,9 +143,9 @@ export const AccountPanel: React.FC = () => {
             </div>
           )}
 
-          <div style={{ overflow: 'hidden' }}>
-            <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.375rem', flexWrap: 'wrap' }}>
+              <span>{displayName}</span>
               {profile?.role === 'admin' && (
                 <span
                   style={{
@@ -166,7 +166,15 @@ export const AccountPanel: React.FC = () => {
                 </span>
               )}
             </div>
-            <div style={{ fontSize: '0.78125rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div
+              style={{
+                fontSize: '0.78125rem',
+                color: 'var(--text-muted)',
+                wordBreak: 'break-all',
+                lineHeight: 1.3,
+                marginTop: '0.125rem'
+              }}
+            >
               {user?.email}
             </div>
           </div>
