@@ -427,7 +427,16 @@ export const VerseReader: React.FC = () => {
                   {/* Top Right Action Container */}
                   <div className="verse-top-actions">
                     {isBookmarked && (
-                      <span className="verse-parallel-bookmark-badge" title="Bookmarked">
+                      <span
+                        className="verse-parallel-bookmark-badge"
+                        title="Bookmarked / சேமிக்கப்பட்டது"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleBookmark(verseObj);
+                          showToast('Bookmark removed / சேமிப்பு நீக்கப்பட்டது');
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      >
                         <BookmarkIcon size={14} fill="currentColor" style={{ color: 'var(--bookmark-active)' }} />
                       </span>
                     )}
@@ -453,18 +462,24 @@ export const VerseReader: React.FC = () => {
                       <div
                         className="verse-dropdown-menu"
                         onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
                       >
                         {/* Bookmark */}
                         <button
                           className={`verse-dropdown-item ${isBookmarked ? 'active' : ''}`}
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             handleToggleBookmark(verseObj);
                             showToast(
                               isBookmarked
                                 ? 'Bookmark removed / சேமிப்பு நீக்கப்பட்டது'
                                 : 'Verse bookmarked! / வசனம் சேமிக்கப்பட்டது!'
                             );
+                            setClickedVerseNum(null);
                           }}
+                          onMouseDown={(e) => e.stopPropagation()}
                         >
                           <BookmarkIcon size={15} fill={isBookmarked ? 'currentColor' : 'none'} />
                           <span>{isBookmarked ? 'Bookmarked / சேமிக்கப்பட்டது' : 'Bookmark / சேமி'}</span>
@@ -473,10 +488,12 @@ export const VerseReader: React.FC = () => {
                         {/* Copy */}
                         <button
                           className="verse-dropdown-item"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             handleCopyVerse(verseObj);
                             setClickedVerseNum(null);
                           }}
+                          onMouseDown={(e) => e.stopPropagation()}
                         >
                           <Copy size={15} />
                           <span>Copy / நகல்</span>
@@ -485,10 +502,12 @@ export const VerseReader: React.FC = () => {
                         {/* Share */}
                         <button
                           className="verse-dropdown-item"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             handleShareVerse(verseObj);
                             setClickedVerseNum(null);
                           }}
+                          onMouseDown={(e) => e.stopPropagation()}
                         >
                           <Share2 size={15} />
                           <span>Share / பகிர்</span>
@@ -497,10 +516,12 @@ export const VerseReader: React.FC = () => {
                         {/* Verse Card */}
                         <button
                           className="verse-dropdown-item"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             openVerseCard(verseObj, currentBook, currentChapter);
                             setClickedVerseNum(null);
                           }}
+                          onMouseDown={(e) => e.stopPropagation()}
                         >
                           <ImageIcon size={15} />
                           <span>Verse Card / கார்டு</span>
@@ -509,10 +530,12 @@ export const VerseReader: React.FC = () => {
                         {/* Fullscreen Focus Reader */}
                         <button
                           className="verse-dropdown-item"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             openFullscreenReader(verses, verseObj.verse);
                             setClickedVerseNum(null);
                           }}
+                          onMouseDown={(e) => e.stopPropagation()}
                         >
                           <Expand size={15} />
                           <span>Focus Reader / மேலும்</span>
@@ -521,7 +544,11 @@ export const VerseReader: React.FC = () => {
                         {/* Highlight */}
                         <button
                           className={`verse-dropdown-item ${highlightColor ? 'active' : ''}`}
-                          onClick={() => setShowHighlightPicker(!showHighlightPicker)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowHighlightPicker(!showHighlightPicker);
+                          }}
+                          onMouseDown={(e) => e.stopPropagation()}
                         >
                           <Highlighter size={15} />
                           <span>Highlight / சிறப்பிக்கு</span>
@@ -529,16 +556,22 @@ export const VerseReader: React.FC = () => {
 
                         {/* Highlight Color Picker Sub-Panel */}
                         {showHighlightPicker && (
-                          <div className="verse-dropdown-highlight-picker">
+                          <div
+                            className="verse-dropdown-highlight-picker"
+                            onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                          >
                             {(['yellow', 'green', 'blue', 'pink', 'orange', 'purple'] as const).map((c) => (
                               <button
                                 key={c}
                                 className={`highlight-color-btn ${highlightColor === c ? 'active' : ''}`}
                                 title={`${c} highlight`}
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   handleSetHighlight(verseObj, c);
                                   setClickedVerseNum(null);
                                 }}
+                                onMouseDown={(e) => e.stopPropagation()}
                                 style={{ backgroundColor: c === 'yellow' ? '#eab308' : c === 'green' ? '#22c55e' : c === 'blue' ? '#3b82f6' : c === 'pink' ? '#ec4899' : c === 'orange' ? '#f97316' : '#a855f7' }}
                               >
                                 {highlightColor === c && <Check size={12} color="#ffffff" />}
@@ -546,10 +579,12 @@ export const VerseReader: React.FC = () => {
                             ))}
                             {highlightColor && (
                               <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   handleSetHighlight(verseObj, null);
                                   setClickedVerseNum(null);
                                 }}
+                                onMouseDown={(e) => e.stopPropagation()}
                                 className="clear-highlight-btn"
                               >
                                 <Trash2 size={12} /><span>Clear</span>
@@ -600,13 +635,15 @@ export const VerseReader: React.FC = () => {
                         {/* Bookmark */}
                         <button
                           className={`verse-action-btn ${isBookmarked ? 'active' : ''}`}
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             handleToggleBookmark(verseObj);
                             showToast(
                               isBookmarked
                                 ? 'Bookmark removed / சேமிப்பு நீக்கப்பட்டது'
                                 : 'Verse bookmarked! / வசனம் சேமிக்கப்பட்டது!'
                             );
+                            setClickedVerseNum(null);
                           }}
                         >
                           <BookmarkIcon size={14} fill={isBookmarked ? 'currentColor' : 'none'} />
@@ -614,13 +651,27 @@ export const VerseReader: React.FC = () => {
                         </button>
 
                         {/* Copy */}
-                        <button className="verse-action-btn" onClick={() => handleCopyVerse(verseObj)}>
+                        <button
+                          className="verse-action-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyVerse(verseObj);
+                            setClickedVerseNum(null);
+                          }}
+                        >
                           <Copy size={14} />
                           <span>Copy / நகல்</span>
                         </button>
 
                         {/* Share */}
-                        <button className="verse-action-btn" onClick={() => handleShareVerse(verseObj)}>
+                        <button
+                          className="verse-action-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShareVerse(verseObj);
+                            setClickedVerseNum(null);
+                          }}
+                        >
                           <Share2 size={14} />
                           <span>Share / பகிர்</span>
                         </button>
@@ -628,7 +679,11 @@ export const VerseReader: React.FC = () => {
                         {/* Verse Card */}
                         <button
                           className="verse-action-btn"
-                          onClick={() => openVerseCard(verseObj, currentBook, currentChapter)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openVerseCard(verseObj, currentBook, currentChapter);
+                            setClickedVerseNum(null);
+                          }}
                         >
                           <ImageIcon size={14} />
                           <span>Card / கார்டு</span>
@@ -637,7 +692,11 @@ export const VerseReader: React.FC = () => {
                         {/* Fullscreen Focus Reader */}
                         <button
                           className="verse-action-btn"
-                          onClick={() => openFullscreenReader(verses, verseObj.verse)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openFullscreenReader(verses, verseObj.verse);
+                            setClickedVerseNum(null);
+                          }}
                           title="Fullscreen Reading Mode / முழுத்திரை வாசிப்பு"
                         >
                           <Expand size={14} />
@@ -760,7 +819,16 @@ export const VerseReader: React.FC = () => {
                   {/* Top Right Action Container */}
                   <div className="verse-top-actions">
                     {isBookmarked && (
-                      <span className="verse-bookmark-badge" title="Bookmarked">
+                      <span
+                        className="verse-bookmark-badge"
+                        title={language === 'en' ? 'Bookmarked (Click to remove)' : 'சேமிக்கப்பட்டது (நீக்க கிளிக் செய்க)'}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleBookmark(verseObj);
+                          showToast(language === 'en' ? 'Bookmark removed' : 'சேமிப்பு நீக்கப்பட்டது');
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      >
                         <BookmarkIcon size={14} fill="currentColor" style={{ color: 'var(--bookmark-active)' }} />
                       </span>
                     )}
@@ -786,18 +854,24 @@ export const VerseReader: React.FC = () => {
                       <div
                         className="verse-dropdown-menu"
                         onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
                       >
                         {/* Bookmark */}
                         <button
                           className={`verse-dropdown-item ${isBookmarked ? 'active' : ''}`}
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             handleToggleBookmark(verseObj);
                             showToast(
                               isBookmarked
                                 ? (language === 'en' ? 'Bookmark removed' : 'சேமிப்பு நீக்கப்பட்டது')
                                 : (language === 'en' ? 'Verse bookmarked!' : 'வசனம் சேமிக்கப்பட்டது!')
                             );
+                            setClickedVerseNum(null);
                           }}
+                          onMouseDown={(e) => e.stopPropagation()}
                         >
                           <BookmarkIcon size={15} fill={isBookmarked ? 'currentColor' : 'none'} />
                           <span>{isBookmarked ? (language === 'en' ? 'Bookmarked' : 'சேமிக்கப்பட்டது') : (language === 'en' ? 'Bookmark' : 'சேமி')}</span>
@@ -806,10 +880,12 @@ export const VerseReader: React.FC = () => {
                         {/* Copy */}
                         <button
                           className="verse-dropdown-item"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             handleCopyVerse(verseObj);
                             setClickedVerseNum(null);
                           }}
+                          onMouseDown={(e) => e.stopPropagation()}
                         >
                           <Copy size={15} />
                           <span>{language === 'en' ? 'Copy' : 'நகலெடு'}</span>
@@ -818,10 +894,12 @@ export const VerseReader: React.FC = () => {
                         {/* Share */}
                         <button
                           className="verse-dropdown-item"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             handleShareVerse(verseObj);
                             setClickedVerseNum(null);
                           }}
+                          onMouseDown={(e) => e.stopPropagation()}
                         >
                           <Share2 size={15} />
                           <span>{language === 'en' ? 'Share' : 'பகிர்'}</span>
@@ -830,10 +908,12 @@ export const VerseReader: React.FC = () => {
                         {/* Verse Card Creator Action */}
                         <button
                           className="verse-dropdown-item"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             openVerseCard(verseObj, currentBook, currentChapter);
                             setClickedVerseNum(null);
                           }}
+                          onMouseDown={(e) => e.stopPropagation()}
                           title={language === 'en' ? 'Create Image Card' : 'படம் உருவாக்கு'}
                         >
                           <ImageIcon size={15} />
@@ -843,10 +923,12 @@ export const VerseReader: React.FC = () => {
                         {/* Fullscreen Focus Reader */}
                         <button
                           className="verse-dropdown-item"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             openFullscreenReader(verses, verseObj.verse);
                             setClickedVerseNum(null);
                           }}
+                          onMouseDown={(e) => e.stopPropagation()}
                           title={language === 'en' ? 'Fullscreen Reading Mode' : 'முழுத்திரை வாசிப்பு'}
                         >
                           <Expand size={15} />
@@ -856,7 +938,11 @@ export const VerseReader: React.FC = () => {
                         {/* Highlight Color Palette Trigger */}
                         <button
                           className={`verse-dropdown-item ${highlightColor ? 'active' : ''}`}
-                          onClick={() => setShowHighlightPicker(!showHighlightPicker)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowHighlightPicker(!showHighlightPicker);
+                          }}
+                          onMouseDown={(e) => e.stopPropagation()}
                         >
                           <Highlighter size={15} />
                           <span>{language === 'en' ? 'Highlight' : 'சிறப்பிக்கு'}</span>
@@ -864,16 +950,22 @@ export const VerseReader: React.FC = () => {
 
                         {/* Highlight Color Picker Sub-Panel */}
                         {showHighlightPicker && (
-                          <div className="verse-dropdown-highlight-picker">
+                          <div
+                            className="verse-dropdown-highlight-picker"
+                            onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                          >
                             {(['yellow', 'green', 'blue', 'pink', 'orange', 'purple'] as const).map((c) => (
                               <button
                                 key={c}
                                 className={`highlight-color-btn ${highlightColor === c ? 'active' : ''}`}
                                 title={`${c} highlight`}
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   handleSetHighlight(verseObj, c);
                                   setClickedVerseNum(null);
                                 }}
+                                onMouseDown={(e) => e.stopPropagation()}
                                 style={{ backgroundColor: c === 'yellow' ? '#eab308' : c === 'green' ? '#22c55e' : c === 'blue' ? '#3b82f6' : c === 'pink' ? '#ec4899' : c === 'orange' ? '#f97316' : '#a855f7' }}
                               >
                                 {highlightColor === c && <Check size={12} color="#ffffff" />}
@@ -881,10 +973,12 @@ export const VerseReader: React.FC = () => {
                             ))}
                             {highlightColor && (
                               <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   handleSetHighlight(verseObj, null);
                                   setClickedVerseNum(null);
                                 }}
+                                onMouseDown={(e) => e.stopPropagation()}
                                 className="clear-highlight-btn"
                               >
                                 <Trash2 size={12} /><span>Clear</span>
@@ -906,32 +1000,52 @@ export const VerseReader: React.FC = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexWrap: 'wrap' }}>
                       <button
                         className={`verse-action-btn ${isBookmarked ? 'active' : ''}`}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           handleToggleBookmark(verseObj);
                           showToast(
                             isBookmarked
                               ? (language === 'en' ? 'Bookmark removed' : 'சேமிப்பு நீக்கப்பட்டது')
                               : (language === 'en' ? 'Verse bookmarked!' : 'வசனம் சேமிக்கப்பட்டது!')
                           );
+                          setClickedVerseNum(null);
                         }}
                       >
                         <BookmarkIcon size={14} fill={isBookmarked ? 'currentColor' : 'none'} />
                         <span>{isBookmarked ? (language === 'en' ? 'Bookmarked' : 'சேமிக்கப்பட்டது') : (language === 'en' ? 'Bookmark' : 'சேமி')}</span>
                       </button>
 
-                      <button className="verse-action-btn" onClick={() => handleCopyVerse(verseObj)}>
+                      <button
+                        className="verse-action-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCopyVerse(verseObj);
+                          setClickedVerseNum(null);
+                        }}
+                      >
                         <Copy size={14} />
                         <span>{language === 'en' ? 'Copy' : 'நகலெடு'}</span>
                       </button>
 
-                      <button className="verse-action-btn" onClick={() => handleShareVerse(verseObj)}>
+                      <button
+                        className="verse-action-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShareVerse(verseObj);
+                          setClickedVerseNum(null);
+                        }}
+                      >
                         <Share2 size={14} />
                         <span>{language === 'en' ? 'Share' : 'பகிர்'}</span>
                       </button>
 
                       <button
                         className="verse-action-btn"
-                        onClick={() => openVerseCard(verseObj, currentBook, currentChapter)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openVerseCard(verseObj, currentBook, currentChapter);
+                          setClickedVerseNum(null);
+                        }}
                       >
                         <ImageIcon size={14} />
                         <span>{language === 'en' ? 'Card' : 'கார்டு'}</span>
@@ -939,7 +1053,11 @@ export const VerseReader: React.FC = () => {
 
                       <button
                         className="verse-action-btn"
-                        onClick={() => openFullscreenReader(verses, verseObj.verse)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openFullscreenReader(verses, verseObj.verse);
+                          setClickedVerseNum(null);
+                        }}
                       >
                         <Expand size={14} />
                         <span>{language === 'en' ? 'Focus' : 'மேலும்'}</span>
