@@ -213,7 +213,6 @@
 }
 
 .verse-item.selected {
-  background-color: var(--accent-soft);
   z-index: 100;
 }
 
@@ -705,7 +704,6 @@
 }
 
 .verse-parallel-item.selected {
-  background-color: var(--accent-soft);
   z-index: 100;
 }
 
