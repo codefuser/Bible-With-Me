@@ -32,7 +32,7 @@ export const AdminStudyManagerTab: React.FC<AdminStudyManagerTabProps> = ({
   onUpdateConfig,
   onSaveMeditation,
   onDeleteMeditation,
-  isEn = false
+  isEn = true
 }) => {
   const [bookId, setBookId] = useState<number>(43); // John
   const [chapter, setChapter] = useState<number>(3);

@@ -7,7 +7,7 @@ interface AdminActivityLogsTabProps {
   isEn?: boolean;
 }
 
-export const AdminActivityLogsTab: React.FC<AdminActivityLogsTabProps> = ({ logs, isEn = false }) => {
+export const AdminActivityLogsTab: React.FC<AdminActivityLogsTabProps> = ({ logs, isEn = true }) => {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
   const filteredLogs = logs.filter((l) => {

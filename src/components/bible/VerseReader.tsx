@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { BibleVerse } from '../../types/bible';
 import { fetchChapterVerses } from '../../services/bibleService';
 import { isVerseBookmarked } from '../../services/bookmarkService';
-import { updateHashRoute } from '../../services/routerService';
+import { updateRoute } from '../../services/routerService';
 import { getVerseHighlightColor, HighlightColor } from '../../services/highlightService';
 import { getTodayVerseRef } from '../../services/dailyVerseService';
 import { trackActivity } from '../../services/activityService';
@@ -145,19 +145,19 @@ export const VerseReader: React.FC = () => {
     setShowHighlightPicker(false);
     if (selectedVerse) {
       setActiveVerseNum(selectedVerse);
-      updateHashRoute(currentBook.code, currentChapter, selectedVerse);
+      updateRoute(currentBook.code, currentChapter, selectedVerse);
       setTimeout(() => {
         verseRefs.current[selectedVerse]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 150);
     } else {
-      updateHashRoute(currentBook.code, currentChapter);
+      updateRoute(currentBook.code, currentChapter);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [currentBook.id, currentBook.code, currentChapter, selectedVerse, loading]);
 
   const handleScrubberSelectVerse = (verseNum: number) => {
     setActiveVerseNum(verseNum);
-    updateHashRoute(currentBook.code, currentChapter, verseNum);
+    updateRoute(currentBook.code, currentChapter, verseNum);
     const targetEl = verseRefs.current[verseNum];
     if (targetEl) {
       targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });

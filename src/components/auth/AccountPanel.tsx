@@ -2,6 +2,7 @@ import React from 'react';
 import { User, LogIn, LogOut, Cloud, RefreshCw, Shield, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useReading } from '../../context/ReadingContext';
+import { navigateToAdmin } from '../../services/routerService';
 
 export const AccountPanel: React.FC = () => {
   const { user, profile, isAuthenticated, syncStatus, logout, setIsAuthModalOpen, triggerSync } = useAuth();
@@ -185,7 +186,7 @@ export const AccountPanel: React.FC = () => {
           <button
             type="button"
             onClick={() => {
-              window.location.hash = '#admin';
+              navigateToAdmin();
             }}
             title={isEn ? 'Admin Control Center' : 'நிர்வாக மையம்'}
             style={{

@@ -9,11 +9,13 @@ import {
   Activity,
   ArrowLeft,
   Lock,
-  Unlock,
-  ExternalLink
+  ExternalLink,
+  CheckCircle,
+  Radio
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useReading } from '../../context/ReadingContext';
+import { navigateToReader } from '../../services/routerService';
 import {
   getAdminConfig,
   saveAdminConfig,
@@ -49,9 +51,11 @@ import { AdminActivityLogsTab } from './AdminActivityLogsTab';
 import '../../styles/admin.css';
 
 export const AdminPanel: React.FC = () => {
-  const { isAuthenticated, profile } = useAuth();
-  const { language } = useReading();
-  const isEn = language === 'en';
+  const { profile } = useAuth();
+  const { currentBook, currentChapter, selectedVerse } = useReading();
+
+  // Admin panel is explicitly set to English
+  const isEn = true;
 
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [isAuthorized, setIsAuthorized] = useState<boolean>(() => {
@@ -171,7 +175,7 @@ export const AdminPanel: React.FC = () => {
   };
 
   const handleReturnToReader = () => {
-    window.location.hash = '';
+    navigateToReader(currentBook?.code, currentChapter, selectedVerse ?? undefined);
   };
 
   const handleLockAdmin = () => {
@@ -188,24 +192,23 @@ export const AdminPanel: React.FC = () => {
 
   return (
     <div className="admin-wrapper">
-      {/* ── Sticky Header Container (Navbar + Tabs Strip) ── */}
+      {/* ── Sticky Header (Navbar + Segmented Tabs Strip) ── */}
       <div className="admin-header-sticky">
-        {/* ── Admin Navigation Bar ── */}
+        {/* ── Admin Top Navigation Bar ── */}
         <header className="admin-navbar">
           <div className="admin-navbar-title">
             <div className="admin-shield-icon">
-              <Shield size={22} />
+              <Shield size={20} />
             </div>
             <div className="admin-title-text">
-              <h1>
-                <span>{isEn ? 'Admin Control Center' : 'வேதாகம நிர்வாக மையம்'}</span>
-                <span className="admin-title-badge">{isEn ? 'Full Access' : 'முழு அதிகாரம்'}</span>
-              </h1>
-              <p>
-                {isEn
-                  ? 'App Configurations, User Database, Daily Revival & Verse Meditation'
-                  : 'அம்சங்கள் கட்டுப்பாடு, பயனர் பட்டியல், எழுப்புதல் வாக்கு & வசன தியான மேலாண்மை'}
-              </p>
+              <div className="admin-title-row">
+                <h1>Bible Admin Console</h1>
+                <span className="admin-status-pill">
+                  <span className="admin-status-dot on" />
+                  Live
+                </span>
+              </div>
+              <p>Platform Settings, User Directory, Devotionals & Deep Study Management</p>
             </div>
           </div>
 
@@ -213,95 +216,97 @@ export const AdminPanel: React.FC = () => {
             <button
               className="admin-btn admin-btn-outline"
               onClick={handleLockAdmin}
-              title={isEn ? 'Lock Admin Panel' : 'நிர்வாக பூட்டு'}
+              title="Lock Admin Session"
             >
-              <Lock size={16} />
-              <span>{isEn ? 'Lock' : 'பூட்டு'}</span>
+              <Lock size={15} />
+              <span>Lock</span>
             </button>
 
             <button
               className="admin-btn admin-btn-primary"
               onClick={handleReturnToReader}
-              title={isEn ? 'Return to Bible Reader' : 'வாசகருக்கு திரும்பு'}
+              title="Exit Admin and Open Bible Reader"
             >
-              <ArrowLeft size={16} />
-              <span>{isEn ? 'Open Reader' : 'வாசகருக்கு திரும்பு'}</span>
+              <ArrowLeft size={15} />
+              <span>Reader View</span>
             </button>
           </div>
         </header>
 
-        {/* ── Tabs Navigation Strip (Segmented & High Contrast) ── */}
+        {/* ── Compact Segmented Tabs Navigation Strip ── */}
         <nav className="admin-tabs-nav" aria-label="Admin Navigation Tabs">
-          <button
-            className={`admin-tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dashboard')}
-          >
-            <span className="admin-tab-icon icon-dashboard">
-              <LayoutDashboard size={18} />
-            </span>
-            <span>{isEn ? 'Dashboard' : 'கட்டுப்பாட்டு பலகை'}</span>
-          </button>
+          <div className="admin-tabs-track">
+            <button
+              className={`admin-tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
+              onClick={() => setActiveTab('dashboard')}
+            >
+              <span className="admin-tab-icon icon-dashboard">
+                <LayoutDashboard size={16} />
+              </span>
+              <span>Overview</span>
+            </button>
 
-          <button
-            className={`admin-tab-btn ${activeTab === 'users' ? 'active' : ''}`}
-            onClick={() => setActiveTab('users')}
-          >
-            <span className="admin-tab-icon icon-users">
-              <Users size={18} />
-            </span>
-            <span>{isEn ? 'All Users' : 'பயனர்கள்'}</span>
-            <span className="admin-tab-count">{users.length}</span>
-          </button>
+            <button
+              className={`admin-tab-btn ${activeTab === 'users' ? 'active' : ''}`}
+              onClick={() => setActiveTab('users')}
+            >
+              <span className="admin-tab-icon icon-users">
+                <Users size={16} />
+              </span>
+              <span>Users</span>
+              <span className="admin-tab-count">{users.length}</span>
+            </button>
 
-          <button
-            className={`admin-tab-btn ${activeTab === 'revival' ? 'active' : ''}`}
-            onClick={() => setActiveTab('revival')}
-          >
-            <span className="admin-tab-icon icon-revival">
-              <Flame size={18} />
-            </span>
-            <span>{isEn ? 'Daily Revival Word' : 'எழுப்புதல் வாக்கு'}</span>
-            <span className="admin-tab-count">{revivalWords.length}</span>
-          </button>
+            <button
+              className={`admin-tab-btn ${activeTab === 'revival' ? 'active' : ''}`}
+              onClick={() => setActiveTab('revival')}
+            >
+              <span className="admin-tab-icon icon-revival">
+                <Flame size={16} />
+              </span>
+              <span>Revival Words</span>
+              <span className="admin-tab-count">{revivalWords.length}</span>
+            </button>
 
-          <button
-            className={`admin-tab-btn ${activeTab === 'study-mgr' ? 'active' : ''}`}
-            onClick={() => setActiveTab('study-mgr')}
-          >
-            <span className="admin-tab-icon icon-study">
-              <BookOpen size={18} />
-            </span>
-            <span>{isEn ? 'Verse & Chapter Study' : 'வேத தியான ஆய்வுகள்'}</span>
-            {config.verseStudyEnabled ? (
-              <span className="admin-status-dot on" title="Study Mode Active"></span>
-            ) : (
-              <span className="admin-status-dot off" title="Study Mode Disabled"></span>
-            )}
-          </button>
+            <button
+              className={`admin-tab-btn ${activeTab === 'study-mgr' ? 'active' : ''}`}
+              onClick={() => setActiveTab('study-mgr')}
+            >
+              <span className="admin-tab-icon icon-study">
+                <BookOpen size={16} />
+              </span>
+              <span>Verse & Chapter Study</span>
+              {config.verseStudyEnabled ? (
+                <span className="admin-status-dot on" title="Study Mode Active" />
+              ) : (
+                <span className="admin-status-dot off" title="Study Mode Disabled" />
+              )}
+            </button>
 
-          <button
-            className={`admin-tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
-            onClick={() => setActiveTab('settings')}
-          >
-            <span className="admin-tab-icon icon-settings">
-              <Settings size={18} />
-            </span>
-            <span>{isEn ? 'Settings & Banners' : 'அமைப்புகள் & அறிவிப்பு'}</span>
-          </button>
+            <button
+              className={`admin-tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
+              onClick={() => setActiveTab('settings')}
+            >
+              <span className="admin-tab-icon icon-settings">
+                <Settings size={16} />
+              </span>
+              <span>Settings</span>
+            </button>
 
-          <button
-            className={`admin-tab-btn ${activeTab === 'logs' ? 'active' : ''}`}
-            onClick={() => setActiveTab('logs')}
-          >
-            <span className="admin-tab-icon icon-logs">
-              <Activity size={18} />
-            </span>
-            <span>{isEn ? 'Activity Logs' : 'தணிக்கை பதிவுகள்'}</span>
-          </button>
+            <button
+              className={`admin-tab-btn ${activeTab === 'logs' ? 'active' : ''}`}
+              onClick={() => setActiveTab('logs')}
+            >
+              <span className="admin-tab-icon icon-logs">
+                <Activity size={16} />
+              </span>
+              <span>Audit Logs</span>
+            </button>
+          </div>
         </nav>
       </div>
 
-      {/* ── Main Tab Content ── */}
+      {/* ── Main Content Area ── */}
       <main className="admin-container">
         {activeTab === 'dashboard' && (
           <AdminDashboardTab

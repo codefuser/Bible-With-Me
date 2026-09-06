@@ -13,7 +13,7 @@ export const AdminPasscodeModal: React.FC<AdminPasscodeModalProps> = ({
   isOpen,
   onSuccess,
   onCancel,
-  isEn = false
+  isEn = true
 }) => {
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState('');

@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { UserAvatar } from '../common/UserAvatar';
 import { Testament, BibleBook } from '../../types/bible';
 import { TANGLISH_MAP } from '../../services/tanglishSearch';
+import { navigateToAdmin } from '../../services/routerService';
 
 // ─── Tanglish & Multi-tier Phonetic Book Filter Helper ────────────────────────
 
@@ -158,7 +159,7 @@ const SideNavContentBody: React.FC<{ onCloseNav?: () => void }> = ({ onCloseNav 
           className="btn-pill"
           onClick={() => {
             if (onCloseNav) onCloseNav();
-            window.location.hash = '#admin';
+            navigateToAdmin();
           }}
           style={{ justifyContent: 'flex-start', fontSize: '0.8125rem', gap: '0.375rem', padding: '0.4375rem 0.625rem', color: '#2563eb' }}
           title={language === 'en' ? 'Admin Control Center' : 'நிர்வாக மையம்'}

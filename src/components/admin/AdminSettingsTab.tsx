@@ -21,7 +21,7 @@ interface AdminSettingsTabProps {
 export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({
   config,
   onUpdateConfig,
-  isEn = false
+  isEn = true
 }) => {
   const [announcement, setAnnouncement] = useState<AnnouncementConfig>(
     config.announcementBanner || {

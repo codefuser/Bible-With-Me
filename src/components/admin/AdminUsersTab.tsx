@@ -28,7 +28,7 @@ export const AdminUsersTab: React.FC<AdminUsersTabProps> = ({
   users,
   onUpdateRole,
   onToggleSuspend,
-  isEn = false
+  isEn = true
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');

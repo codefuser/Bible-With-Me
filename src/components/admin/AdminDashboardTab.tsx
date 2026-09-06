@@ -28,7 +28,7 @@ export const AdminDashboardTab: React.FC<AdminDashboardTabProps> = ({
   config,
   onUpdateConfig,
   onNavigateTab,
-  isEn = false
+  isEn = true
 }) => {
   return (
     <div>

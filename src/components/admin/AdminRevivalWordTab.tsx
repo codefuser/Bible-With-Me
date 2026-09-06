@@ -42,7 +42,7 @@ export const AdminRevivalWordTab: React.FC<AdminRevivalWordTabProps> = ({
   revivalWords,
   onSaveWord,
   onDeleteWord,
-  isEn = false
+  isEn = true
 }) => {
   const todayStr = new Date().toISOString().split('T')[0];
 
