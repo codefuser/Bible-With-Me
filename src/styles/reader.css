@@ -75,8 +75,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.875rem;
-  height: 1.875rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
   border-radius: 50%;
   border: 1px solid var(--border-color);
   background-color: var(--bg-surface);
@@ -815,7 +817,8 @@
   .verse-parallel-col.lang-en-col {
     background-color: rgba(59, 130, 246, 0.06);
     border-left: 3px solid #3b82f6;
-    opacity: 0.92;
+    padding-right: var(--verse-pad-right, 0.625rem);
+    opacity: 0.95;
   }
 }
 

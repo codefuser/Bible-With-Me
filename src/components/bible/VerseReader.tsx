@@ -316,8 +316,10 @@ export const VerseReader: React.FC = () => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '30px',
-                height: '30px',
+                width: '44px',
+                height: '44px',
+                minWidth: '44px',
+                minHeight: '44px',
                 borderRadius: '50%',
                 backgroundColor: 'var(--accent-soft)',
                 color: 'var(--accent-color)',
@@ -327,7 +329,7 @@ export const VerseReader: React.FC = () => {
                 boxShadow: '0 2px 6px rgba(0, 0, 0, 0.06)'
               }}
             >
-              <SlidersHorizontal size={15} />
+              <SlidersHorizontal size={18} />
             </button>
           </div>
         </div>

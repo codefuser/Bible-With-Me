@@ -18,9 +18,10 @@ export const DailyVerseCard: React.FC = () => {
 
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
     try {
-      return localStorage.getItem(COLLAPSE_STORAGE_KEY) === 'true';
+      const stored = localStorage.getItem(COLLAPSE_STORAGE_KEY);
+      return stored !== null ? stored === 'true' : true;
     } catch {
-      return false;
+      return true;
     }
   });
 
