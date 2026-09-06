@@ -5,6 +5,7 @@ import { getSession, getUserProfile, signIn, signUp, signOut, onAuthStateChange 
 import { syncGuestDataToCloud } from '../services/syncService';
 import { fetchCloudSearchData } from '../services/userDataService';
 import { isSupabaseConfigured } from '../lib/supabase';
+import { isAdminSessionActive } from '../services/adminService';
 
 // ─── LocalStorage Keys ────────────────────────────────────────────────────────
 
@@ -312,7 +313,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const isAuthenticated = !!user;
-  const isAdmin = profile?.role === 'admin';
+  const isAdmin = (profile?.role === 'admin') || isAdminSessionActive();
   const isGuest = !isAuthenticated;
 
   return (

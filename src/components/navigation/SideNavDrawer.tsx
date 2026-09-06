@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Search, Bookmark, Settings, ChevronRight, History, Compass, User, PanelLeftClose, PanelLeftOpen, BookOpen } from 'lucide-react';
+import { X, Search, Bookmark, Settings, ChevronRight, History, Compass, User, PanelLeftClose, PanelLeftOpen, BookOpen, Shield } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
 import { UserAvatar } from '../common/UserAvatar';
@@ -152,6 +152,19 @@ const SideNavContentBody: React.FC<{ onCloseNav?: () => void }> = ({ onCloseNav 
         >
           <UserAvatar avatarUrl={profile?.avatar_url} name={profile?.display_name || user?.email} size={18} />
           <span>{isAuthenticated ? (language === 'en' ? 'Account' : 'கணக்கு') : (language === 'en' ? 'Sign In' : 'உள்நுழைக')}</span>
+        </button>
+
+        <button
+          className="btn-pill"
+          onClick={() => {
+            if (onCloseNav) onCloseNav();
+            window.location.hash = '#admin';
+          }}
+          style={{ justifyContent: 'flex-start', fontSize: '0.8125rem', gap: '0.375rem', padding: '0.4375rem 0.625rem', color: '#2563eb' }}
+          title={language === 'en' ? 'Admin Control Center' : 'நிர்வாக மையம்'}
+        >
+          <Shield size={15} style={{ color: '#2563eb' }} />
+          <span>{language === 'en' ? 'Admin Panel' : 'நிர்வாகம்'}</span>
         </button>
       </div>
 

@@ -18,7 +18,8 @@ import { KeyboardShortcuts } from './components/common/KeyboardShortcuts';
 import { AuthModal } from './components/auth/AuthModal';
 import { SyncBanner } from './components/auth/SyncBanner';
 import { LandingPage } from './components/auth/LandingPage';
-import { AdminRoutePlaceholder } from './components/admin/AdminRoute';
+import { AdminPanel } from './components/admin/AdminPanel';
+import { AnnouncementBanner } from './components/layout/AnnouncementBanner';
 import { VerseCardModal } from './components/bible/VerseCardModal';
 import { ExitConfirmationModal } from './components/common/ExitConfirmationModal';
 import { LanguageSelectorModal } from './components/language/LanguageSelectorModal';
@@ -144,7 +145,8 @@ const MainLayout: React.FC = () => {
     return (
       <div className="app-container">
         <Header />
-        <AdminRoutePlaceholder />
+        <AnnouncementBanner />
+        <AdminPanel />
       </div>
     );
   }
@@ -153,6 +155,7 @@ const MainLayout: React.FC = () => {
     <div className="app-container">
       <KeyboardShortcuts />
       <Header />
+      <AnnouncementBanner />
 
       <div className="app-body-layout">
         {/* Permanent Desktop Side Navigation Sidebar */}
@@ -194,10 +197,9 @@ const MainLayout: React.FC = () => {
       <BookSelectorModal />
       <SearchModal />
       <BookmarksModal />
-      {/* Study Modals (Disabled/Hidden - Uncomment to enable):
+      {/* Active Verse & Chapter Deep Study Modals */}
       <VerseStudyModal />
       <ChapterStudyModal />
-      */}
       <DailyHistoryModal />
       <ReadingHistoryModal />
       <AuthModal />
@@ -243,6 +245,11 @@ const AppGate: React.FC = () => {
   // While checking session (< 1s typically), show app splash
   if (isSessionLoading) {
     return <AppSplash />;
+  }
+
+  // Admin route requested via URL hash (#admin) → allow admin access
+  if (typeof window !== 'undefined' && window.location.hash.toLowerCase() === '#admin') {
+    return <MainLayout />;
   }
 
   // Logged in user → show Bible reader
