@@ -188,101 +188,118 @@ export const AdminPanel: React.FC = () => {
 
   return (
     <div className="admin-wrapper">
-      {/* ── Admin Navigation Bar ── */}
-      <header className="admin-navbar">
-        <div className="admin-navbar-title">
-          <div className="admin-shield-icon">
-            <Shield size={18} />
+      {/* ── Sticky Header Container (Navbar + Tabs Strip) ── */}
+      <div className="admin-header-sticky">
+        {/* ── Admin Navigation Bar ── */}
+        <header className="admin-navbar">
+          <div className="admin-navbar-title">
+            <div className="admin-shield-icon">
+              <Shield size={22} />
+            </div>
+            <div className="admin-title-text">
+              <h1>
+                <span>{isEn ? 'Admin Control Center' : 'வேதாகம நிர்வாக மையம்'}</span>
+                <span className="admin-title-badge">{isEn ? 'Full Access' : 'முழு அதிகாரம்'}</span>
+              </h1>
+              <p>
+                {isEn
+                  ? 'App Configurations, User Database, Daily Revival & Verse Meditation'
+                  : 'அம்சங்கள் கட்டுப்பாடு, பயனர் பட்டியல், எழுப்புதல் வாக்கு & வசன தியான மேலாண்மை'}
+              </p>
+            </div>
           </div>
-          <div className="admin-title-text">
-            <h1>
-              <span>{isEn ? 'Admin Control Center' : 'வேதாகம நிர்வாக மையம்'}</span>
-              <span className="admin-title-badge">{isEn ? 'Full Access' : 'முழு அதிகாரம்'}</span>
-            </h1>
-            <p>
-              {isEn
-                ? 'App Configurations, User Database, Daily Revival & Verse Meditation'
-                : 'அம்சங்கள் கட்டுப்பாடு, பயனர் பட்டியல், எழுப்புதல் வாக்கு & வசன தியான மேலாண்மை'}
-            </p>
-          </div>
-        </div>
 
-        <div className="admin-navbar-actions">
+          <div className="admin-navbar-actions">
+            <button
+              className="admin-btn admin-btn-outline"
+              onClick={handleLockAdmin}
+              title={isEn ? 'Lock Admin Panel' : 'நிர்வாக பூட்டு'}
+            >
+              <Lock size={16} />
+              <span>{isEn ? 'Lock' : 'பூட்டு'}</span>
+            </button>
+
+            <button
+              className="admin-btn admin-btn-primary"
+              onClick={handleReturnToReader}
+              title={isEn ? 'Return to Bible Reader' : 'வாசகருக்கு திரும்பு'}
+            >
+              <ArrowLeft size={16} />
+              <span>{isEn ? 'Open Reader' : 'வாசகருக்கு திரும்பு'}</span>
+            </button>
+          </div>
+        </header>
+
+        {/* ── Tabs Navigation Strip (Segmented & High Contrast) ── */}
+        <nav className="admin-tabs-nav" aria-label="Admin Navigation Tabs">
           <button
-            className="admin-btn admin-btn-outline"
-            onClick={handleLockAdmin}
-            title={isEn ? 'Lock Admin Panel' : 'நிர்வாக பூட்டு'}
+            className={`admin-tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
+            onClick={() => setActiveTab('dashboard')}
           >
-            <Lock size={15} />
-            <span>{isEn ? 'Lock' : 'பூட்டு'}</span>
+            <span className="admin-tab-icon icon-dashboard">
+              <LayoutDashboard size={18} />
+            </span>
+            <span>{isEn ? 'Dashboard' : 'கட்டுப்பாட்டு பலகை'}</span>
           </button>
 
           <button
-            className="admin-btn admin-btn-primary"
-            onClick={handleReturnToReader}
-            title={isEn ? 'Return to Bible Reader' : 'வாசகருக்கு திரும்பு'}
+            className={`admin-tab-btn ${activeTab === 'users' ? 'active' : ''}`}
+            onClick={() => setActiveTab('users')}
           >
-            <ArrowLeft size={16} />
-            <span>{isEn ? 'Open Reader' : 'வாசகருக்கு திரும்பு'}</span>
+            <span className="admin-tab-icon icon-users">
+              <Users size={18} />
+            </span>
+            <span>{isEn ? 'All Users' : 'பயனர்கள்'}</span>
+            <span className="admin-tab-count">{users.length}</span>
           </button>
-        </div>
-      </header>
 
-      {/* ── Tabs Navigation ── */}
-      <nav className="admin-tabs-nav">
-        <button
-          className={`admin-tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
-          onClick={() => setActiveTab('dashboard')}
-        >
-          <LayoutDashboard size={16} />
-          <span>{isEn ? 'Dashboard' : 'கட்டுப்பாட்டு பலகை'}</span>
-        </button>
+          <button
+            className={`admin-tab-btn ${activeTab === 'revival' ? 'active' : ''}`}
+            onClick={() => setActiveTab('revival')}
+          >
+            <span className="admin-tab-icon icon-revival">
+              <Flame size={18} />
+            </span>
+            <span>{isEn ? 'Daily Revival Word' : 'எழுப்புதல் வாக்கு'}</span>
+            <span className="admin-tab-count">{revivalWords.length}</span>
+          </button>
 
-        <button
-          className={`admin-tab-btn ${activeTab === 'users' ? 'active' : ''}`}
-          onClick={() => setActiveTab('users')}
-        >
-          <Users size={16} />
-          <span>{isEn ? 'All Users' : 'பயனர்கள்'}</span>
-          <span style={{ fontSize: '0.72rem', opacity: 0.8, marginLeft: '0.2rem' }}>({users.length})</span>
-        </button>
+          <button
+            className={`admin-tab-btn ${activeTab === 'study-mgr' ? 'active' : ''}`}
+            onClick={() => setActiveTab('study-mgr')}
+          >
+            <span className="admin-tab-icon icon-study">
+              <BookOpen size={18} />
+            </span>
+            <span>{isEn ? 'Verse & Chapter Study' : 'வேத தியான ஆய்வுகள்'}</span>
+            {config.verseStudyEnabled ? (
+              <span className="admin-status-dot on" title="Study Mode Active"></span>
+            ) : (
+              <span className="admin-status-dot off" title="Study Mode Disabled"></span>
+            )}
+          </button>
 
-        <button
-          className={`admin-tab-btn ${activeTab === 'revival' ? 'active' : ''}`}
-          onClick={() => setActiveTab('revival')}
-        >
-          <Flame size={16} />
-          <span>{isEn ? 'Daily Revival Word' : 'எழுப்புதல் வாக்கு'}</span>
-          <span style={{ fontSize: '0.72rem', opacity: 0.8, marginLeft: '0.2rem' }}>({revivalWords.length})</span>
-        </button>
+          <button
+            className={`admin-tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
+            onClick={() => setActiveTab('settings')}
+          >
+            <span className="admin-tab-icon icon-settings">
+              <Settings size={18} />
+            </span>
+            <span>{isEn ? 'Settings & Banners' : 'அமைப்புகள் & அறிவிப்பு'}</span>
+          </button>
 
-        <button
-          className={`admin-tab-btn ${activeTab === 'study-mgr' ? 'active' : ''}`}
-          onClick={() => setActiveTab('study-mgr')}
-        >
-          <BookOpen size={16} />
-          <span>{isEn ? 'Verse & Chapter Study' : 'வேத தியான ஆய்வுகள்'}</span>
-          {config.verseStudyEnabled && (
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e', marginLeft: '0.2rem' }}></span>
-          )}
-        </button>
-
-        <button
-          className={`admin-tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
-          onClick={() => setActiveTab('settings')}
-        >
-          <Settings size={16} />
-          <span>{isEn ? 'Settings & Banners' : 'அமைப்புகள் & அறிவிப்பு'}</span>
-        </button>
-
-        <button
-          className={`admin-tab-btn ${activeTab === 'logs' ? 'active' : ''}`}
-          onClick={() => setActiveTab('logs')}
-        >
-          <Activity size={16} />
-          <span>{isEn ? 'Activity Logs' : 'தணிக்கை பதிவுகள்'}</span>
-        </button>
-      </nav>
+          <button
+            className={`admin-tab-btn ${activeTab === 'logs' ? 'active' : ''}`}
+            onClick={() => setActiveTab('logs')}
+          >
+            <span className="admin-tab-icon icon-logs">
+              <Activity size={18} />
+            </span>
+            <span>{isEn ? 'Activity Logs' : 'தணிக்கை பதிவுகள்'}</span>
+          </button>
+        </nav>
+      </div>
 
       {/* ── Main Tab Content ── */}
       <main className="admin-container">

@@ -143,8 +143,7 @@ const MainLayout: React.FC = () => {
 
   if (isAdminView) {
     return (
-      <div className="app-container">
-        <Header />
+      <div className="app-container admin-app-container">
         <AnnouncementBanner />
         <AdminPanel />
       </div>
