@@ -11,7 +11,11 @@ export const defaultPreferences: ReadingPreferences = {
   language: 'ta',
   fontFamilyTa: 'noto',
   fontFamilyEn: 'lora',
-  verseOptionsStyle: 'dropdown'
+  verseOptionsStyle: 'dropdown',
+  dailyGoalMinutes: 5,
+  reminderTime: '07:00',
+  notificationsEnabled: false,
+  onboardingCompleted: false
 };
 
 export const getStoredPreferences = (): ReadingPreferences => {

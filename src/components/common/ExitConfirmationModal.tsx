@@ -13,7 +13,7 @@ export const ExitConfirmationModal: React.FC<ExitConfirmationModalProps> = ({
   onConfirmExit,
   onCancelExit
 }) => {
-  const { language } = useReading();
+  const { language, preferences } = useReading();
 
   // Close on Escape key press
   useEffect(() => {
@@ -29,6 +29,13 @@ export const ExitConfirmationModal: React.FC<ExitConfirmationModalProps> = ({
   if (!isOpen) return null;
 
   const isTa = language === 'ta';
+
+  const today = new Date().toISOString().split('T')[0];
+  const goalMin = preferences.dailyGoalMinutes || 5;
+  const savedSec = parseInt(localStorage.getItem(`bible_reading_sec_${today}`) || '0', 10);
+  const totalGoalSec = goalMin * 60;
+  const isGoalMet = savedSec >= totalGoalSec;
+  const remainingMin = Math.ceil(Math.max(0, totalGoalSec - savedSec) / 60);
 
   return (
     <div
@@ -56,7 +63,7 @@ export const ExitConfirmationModal: React.FC<ExitConfirmationModalProps> = ({
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
-          maxWidth: '400px',
+          maxWidth: '420px',
           backgroundColor: 'var(--bg-surface)',
           borderRadius: '1rem',
           border: '1px solid var(--border-color)',
@@ -68,7 +75,7 @@ export const ExitConfirmationModal: React.FC<ExitConfirmationModalProps> = ({
           flexDirection: 'column',
           alignItems: 'center',
           textAlign: 'center',
-          gap: '1.25rem'
+          gap: '1.15rem'
         }}
       >
         {/* Top Icon Pill */}
@@ -77,12 +84,14 @@ export const ExitConfirmationModal: React.FC<ExitConfirmationModalProps> = ({
             width: '3.5rem',
             height: '3.5rem',
             borderRadius: '50%',
-            backgroundColor: 'rgba(239, 68, 68, 0.12)',
-            color: '#ef4444',
+            backgroundColor: isGoalMet ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+            color: isGoalMet ? '#10b981' : '#ef4444',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.15)'
+            boxShadow: isGoalMet
+              ? '0 4px 12px rgba(16, 185, 129, 0.15)'
+              : '0 4px 12px rgba(239, 68, 68, 0.15)'
           }}
         >
           <LogOut size={28} />
@@ -101,9 +110,49 @@ export const ExitConfirmationModal: React.FC<ExitConfirmationModalProps> = ({
           >
             {isTa ? 'ஆப்பில் இருந்து வெளியேற வேண்டுமா?' : 'Exit Bible App?'}
           </h3>
+
+          {!isGoalMet ? (
+            <div
+              style={{
+                background: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                borderRadius: '10px',
+                padding: '0.65rem 0.85rem',
+                margin: '0.5rem 0 0.75rem 0',
+                textAlign: 'left',
+                display: 'flex',
+                gap: '0.5rem',
+                alignItems: 'center'
+              }}
+            >
+              <AlertCircle size={18} color="#ef4444" style={{ flexShrink: 0 }} />
+              <div style={{ fontSize: '0.8125rem', color: '#dc2626', fontWeight: 600 }}>
+                {isTa
+                  ? `இன்றைய ${goalMin} நிமிட வாசிப்பு இலக்கை முடிக்க இன்னும் ${remainingMin} நிமிடம் உள்ளது. அர்ப்பணிப்பை முடித்துவிட்டு வெளியேறலாமா?`
+                  : `You still have ${remainingMin} min left to finish today's ${goalMin}-min reading goal. Complete your daily time before leaving?`}
+              </div>
+            </div>
+          ) : (
+            <div
+              style={{
+                background: 'rgba(16, 185, 129, 0.08)',
+                border: '1px solid rgba(16, 185, 129, 0.2)',
+                borderRadius: '10px',
+                padding: '0.5rem 0.85rem',
+                margin: '0.5rem 0 0.75rem 0',
+                textAlign: 'center',
+                fontSize: '0.8125rem',
+                color: '#059669',
+                fontWeight: 600
+              }}
+            >
+              {isTa ? '✅ இன்றைய வேத வாசிப்பு இலக்கு நிறைவு பெற்றது!' : '✅ Today\'s scripture reading goal is completed!'}
+            </div>
+          )}
+
           <p
             style={{
-              fontSize: '0.9375rem',
+              fontSize: '0.875rem',
               color: 'var(--text-muted)',
               lineHeight: 1.5,
               margin: 0,

@@ -26,7 +26,11 @@ export const fetchCloudSettings = async (userId: string): Promise<Partial<Readin
       theme: data.theme,
       language: data.language,
       fontFamilyTa: data.font_family_ta,
-      fontFamilyEn: data.font_family_en
+      fontFamilyEn: data.font_family_en,
+      dailyGoalMinutes: data.daily_goal_minutes,
+      reminderTime: data.reminder_time,
+      notificationsEnabled: data.notifications_enabled,
+      onboardingCompleted: data.onboarding_completed
     };
   } catch (err) {
     console.error('[Supabase Exception] fetchCloudSettings threw:', err);
@@ -44,7 +48,7 @@ export const upsertCloudSettings = async (userId: string, prefs: ReadingPreferen
       }
     });
 
-    // Safely attempt basic table upsert without non-existent columns
+    // Safely attempt basic table upsert with extended onboarding columns if available
     await supabase.from('user_settings').upsert(
       {
         user_id: userId,
@@ -53,6 +57,10 @@ export const upsertCloudSettings = async (userId: string, prefs: ReadingPreferen
         line_height: prefs.lineHeight,
         reading_width: prefs.maxWidth,
         language: prefs.language,
+        daily_goal_minutes: prefs.dailyGoalMinutes ?? 5,
+        reminder_time: prefs.reminderTime ?? '07:00',
+        notifications_enabled: prefs.notificationsEnabled ?? false,
+        onboarding_completed: prefs.onboardingCompleted ?? true,
         updated_at: new Date().toISOString()
       },
       { onConflict: 'user_id' }
@@ -60,6 +68,36 @@ export const upsertCloudSettings = async (userId: string, prefs: ReadingPreferen
 
     return true;
   } catch {
+    return false;
+  }
+};
+
+/**
+ * Logs a finished reading session into Supabase `daily_reading_sessions`
+ */
+export const logCloudReadingSession = async (
+  userId: string,
+  book: string,
+  chapter: number,
+  durationSeconds: number,
+  goalMinutes: number,
+  goalMet: boolean
+): Promise<boolean> => {
+  if (!supabase) return false;
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    await supabase.from('daily_reading_sessions').insert({
+      user_id: userId,
+      session_date: today,
+      duration_seconds: durationSeconds,
+      book,
+      chapter,
+      goal_minutes: goalMinutes,
+      goal_met: goalMet
+    });
+    return true;
+  } catch (err) {
+    console.error('Failed to log cloud reading session:', err);
     return false;
   }
 };

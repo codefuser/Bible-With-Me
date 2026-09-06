@@ -74,6 +74,10 @@ export interface ReadingPreferences {
   fontFamilyEn?: EnglishFontOption;
   verseOptionsStyle?: VerseOptionsStyleOption;
   customThemeColors?: CustomThemeColors;
+  dailyGoalMinutes?: number;
+  reminderTime?: string;
+  notificationsEnabled?: boolean;
+  onboardingCompleted?: boolean;
 }
 
 export interface Bookmark {

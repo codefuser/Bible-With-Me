@@ -1,0 +1,272 @@
+/* ==========================================================================
+   READING GOAL TRACKER & ACTIVE TIMER STYLES
+   ========================================================================== */
+
+.reading-tracker-pill {
+  position: fixed;
+  bottom: 5.25rem;
+  right: 1.25rem;
+  z-index: 95;
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 9999px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.85rem 0.45rem 0.55rem;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  backdrop-filter: blur(8px);
+}
+
+.reading-tracker-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px -6px rgba(0, 0, 0, 0.2);
+  border-color: #2563eb;
+}
+
+.reading-tracker-pill.completed {
+  border-color: #10b981;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(5, 150, 105, 0.04));
+}
+
+.reading-tracker-ring-box {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.reading-tracker-ring-svg {
+  transform: rotate(-90deg);
+  width: 100%;
+  height: 100%;
+}
+
+.reading-tracker-ring-bg {
+  stroke: var(--border-color, #e2e8f0);
+  stroke-width: 3;
+  fill: none;
+}
+
+.reading-tracker-ring-val {
+  stroke: #2563eb;
+  stroke-width: 3;
+  stroke-linecap: round;
+  fill: none;
+  transition: stroke-dashoffset 0.35s ease;
+}
+
+.reading-tracker-pill.completed .reading-tracker-ring-val {
+  stroke: #10b981;
+}
+
+.reading-tracker-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.reading-tracker-time {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
+.reading-tracker-sub {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+/* Expanded Card Popover */
+.reading-tracker-popover {
+  position: fixed;
+  bottom: 8.5rem;
+  right: 1.25rem;
+  z-index: 96;
+  width: 310px;
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 16px;
+  box-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.22);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  animation: trackerPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--text-primary);
+}
+
+@keyframes trackerPop {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.reading-tracker-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.reading-tracker-popover-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+}
+
+.reading-tracker-close-btn {
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reading-tracker-close-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.reading-tracker-progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--bg-secondary);
+  overflow: hidden;
+}
+
+.reading-tracker-progress-bar-val {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #2563eb, #7c3aed);
+  transition: width 0.3s ease;
+}
+
+.reading-tracker-progress-bar-val.completed {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.reading-tracker-goal-selector {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+
+.reading-tracker-goal-btn {
+  flex: 1;
+  padding: 0.4rem 0.2rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.reading-tracker-goal-btn.active {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+}
+
+/* Celebration Overlay Modal */
+.celebration-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  animation: celebrationFade 0.3s ease;
+}
+
+@keyframes celebrationFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.celebration-card {
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 20px;
+  padding: 2rem;
+  text-align: center;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  animation: celebrationPop 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--text-primary);
+}
+
+@keyframes celebrationPop {
+  from {
+    opacity: 0;
+    transform: scale(0.85) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.celebration-icon-box {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 20px rgba(16, 185, 129, 0.35);
+  animation: celebrationPulse 1.8s infinite ease-in-out;
+}
+
+@keyframes celebrationPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+@media (max-width: 768px) {
+  .reading-tracker-pill {
+    bottom: 4.8rem;
+    right: 0.75rem;
+    padding: 0.35rem 0.7rem 0.35rem 0.45rem;
+  }
+  .reading-tracker-popover {
+    right: 0.75rem;
+    left: 0.75rem;
+    width: auto;
+    bottom: 7.8rem;
+  }
+}
