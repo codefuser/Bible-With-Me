@@ -27,6 +27,7 @@ import { FullscreenVerseReader } from './components/bible/FullscreenVerseReader'
 import { StreakStatsModal } from './components/streaks/StreakStatsModal';
 import { useMobileBackButton } from './hooks/useMobileBackButton';
 import { isAdminRoute } from './services/routerService';
+import { initAdminRealtimeSync } from './services/adminService';
 import { BookOpen, Clock, ArrowRight } from 'lucide-react';
 
 // ─── App Init Splash (while checking session) ─────────────────────────────────
@@ -291,6 +292,11 @@ const AppGate: React.FC = () => {
 // ─── Root App ─────────────────────────────────────────────────────────────────
 
 export function App() {
+  useEffect(() => {
+    const cleanup = initAdminRealtimeSync();
+    return () => cleanup();
+  }, []);
+
   return (
     <AuthProvider>
       <ReadingProvider>
