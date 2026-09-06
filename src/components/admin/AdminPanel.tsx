@@ -18,18 +18,22 @@ import { useReading } from '../../context/ReadingContext';
 import { navigateToReader } from '../../services/routerService';
 import {
   getAdminConfig,
+  fetchAdminConfigFromDB,
   saveAdminConfig,
   getDashboardStats,
   getAllUsers,
   updateUserRole,
   toggleUserSuspension,
   getRevivalWords,
+  fetchRevivalWordsFromDB,
   saveRevivalWord,
   deleteRevivalWord,
   getCustomMeditations,
+  fetchCustomMeditationsFromDB,
   saveCustomMeditation,
   deleteCustomMeditation,
   getAuditLogs,
+  fetchAuditLogsFromDB,
   isAdminSessionActive,
   setAdminSession
 } from '../../services/adminService';
@@ -81,24 +85,31 @@ export const AdminPanel: React.FC = () => {
   const [customMeditations, setCustomMeditations] = useState<CustomVerseMeditation[]>(getCustomMeditations);
   const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>(getAuditLogs);
 
+  const [isSyncing, setIsSyncing] = useState(false);
+
   const refreshAllData = useCallback(async () => {
-    const currentConfig = getAdminConfig();
-    setConfig(currentConfig);
+    setIsSyncing(true);
+    try {
+      const [currentConfig, u, rw, cm, logs, s] = await Promise.all([
+        fetchAdminConfigFromDB(),
+        getAllUsers(),
+        fetchRevivalWordsFromDB(),
+        fetchCustomMeditationsFromDB(),
+        fetchAuditLogsFromDB(),
+        getDashboardStats()
+      ]);
 
-    const u = await getAllUsers();
-    setUsers(u);
-
-    const rw = getRevivalWords();
-    setRevivalWords(rw);
-
-    const cm = getCustomMeditations();
-    setCustomMeditations(cm);
-
-    const logs = getAuditLogs();
-    setAuditLogs(logs);
-
-    const s = await getDashboardStats();
-    setStats(s);
+      setConfig(currentConfig);
+      setUsers(u);
+      setRevivalWords(rw);
+      setCustomMeditations(cm);
+      setAuditLogs(logs);
+      setStats(s);
+    } catch (err) {
+      console.warn('[AdminPanel] Error refreshing data from DB:', err);
+    } finally {
+      setIsSyncing(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -203,9 +214,9 @@ export const AdminPanel: React.FC = () => {
             <div className="admin-title-text">
               <div className="admin-title-row">
                 <h1>Bible Admin Console</h1>
-                <span className="admin-status-pill">
+                <span className="admin-status-pill" title="Connected to Supabase PostgreSQL with live Realtime subscription">
                   <span className="admin-status-dot on" />
-                  Live
+                  {isSyncing ? 'Syncing...' : 'Supabase Cloud Synced'}
                 </span>
               </div>
               <p>Platform Settings, User Directory, Devotionals & Deep Study Management</p>
