@@ -6,11 +6,12 @@ import { useAuth } from '../../context/AuthContext';
 import { BibleVerse } from '../../types/bible';
 import { fetchChapterVerses } from '../../services/bibleService';
 import { isVerseBookmarked } from '../../services/bookmarkService';
-import { updateHashRoute } from '../../services/routerService';
+import { updateRoute } from '../../services/routerService';
 import { getVerseHighlightColor, HighlightColor } from '../../services/highlightService';
 import { getTodayVerseRef } from '../../services/dailyVerseService';
 import { trackActivity } from '../../services/activityService';
 import { upsertCloudProgress } from '../../services/userDataService';
+import { getAdminConfig, onAdminConfigChange } from '../../services/adminService';
 import { LoadingState } from '../common/LoadingState';
 import { ErrorState } from '../common/ErrorState';
 import { Toast } from '../common/Toast';
@@ -28,10 +29,17 @@ export const VerseReader: React.FC = () => {
     handleToggleBookmark,
     handleSetHighlight: contextHandleSetHighlight,
     openVerseStudy,
+    openChapterStudy,
     openVerseCard,
     openFullscreenReader,
     recordChapterRead
   } = useReading();
+
+  const [adminConfig, setAdminConfig] = useState(() => getAdminConfig());
+
+  useEffect(() => {
+    return onAdminConfigChange((cfg) => setAdminConfig(cfg));
+  }, []);
 
   const { user } = useAuth();
   const userId = user?.id || null;
@@ -137,19 +145,19 @@ export const VerseReader: React.FC = () => {
     setShowHighlightPicker(false);
     if (selectedVerse) {
       setActiveVerseNum(selectedVerse);
-      updateHashRoute(currentBook.code, currentChapter, selectedVerse);
+      updateRoute(currentBook.code, currentChapter, selectedVerse);
       setTimeout(() => {
         verseRefs.current[selectedVerse]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 150);
     } else {
-      updateHashRoute(currentBook.code, currentChapter);
+      updateRoute(currentBook.code, currentChapter);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [currentBook.id, currentBook.code, currentChapter, selectedVerse, loading]);
 
   const handleScrubberSelectVerse = (verseNum: number) => {
     setActiveVerseNum(verseNum);
-    updateHashRoute(currentBook.code, currentChapter, verseNum);
+    updateRoute(currentBook.code, currentChapter, verseNum);
     const targetEl = verseRefs.current[verseNum];
     if (targetEl) {
       targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -304,6 +312,32 @@ export const VerseReader: React.FC = () => {
             </h1>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {/* Chapter Study Button */}
+            {adminConfig.chapterStudyEnabled && (
+              <button
+                type="button"
+                className="btn-pill"
+                onClick={() => openChapterStudy(currentBook.id, currentChapter)}
+                title={language === 'en' ? 'Chapter Study & Historical Context' : 'முழு அதிகார ஆய்வு & பின்னணி'}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.4rem 0.75rem',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  backgroundColor: 'var(--accent-soft)',
+                  color: 'var(--accent-color)',
+                  border: '1px solid var(--accent-color)',
+                  borderRadius: '9999px',
+                  cursor: 'pointer'
+                }}
+              >
+                <BookOpen size={14} />
+                <span>{language === 'en' ? 'Chapter Study' : 'அதிகார ஆய்வு'}</span>
+              </button>
+            )}
+
             <span className="chapter-subhead">
               {verses.length} {language === 'en' ? 'Verses' : 'வசனங்கள்'}
             </span>
@@ -316,8 +350,10 @@ export const VerseReader: React.FC = () => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '30px',
-                height: '30px',
+                width: '44px',
+                height: '44px',
+                minWidth: '44px',
+                minHeight: '44px',
                 borderRadius: '50%',
                 backgroundColor: 'var(--accent-soft)',
                 color: 'var(--accent-color)',
@@ -327,7 +363,7 @@ export const VerseReader: React.FC = () => {
                 boxShadow: '0 2px 6px rgba(0, 0, 0, 0.06)'
               }}
             >
-              <SlidersHorizontal size={15} />
+              <SlidersHorizontal size={18} />
             </button>
           </div>
         </div>
@@ -466,6 +502,24 @@ export const VerseReader: React.FC = () => {
                         onPointerDown={(e) => e.stopPropagation()}
                         onTouchStart={(e) => e.stopPropagation()}
                       >
+                        {/* Verse Study / Meditation */}
+                        {adminConfig.verseStudyEnabled && (
+                          <button
+                            className="verse-dropdown-item"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openVerseStudy(currentBook.id, currentChapter, verseObj.verse);
+                              setClickedVerseNum(null);
+                            }}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            style={{ color: '#2563eb', fontWeight: 600 }}
+                            title="Deep 9-point meditation study"
+                          >
+                            <Sparkles size={15} style={{ color: '#2563eb' }} />
+                            <span>தியானம் / Study</span>
+                          </button>
+                        )}
+
                         {/* Bookmark */}
                         <button
                           className={`verse-dropdown-item ${isBookmarked ? 'active' : ''}`}
@@ -632,6 +686,23 @@ export const VerseReader: React.FC = () => {
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexWrap: 'wrap' }}>
+                        {/* Verse Study / Meditation */}
+                        {adminConfig.verseStudyEnabled && (
+                          <button
+                            className="verse-action-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openVerseStudy(currentBook.id, currentChapter, verseObj.verse);
+                              setClickedVerseNum(null);
+                            }}
+                            style={{ color: '#2563eb', borderColor: 'rgba(37, 99, 235, 0.4)', fontWeight: 600 }}
+                            title="Study / Meditation"
+                          >
+                            <Sparkles size={14} style={{ color: '#2563eb' }} />
+                            <span>தியானம் / Study</span>
+                          </button>
+                        )}
+
                         {/* Bookmark */}
                         <button
                           className={`verse-action-btn ${isBookmarked ? 'active' : ''}`}
@@ -858,6 +929,24 @@ export const VerseReader: React.FC = () => {
                         onPointerDown={(e) => e.stopPropagation()}
                         onTouchStart={(e) => e.stopPropagation()}
                       >
+                        {/* Verse Study / Meditation */}
+                        {adminConfig.verseStudyEnabled && (
+                          <button
+                            className="verse-dropdown-item"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openVerseStudy(currentBook.id, currentChapter, verseObj.verse);
+                              setClickedVerseNum(null);
+                            }}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            style={{ color: '#2563eb', fontWeight: 600 }}
+                            title="Deep 9-point meditation study"
+                          >
+                            <Sparkles size={15} style={{ color: '#2563eb' }} />
+                            <span>{language === 'en' ? 'Study / Meditation' : 'தியானம் / Study'}</span>
+                          </button>
+                        )}
+
                         {/* Bookmark */}
                         <button
                           className={`verse-dropdown-item ${isBookmarked ? 'active' : ''}`}
@@ -998,6 +1087,23 @@ export const VerseReader: React.FC = () => {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexWrap: 'wrap' }}>
+                      {/* Verse Study / Meditation */}
+                      {adminConfig.verseStudyEnabled && (
+                        <button
+                          className="verse-action-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openVerseStudy(currentBook.id, currentChapter, verseObj.verse);
+                            setClickedVerseNum(null);
+                          }}
+                          style={{ color: '#2563eb', borderColor: 'rgba(37, 99, 235, 0.4)', fontWeight: 600 }}
+                          title="Study / Meditation"
+                        >
+                          <Sparkles size={14} style={{ color: '#2563eb' }} />
+                          <span>{language === 'en' ? 'Study' : 'தியானம்'}</span>
+                        </button>
+                      )}
+
                       <button
                         className={`verse-action-btn ${isBookmarked ? 'active' : ''}`}
                         onClick={(e) => {

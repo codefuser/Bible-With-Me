@@ -1,6 +1,7 @@
 import { BibleVerse } from '../types/bible';
 import { CuratedVerseRef, DailyVerseHistoryItem } from '../types/studyTypes';
 import { getBookMetaById, getVerseByLocation, loadBibleDatasets } from './csvBibleService';
+import { getRevivalWordForDate } from './adminService';
 
 const DAILY_VERSE_HISTORY_KEY = 'bible_daily_verse_history_v1';
 const TEST_DATE_OVERRIDE_KEY = 'bible_daily_verse_test_date';
@@ -136,25 +137,33 @@ export interface LoadedDailyVerse {
   category: string;
 }
 
-// Fetch the full daily verse from CSV datasets deterministically
+// Fetch the full daily verse from CSV datasets deterministically (with admin override support)
 export const getDailyVerse = async (customDateStr?: string): Promise<LoadedDailyVerse | null> => {
   await loadBibleDatasets();
   const dateStr = customDateStr || getActiveDateString();
+  const adminOverride = getRevivalWordForDate(dateStr);
   const curated = getCuratedVerseForDate(dateStr);
 
-  const verseObj = getVerseByLocation(curated.book_id, curated.chapter, curated.verse);
+  const bookId = adminOverride ? adminOverride.book_id : curated.book_id;
+  const chapter = adminOverride ? adminOverride.chapter : curated.chapter;
+  const verse = adminOverride ? adminOverride.verse : curated.verse;
+  const promptTa = adminOverride ? adminOverride.prompt_ta : curated.prompt_ta;
+  const promptEn = adminOverride ? adminOverride.prompt_en : curated.prompt_en;
+  const category = adminOverride ? adminOverride.category : curated.category;
+
+  const verseObj = getVerseByLocation(bookId, chapter, verse);
   if (!verseObj) return null;
 
-  const bookMeta = getBookMetaById(curated.book_id);
+  const bookMeta = getBookMetaById(bookId);
 
   const loaded: LoadedDailyVerse = {
     date: dateStr,
     verse: verseObj,
     book_name_ta: bookMeta ? bookMeta.name_ta : '',
     book_name_en: bookMeta ? bookMeta.name_en : '',
-    prompt_ta: curated.prompt_ta,
-    prompt_en: curated.prompt_en,
-    category: curated.category
+    prompt_ta: promptTa,
+    prompt_en: promptEn,
+    category: category
   };
 
   recordDailyVerseHistory(loaded);

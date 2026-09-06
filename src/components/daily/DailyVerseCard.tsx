@@ -1,15 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Sparkles, BookOpen, ChevronDown, History, Image as ImageIcon, Bookmark } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
 import { getDailyVerse, LoadedDailyVerse } from '../../services/dailyVerseService';
 import { ALL_BIBLE_BOOKS } from '../../services/bibleService';
 import { trackActivity } from '../../services/activityService';
+import { getAdminConfig, onAdminConfigChange } from '../../services/adminService';
 
 const COLLAPSE_STORAGE_KEY = 'bible_daily_verse_collapsed';
 
 export const DailyVerseCard: React.FC = () => {
-  const { books, setBookAndChapter, language, setIsDailyHistoryOpen, openVerseCard } = useReading();
+  const { books, setBookAndChapter, language, setIsDailyHistoryOpen, openVerseCard, openVerseStudy } = useReading();
   const { user } = useAuth();
   const userId = user?.id || null;
 
@@ -18,28 +19,37 @@ export const DailyVerseCard: React.FC = () => {
 
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
     try {
-      return localStorage.getItem(COLLAPSE_STORAGE_KEY) === 'true';
+      const stored = localStorage.getItem(COLLAPSE_STORAGE_KEY);
+      return stored !== null ? stored === 'true' : true;
     } catch {
-      return false;
+      return true;
     }
   });
 
-  useEffect(() => {
-    let isMounted = true;
+  const [adminConfig, setAdminConfig] = useState(() => getAdminConfig());
+
+  const fetchDailyVerseData = useCallback(() => {
     getDailyVerse().then((res) => {
-      if (isMounted) {
-        setDailyData(res);
-        setLoading(false);
-        if (userId && res?.verse) {
-          const bookCode = ALL_BIBLE_BOOKS.find((b) => b.id === res.verse.book_id)?.code || String(res.verse.book_id);
-          trackActivity(userId, 'DAILY_VERSE_VIEWED', bookCode, res.verse.chapter, res.verse.verse);
-        }
+      setDailyData(res);
+      setLoading(false);
+      if (userId && res?.verse) {
+        const bookCode = ALL_BIBLE_BOOKS.find((b) => b.id === res.verse.book_id)?.code || String(res.verse.book_id);
+        trackActivity(userId, 'DAILY_VERSE_VIEWED', bookCode, res.verse.chapter, res.verse.verse);
       }
     });
-    return () => {
-      isMounted = false;
-    };
   }, [userId]);
+
+  useEffect(() => {
+    fetchDailyVerseData();
+    const unsubConfig = onAdminConfigChange((cfg) => setAdminConfig(cfg));
+    const handleRevivalUpdate = () => fetchDailyVerseData();
+    window.addEventListener('admin-revival-word-updated', handleRevivalUpdate);
+
+    return () => {
+      unsubConfig();
+      window.removeEventListener('admin-revival-word-updated', handleRevivalUpdate);
+    };
+  }, [fetchDailyVerseData]);
 
   const toggleCollapse = () => {
     setIsCollapsed((prev) => {
@@ -53,7 +63,7 @@ export const DailyVerseCard: React.FC = () => {
     });
   };
 
-  if (loading || !dailyData) return null;
+  if (!adminConfig.dailyRevivalWordEnabled || loading || !dailyData) return null;
 
   const { verse, book_name_ta, book_name_en } = dailyData;
   const refTa = `${book_name_ta} ${verse.chapter}:${verse.verse}`;
@@ -269,6 +279,43 @@ export const DailyVerseCard: React.FC = () => {
                   {language === 'ta' ? 'கார்டு உருவாக்க' : 'Create Card'}
                 </span>
               </button>
+
+              {/* Meditate / Verse Study Button */}
+              {adminConfig.verseStudyEnabled && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (dailyData) {
+                      openVerseStudy(dailyData.verse.book_id, dailyData.verse.chapter, dailyData.verse.verse);
+                    }
+                  }}
+                  style={{
+                    flex: '1 1 120px',
+                    minWidth: 0,
+                    whiteSpace: 'nowrap',
+                    height: '2.25rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.25rem',
+                    padding: '0 0.5rem',
+                    borderRadius: '9999px',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    color: '#2563eb',
+                    fontSize: '0.78125rem',
+                    fontWeight: 600,
+                    border: '1px solid rgba(37, 99, 235, 0.3)',
+                    cursor: 'pointer',
+                    transition: 'all 150ms ease'
+                  }}
+                  title={language === 'ta' ? 'வசன தியான ஆய்வு' : 'Deep Verse Meditation'}
+                >
+                  <Sparkles size={13} style={{ flexShrink: 0 }} />
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {language === 'ta' ? 'தியானிக்க' : 'Study Verse'}
+                  </span>
+                </button>
+              )}
 
               {/* Read Chapter Primary Action Button */}
               <button

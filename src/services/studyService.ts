@@ -12,6 +12,7 @@ import {
   getVerseByLocation,
   loadBibleDatasets
 } from './csvBibleService';
+import { getCustomMeditationForVerse } from './adminService';
 
 const VERSE_STUDY_CACHE_KEY_PREFIX = 'bible_verse_study_cache_';
 const CHAPTER_STUDY_CACHE_KEY_PREFIX = 'bible_chapter_study_cache_';
@@ -464,10 +465,39 @@ export const getVerseStudy = async (
   await loadBibleDatasets();
   const cacheKey = `${VERSE_STUDY_CACHE_KEY_PREFIX}${bookId}_${chapter}_${verseNum}`;
 
+  const applyCustomOverrides = (data: VerseStudy): VerseStudy => {
+    const custom = getCustomMeditationForVerse(bookId, chapter, verseNum);
+    if (!custom) return data;
+
+    const merged = { ...data };
+    if (custom.simple_explanation_ta) merged.simple_explanation_ta = custom.simple_explanation_ta;
+    if (custom.simple_explanation_en) merged.simple_explanation_en = custom.simple_explanation_en;
+    if (custom.deep_meaning_ta) merged.deep_meaning_ta = custom.deep_meaning_ta;
+    if (custom.deep_meaning_en) merged.deep_meaning_en = custom.deep_meaning_en;
+    if (custom.prayer_ta) merged.prayer_ta = custom.prayer_ta;
+    if (custom.prayer_en) merged.prayer_en = custom.prayer_en;
+    if (custom.pastoral_note) {
+      merged.what_it_emphasizes_ta = `${merged.what_it_emphasizes_ta}\n\n[போதகரின் விசேஷ தியானக் குறிப்பு]: ${custom.pastoral_note}`;
+    }
+    if (custom.practical_application_ta) {
+      merged.learnings_ta = { ...merged.learnings_ta, today_practice: custom.practical_application_ta };
+    }
+    if (custom.practical_application_en) {
+      merged.learnings_en = { ...merged.learnings_en, today_practice: custom.practical_application_en };
+    }
+    if (custom.reflection_question_ta) {
+      merged.reflection_questions_ta = [custom.reflection_question_ta, ...merged.reflection_questions_ta];
+    }
+    if (custom.reflection_question_en) {
+      merged.reflection_questions_en = [custom.reflection_question_en, ...merged.reflection_questions_en];
+    }
+    return merged;
+  };
+
   try {
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
-      return JSON.parse(cached) as VerseStudy;
+      return applyCustomOverrides(JSON.parse(cached) as VerseStudy);
     }
   } catch (err) {
     console.error('Error loading cached verse study:', err);
@@ -489,7 +519,7 @@ export const getVerseStudy = async (
     console.error('Error saving verse study cache:', err);
   }
 
-  return studyData;
+  return applyCustomOverrides(studyData);
 };
 
 export const getChapterStudy = async (

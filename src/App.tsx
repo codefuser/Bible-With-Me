@@ -18,13 +18,15 @@ import { KeyboardShortcuts } from './components/common/KeyboardShortcuts';
 import { AuthModal } from './components/auth/AuthModal';
 import { SyncBanner } from './components/auth/SyncBanner';
 import { LandingPage } from './components/auth/LandingPage';
-import { AdminRoutePlaceholder } from './components/admin/AdminRoute';
+import { AdminPanel } from './components/admin/AdminPanel';
+import { AnnouncementBanner } from './components/layout/AnnouncementBanner';
 import { VerseCardModal } from './components/bible/VerseCardModal';
 import { ExitConfirmationModal } from './components/common/ExitConfirmationModal';
 import { LanguageSelectorModal } from './components/language/LanguageSelectorModal';
 import { FullscreenVerseReader } from './components/bible/FullscreenVerseReader';
 import { StreakStatsModal } from './components/streaks/StreakStatsModal';
 import { useMobileBackButton } from './hooks/useMobileBackButton';
+import { isAdminRoute } from './services/routerService';
 import { BookOpen, Clock, ArrowRight } from 'lucide-react';
 
 // ─── App Init Splash (while checking session) ─────────────────────────────────
@@ -114,16 +116,27 @@ const MainLayout: React.FC = () => {
   const { historyItem, books, language, setBookAndChapter, preferences, isBibleDataLoading, isPreferencesOpen, isSearchOpen } =
     useReading();
   const { isExitModalOpen, handleConfirmExit, handleCancelExit } = useMobileBackButton();
-  const [isAdminView, setIsAdminView] = useState<boolean>(
-    window.location.hash.toLowerCase() === '#admin'
-  );
+  const [isAdminView, setIsAdminView] = useState<boolean>(() => isAdminRoute());
 
   useEffect(() => {
-    const handleHashChange = () => {
-      setIsAdminView(window.location.hash.toLowerCase() === '#admin');
+    // If URL has legacy #admin, replace it with clean /admin path
+    if (window.location.hash.toLowerCase() === '#admin') {
+      window.history.replaceState({ view: 'admin' }, '', '/admin');
+    }
+
+    const handleRouteChange = () => {
+      setIsAdminView(isAdminRoute());
     };
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+
+    window.addEventListener('popstate', handleRouteChange);
+    window.addEventListener('app-route-change', handleRouteChange);
+    window.addEventListener('hashchange', handleRouteChange);
+
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange);
+      window.removeEventListener('app-route-change', handleRouteChange);
+      window.removeEventListener('hashchange', handleRouteChange);
+    };
   }, []);
 
   const handleContinueReading = () => {
@@ -142,9 +155,9 @@ const MainLayout: React.FC = () => {
 
   if (isAdminView) {
     return (
-      <div className="app-container">
-        <Header />
-        <AdminRoutePlaceholder />
+      <div className="app-container admin-app-container">
+        <AnnouncementBanner />
+        <AdminPanel />
       </div>
     );
   }
@@ -153,6 +166,7 @@ const MainLayout: React.FC = () => {
     <div className="app-container">
       <KeyboardShortcuts />
       <Header />
+      <AnnouncementBanner />
 
       <div className="app-body-layout">
         {/* Permanent Desktop Side Navigation Sidebar */}
@@ -194,10 +208,9 @@ const MainLayout: React.FC = () => {
       <BookSelectorModal />
       <SearchModal />
       <BookmarksModal />
-      {/* Study Modals (Disabled/Hidden - Uncomment to enable):
+      {/* Active Verse & Chapter Deep Study Modals */}
       <VerseStudyModal />
       <ChapterStudyModal />
-      */}
       <DailyHistoryModal />
       <ReadingHistoryModal />
       <AuthModal />
@@ -243,6 +256,11 @@ const AppGate: React.FC = () => {
   // While checking session (< 1s typically), show app splash
   if (isSessionLoading) {
     return <AppSplash />;
+  }
+
+  // Admin route requested via /admin or legacy #admin → allow admin access
+  if (typeof window !== 'undefined' && isAdminRoute()) {
+    return <MainLayout />;
   }
 
   // Logged in user → show Bible reader

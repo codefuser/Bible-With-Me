@@ -2,6 +2,7 @@ import React from 'react';
 import { User, LogIn, LogOut, Cloud, RefreshCw, Shield, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useReading } from '../../context/ReadingContext';
+import { navigateToAdmin } from '../../services/routerService';
 
 export const AccountPanel: React.FC = () => {
   const { user, profile, isAuthenticated, syncStatus, logout, setIsAuthModalOpen, triggerSync } = useAuth();
@@ -180,30 +181,57 @@ export const AccountPanel: React.FC = () => {
           </div>
         </div>
 
-        {/* Minimal Professional Sign Out Button */}
-        <button
-          type="button"
-          onClick={logout}
-          title={isEn ? 'Sign Out' : 'வெளியேறு'}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.375rem',
-            padding: '0.375rem 0.625rem',
-            borderRadius: '0.375rem',
-            backgroundColor: 'var(--bg-secondary)',
-            color: 'var(--text-secondary)',
-            border: '1px solid var(--border-color)',
-            fontSize: '0.78125rem',
-            fontWeight: 500,
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
-            transition: 'all 150ms ease'
-          }}
-        >
-          <LogOut size={14} />
-          <span>{isEn ? 'Sign Out' : 'வெளியேறு'}</span>
-        </button>
+        {/* Admin Navigation & Sign Out */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => {
+              navigateToAdmin();
+            }}
+            title={isEn ? 'Admin Control Center' : 'நிர்வாக மையம்'}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.375rem',
+              padding: '0.375rem 0.625rem',
+              borderRadius: '0.375rem',
+              backgroundColor: 'rgba(37, 99, 235, 0.1)',
+              color: '#2563eb',
+              border: '1px solid rgba(37, 99, 235, 0.25)',
+              fontSize: '0.78125rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            <Shield size={14} />
+            <span>{isEn ? 'Admin Panel' : 'நிர்வாகம்'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={logout}
+            title={isEn ? 'Sign Out' : 'வெளியேறு'}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.375rem',
+              padding: '0.375rem 0.625rem',
+              borderRadius: '0.375rem',
+              backgroundColor: 'var(--bg-secondary)',
+              color: 'var(--text-secondary)',
+              border: '1px solid var(--border-color)',
+              fontSize: '0.78125rem',
+              fontWeight: 500,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              transition: 'all 150ms ease'
+            }}
+          >
+            <LogOut size={14} />
+            <span>{isEn ? 'Sign Out' : 'வெளியேறு'}</span>
+          </button>
+        </div>
       </div>
     </div>
   );

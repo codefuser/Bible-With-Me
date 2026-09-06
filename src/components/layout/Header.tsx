@@ -20,9 +20,9 @@ export const Header: React.FC = () => {
   const bookName = language === 'en' ? currentBook.name_en : currentBook.name_ta;
 
   const getMobileLanguageLabel = () => {
-    if (language === 'ta') return 'த';
-    if (language === 'en') return 'E';
-    return 'த+E';
+    if (language === 'ta') return 'தமிழ்';
+    if (language === 'en') return 'ENG';
+    return 'த + ENG';
   };
 
   const getDesktopLanguageLabel = () => {

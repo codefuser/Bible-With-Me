@@ -15,7 +15,7 @@ import { getStoredBookmarks, toggleBookmark } from '../services/bookmarkService'
 import { getStoredHistory, getStoredHistoryList, updateReadingHistory } from '../services/historyService';
 import { getStoredNotes, saveNote as saveNoteService } from '../services/noteService';
 import { getStoredHighlights, saveHighlight, HighlightColor } from '../services/highlightService';
-import { parseHashRoute } from '../services/routerService';
+import { parseRoute, isAdminRoute } from '../services/routerService';
 import { loadCloudBookmarksToLocal } from '../services/syncService';
 import {
   fetchCloudSettings,
@@ -321,8 +321,8 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (data && data.length > 0) {
           setBooks(data);
 
-          // 1. Check for Hash Route Deep-Link (e.g. #JOHN/3/16)
-          const routeState = parseHashRoute(data);
+          // 1. Check for Route Deep-Link (e.g. /JOHN/3/16 or /GEN/1)
+          const routeState = parseRoute(data);
           if (routeState) {
             const matchedBook = data.find((b) => b.code.toUpperCase() === routeState.bookCode.toUpperCase());
             if (matchedBook) {
@@ -350,6 +350,31 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       })
       .catch(() => setIsBibleDataLoading(false));
   }, []);
+
+  // Listen for browser forward/back buttons and app-route-change to sync reading location
+  useEffect(() => {
+    const handlePopState = () => {
+      if (isAdminRoute()) return;
+      if (books && books.length > 0) {
+        const routeState = parseRoute(books);
+        if (routeState) {
+          const matchedBook = books.find((b) => b.code.toUpperCase() === routeState.bookCode.toUpperCase());
+          if (matchedBook) {
+            setCurrentBook(matchedBook);
+            setCurrentChapter(routeState.chapter);
+            if (routeState.verse) setSelectedVerse(routeState.verse);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('app-route-change', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('app-route-change', handlePopState);
+    };
+  }, [books]);
 
   // Update HTML data-theme attribute, custom colors, and font variables whenever preferences change
   useEffect(() => {
