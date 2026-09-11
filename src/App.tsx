@@ -28,6 +28,10 @@ import { StreakStatsModal } from './components/streaks/StreakStatsModal';
 import { useMobileBackButton } from './hooks/useMobileBackButton';
 import { isAdminRoute } from './services/routerService';
 import { initAdminRealtimeSync } from './services/adminService';
+import { initNotificationScheduler } from './services/notificationService';
+import { OnboardingWizard } from './components/onboarding/OnboardingWizard';
+import { ReadingGoalTracker } from './components/bible/ReadingGoalTracker';
+import { ThemeOption } from './types/bible';
 import { BookOpen, Clock, ArrowRight } from 'lucide-react';
 
 // ─── App Init Splash (while checking session) ─────────────────────────────────
@@ -204,6 +208,9 @@ const MainLayout: React.FC = () => {
       {/* Sticky Bottom Reading Navigation Bar */}
       <ReadingControls />
 
+      {/* Floating Active Reading Session Timer & Goal Tracker */}
+      <ReadingGoalTracker />
+
       {/* Global Modals */}
       <SideNavDrawer />
       <BookSelectorModal />
@@ -234,9 +241,14 @@ const MainLayout: React.FC = () => {
 // ─── App Gate — decides what to show based on auth state ─────────────────────
 
 const GUEST_MODE_KEY = 'bible_guest_mode_entered';
+const ONBOARDED_KEY = 'bible_user_onboarded_v1';
 
 const AppGate: React.FC = () => {
   const { isAuthenticated, isSessionLoading, setIsAuthModalOpen } = useAuth();
+  const { updatePreferences } = useReading();
+  const [isOnboarded, setIsOnboarded] = useState<boolean>(
+    () => localStorage.getItem(ONBOARDED_KEY) === 'true'
+  );
   const [guestModeEntered, setGuestModeEntered] = useState<boolean>(
     () => sessionStorage.getItem(GUEST_MODE_KEY) === 'true'
   );
@@ -254,6 +266,30 @@ const AppGate: React.FC = () => {
     setGuestModeEntered(true);
   };
 
+  const handleOnboardingComplete = (data: {
+    goalMinutes: number;
+    theme: ThemeOption;
+    reminderTime: string;
+    notificationsEnabled: boolean;
+    action: 'guest' | 'auth';
+  }) => {
+    localStorage.setItem(ONBOARDED_KEY, 'true');
+    setIsOnboarded(true);
+    updatePreferences({
+      dailyGoalMinutes: data.goalMinutes,
+      theme: data.theme,
+      reminderTime: data.reminderTime,
+      notificationsEnabled: data.notificationsEnabled,
+      onboardingCompleted: true
+    });
+    if (data.action === 'guest') {
+      sessionStorage.setItem(GUEST_MODE_KEY, 'true');
+      setGuestModeEntered(true);
+    } else {
+      setIsAuthModalOpen(true);
+    }
+  };
+
   // While checking session (< 1s typically), show app splash
   if (isSessionLoading) {
     return <AppSplash />;
@@ -262,6 +298,16 @@ const AppGate: React.FC = () => {
   // Admin route requested via /admin or legacy #admin → allow admin access
   if (typeof window !== 'undefined' && isAdminRoute()) {
     return <MainLayout />;
+  }
+
+  // First time visitor → show animated Onboarding Wizard
+  if (!isOnboarded && !isAuthenticated) {
+    return (
+      <>
+        <OnboardingWizard onComplete={handleOnboardingComplete} />
+        <AuthModal />
+      </>
+    );
   }
 
   // Logged in user → show Bible reader
@@ -294,7 +340,11 @@ const AppGate: React.FC = () => {
 export function App() {
   useEffect(() => {
     const cleanup = initAdminRealtimeSync();
-    return () => cleanup();
+    const cleanupNotifs = initNotificationScheduler();
+    return () => {
+      cleanup();
+      cleanupNotifs();
+    };
   }, []);
 
   return (

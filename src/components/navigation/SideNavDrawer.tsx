@@ -5,7 +5,6 @@ import { useAuth } from '../../context/AuthContext';
 import { UserAvatar } from '../common/UserAvatar';
 import { Testament, BibleBook } from '../../types/bible';
 import { TANGLISH_MAP } from '../../services/tanglishSearch';
-import { navigateToAdmin } from '../../services/routerService';
 
 // ─── Tanglish & Multi-tier Phonetic Book Filter Helper ────────────────────────
 
@@ -153,19 +152,6 @@ const SideNavContentBody: React.FC<{ onCloseNav?: () => void }> = ({ onCloseNav 
         >
           <UserAvatar avatarUrl={profile?.avatar_url} name={profile?.display_name || user?.email} size={18} />
           <span>{isAuthenticated ? (language === 'en' ? 'Account' : 'கணக்கு') : (language === 'en' ? 'Sign In' : 'உள்நுழைக')}</span>
-        </button>
-
-        <button
-          className="btn-pill"
-          onClick={() => {
-            if (onCloseNav) onCloseNav();
-            navigateToAdmin();
-          }}
-          style={{ justifyContent: 'flex-start', fontSize: '0.8125rem', gap: '0.375rem', padding: '0.4375rem 0.625rem', color: '#2563eb' }}
-          title={language === 'en' ? 'Admin Control Center' : 'நிர்வாக மையம்'}
-        >
-          <Shield size={15} style={{ color: '#2563eb' }} />
-          <span>{language === 'en' ? 'Admin Panel' : 'நிர்வாகம்'}</span>
         </button>
       </div>
 
