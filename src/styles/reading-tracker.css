@@ -50,7 +50,7 @@
   color: var(--text-muted);
 }
 
-/* 2. CIRCULAR PROGRESS INDICATOR (Small genuine circle, aspect-ratio: 1/1) */
+/* 2. CIRCULAR PROGRESS INDICATOR (Small genuine circle on mobile) */
 .reading-tracker-circle {
   position: fixed;
   bottom: calc(5.25rem + env(safe-area-inset-bottom));
@@ -127,13 +127,111 @@
   pointer-events: none;
 }
 
-/* 3. EXPANDED CARD POPOVER */
+/* 3. DESKTOP / LAPTOP PERSISTENT WIDGET (Timing + Percentage displayed) */
+.reading-tracker-desktop-pill {
+  position: fixed;
+  bottom: calc(5.25rem + env(safe-area-inset-bottom));
+  right: 1.25rem;
+  z-index: 80;
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 9999px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.35rem 0.5rem 0.35rem 0.45rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  backdrop-filter: blur(8px);
+}
+
+.reading-tracker-desktop-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+  border-color: var(--accent-color, #2563eb);
+}
+
+.reading-tracker-desktop-pill.completed {
+  border-color: #10b981;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), var(--bg-surface, #ffffff));
+}
+
+.reading-tracker-desktop-ring {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.reading-tracker-desktop-ring-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  pointer-events: none;
+}
+
+.reading-tracker-desktop-data {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.2;
+}
+
+.reading-tracker-desktop-time {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.reading-tracker-desktop-pct {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.reading-tracker-desktop-min-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  margin-left: 0.125rem;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.reading-tracker-desktop-min-btn:hover {
+  background: var(--border-color);
+  color: var(--text-primary);
+  transform: scale(1.1);
+}
+
+/* 4. EXPANDED CARD POPOVER */
 .reading-tracker-popover {
   position: fixed;
   bottom: calc(5.5rem + env(safe-area-inset-bottom));
   right: 0.75rem;
   z-index: 85;
-  width: 310px;
+  width: 320px;
   background: var(--bg-surface, #ffffff);
   border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 16px;
@@ -312,7 +410,49 @@
   color: #ffffff;
 }
 
-/* 4. CELEBRATION OVERLAY MODAL */
+/* Custom Timer Input Field Box */
+.reading-tracker-custom-box {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.reading-tracker-custom-input {
+  flex: 1;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.8125rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-weight: 600;
+  transition: border-color 0.15s ease;
+}
+
+.reading-tracker-custom-input:focus {
+  border-color: var(--accent-color, #2563eb);
+}
+
+.reading-tracker-custom-btn {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 8px;
+  border: 1px solid var(--accent-color, #2563eb);
+  background: var(--accent-color, #2563eb);
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.reading-tracker-custom-btn:hover {
+  background: var(--accent-hover, #1e3a8a);
+  border-color: var(--accent-hover, #1e3a8a);
+}
+
+/* 5. CELEBRATION OVERLAY MODAL */
 .celebration-backdrop {
   position: fixed;
   inset: 0;

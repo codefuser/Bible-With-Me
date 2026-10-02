@@ -6,9 +6,11 @@ import {
   X,
   Award,
   ChevronLeft,
+  ChevronRight,
   Play,
   Pause,
-  Power
+  Power,
+  Sliders
 } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
@@ -36,6 +38,33 @@ export const ReadingGoalTracker: React.FC = () => {
     return `bible_reading_celebrated_${today}`;
   };
 
+  // Screen width responsive check (laptop/desktop >= 1024px)
+  const [isDesktop, setIsDesktop] = useState<boolean>(() => {
+    return typeof window !== 'undefined' ? window.innerWidth >= 1024 : false;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 1024);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Desktop manual minimize state
+  const [isDesktopMinimized, setIsDesktopMinimized] = useState<boolean>(false);
+
+  // Mobile state: First time on mobile starts as 'circle' (with percentage)
+  // On desktop, popover state is handled when clicking the desktop pill
+  const [uiState, setUiState] = useState<TimerUiState>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+      return 'handle'; // Desktop uses desktop pill by default
+    }
+    return 'circle'; // Mobile opens with percentage circle
+  });
+
+  const [customMinutesInput, setCustomMinutesInput] = useState<string>('');
+
   const [isTimingEnabled, setIsTimingEnabled] = useState<boolean>(() => {
     try {
       return localStorage.getItem('bible_reading_timer_enabled') !== 'false';
@@ -53,7 +82,6 @@ export const ReadingGoalTracker: React.FC = () => {
     }
   });
 
-  const [uiState, setUiState] = useState<TimerUiState>('handle');
   const [showCelebration, setShowCelebration] = useState<boolean>(false);
   const [isCelebratedToday, setIsCelebratedToday] = useState<boolean>(() => {
     try {
@@ -66,23 +94,28 @@ export const ReadingGoalTracker: React.FC = () => {
   const secondsReadRef = useRef(secondsRead);
   secondsReadRef.current = secondsRead;
 
-  const autoCollapseTimerRef = useRef<any>(null);
+  // Mobile auto-collapse timer (5 seconds)
+  // "phonela first time open panumpothu persentageoda kamikanum verse vasikum pothu athu automatia 5 secondskulla minimize aahiranum"
+  useEffect(() => {
+    if (isDesktop) return;
+    if (uiState !== 'circle') return;
 
-  const startAutoCollapse = () => {
-    if (autoCollapseTimerRef.current) {
-      clearTimeout(autoCollapseTimerRef.current);
-    }
-    autoCollapseTimerRef.current = setTimeout(() => {
+    const timer = setTimeout(() => {
       setUiState('handle');
-    }, 4000);
-  };
+    }, 5000);
 
-  const clearAutoCollapse = () => {
-    if (autoCollapseTimerRef.current) {
-      clearTimeout(autoCollapseTimerRef.current);
-      autoCollapseTimerRef.current = null;
-    }
-  };
+    // Minimize when scrolling/reading verses on phone
+    const handleScroll = () => {
+      setUiState('handle');
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [isDesktop, uiState]);
 
   // Toggle timing enabled / disabled
   const handleToggleTiming = () => {
@@ -127,13 +160,6 @@ export const ReadingGoalTracker: React.FC = () => {
     };
   }, [isTimingEnabled]);
 
-  // Clean up auto-collapse timer on unmount
-  useEffect(() => {
-    return () => {
-      clearAutoCollapse();
-    };
-  }, []);
-
   // Check goal completion
   useEffect(() => {
     if (secondsRead >= totalGoalSeconds && !isCelebratedToday) {
@@ -173,13 +199,28 @@ export const ReadingGoalTracker: React.FC = () => {
 
   const remainingSeconds = Math.max(0, totalGoalSeconds - secondsRead);
 
-  // Circular progress ring dimensions: radius 18 -> circumference ~113.097
+  // Circular progress ring calculations: radius 18 -> circumference ~113.097
   const radius = 18;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percent / 100) * circumference;
 
+  // Desktop ring radius 12 -> circumference ~75.398
+  const desktopRadius = 12;
+  const desktopCircumference = 2 * Math.PI * desktopRadius;
+  const desktopDashoffset = desktopCircumference - (percent / 100) * desktopCircumference;
+
   const handleGoalChange = (newGoalMin: number) => {
     updatePreferences({ dailyGoalMinutes: newGoalMin });
+  };
+
+  // Custom goal submit handler
+  const handleSaveCustomGoal = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const val = parseInt(customMinutesInput.trim(), 10);
+    if (!isNaN(val) && val > 0 && val <= 360) {
+      handleGoalChange(val);
+      setCustomMinutesInput('');
+    }
   };
 
   // Close details popover when clicking outside
@@ -188,8 +229,12 @@ export const ReadingGoalTracker: React.FC = () => {
 
     const handleOutsideClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (!target.closest('.reading-tracker-popover') && !target.closest('.reading-tracker-circle')) {
-        setUiState('handle');
+      if (
+        !target.closest('.reading-tracker-popover') &&
+        !target.closest('.reading-tracker-circle') &&
+        !target.closest('.reading-tracker-desktop-pill')
+      ) {
+        setUiState(isDesktop ? 'handle' : 'handle');
       }
     };
 
@@ -201,74 +246,163 @@ export const ReadingGoalTracker: React.FC = () => {
       clearTimeout(timer);
       document.removeEventListener('click', handleOutsideClick);
     };
-  }, [uiState]);
+  }, [uiState, isDesktop]);
 
   return (
     <>
-      {/* 1. COLLAPSED STATE: Tiny side handle attached to right screen edge */}
-      {uiState === 'handle' && (
-        <button
-          type="button"
-          className={`reading-tracker-handle ${!isTimingEnabled ? 'disabled' : ''}`}
-          onClick={() => {
-            setUiState('circle');
-            startAutoCollapse();
-          }}
+      {/* ───────────────────────────────────────────────────────────
+          A. LAPTOP / DESKTOP VIEW
+          Persistent widget showing timing & percentage.
+          Does NOT minimize automatically. User can minimize if desired.
+          ─────────────────────────────────────────────────────────── */}
+      {isDesktop && !isDesktopMinimized && (
+        <div
+          className={`reading-tracker-desktop-pill ${isGoalMet ? 'completed' : ''}`}
+          onClick={() => setUiState('details')}
           title={
             isTimingEnabled
-              ? `${language === 'en' ? 'Reading Goal' : 'வாசிப்பு இலக்கு'}: ${percent}% (${formatMinSec(secondsRead)} / ${formatMinSec(totalGoalSeconds)})`
-              : `${language === 'en' ? 'Timer Paused (Click to view)' : 'டைமர் நிறுத்தி வைக்கப்பட்டுள்ளது (பார்க்க தட்டவும்)'}`
+              ? `${language === 'en' ? 'Reading Goal' : 'வாசிப்பு இலக்கு'}: ${formatMinSec(secondsRead)} / ${formatMinSec(totalGoalSeconds)} (${percent}%) - ${language === 'en' ? 'Click for settings' : 'அமைப்புகளுக்கு தட்டவும்'}`
+              : `${language === 'en' ? 'Timer Paused (Click to resume)' : 'டைமர் நிறுத்தி வைக்கப்பட்டுள்ளது (தொடங்க தட்டவும்)'}`
           }
-          aria-label="Toggle Reading Goal Indicator"
         >
-          {isTimingEnabled ? (
-            <ChevronLeft size={15} className="reading-tracker-handle-arrow" />
-          ) : (
-            <Clock size={13} className="reading-tracker-handle-paused" />
-          )}
-        </button>
-      )}
-
-      {/* 2. CIRCULAR PROGRESS INDICATOR (Auto-collapses back to handle) */}
-      {uiState === 'circle' && (
-        <div
-          className={`reading-tracker-circle ${isGoalMet ? 'completed' : ''}`}
-          onClick={() => {
-            clearAutoCollapse();
-            setUiState('details');
-          }}
-          onMouseEnter={clearAutoCollapse}
-          onMouseLeave={startAutoCollapse}
-          title={language === 'en' ? 'Click for goal settings' : 'இலக்கு அமைப்புகளுக்கு தட்டவும்'}
-          role="button"
-          tabIndex={0}
-        >
-          <svg className="reading-tracker-svg" viewBox="0 0 44 44">
-            <circle
-              className="reading-tracker-ring-bg"
-              cx="22"
-              cy="22"
-              r={radius}
-            />
-            {isTimingEnabled && (
+          <div className="reading-tracker-desktop-ring">
+            <svg viewBox="0 0 32 32" width="32" height="32">
               <circle
-                className="reading-tracker-ring-val"
-                cx="22"
-                cy="22"
-                r={radius}
-                strokeDasharray={circumference}
-                strokeDashoffset={strokeDashoffset}
-                transform="rotate(-90 22 22)"
+                className="reading-tracker-ring-bg"
+                cx="16"
+                cy="16"
+                r={desktopRadius}
+                strokeWidth="2.5"
               />
-            )}
-          </svg>
-          <div className="reading-tracker-percent-center">
-            {isTimingEnabled ? `${percent}%` : <Pause size={14} />}
+              {isTimingEnabled && (
+                <circle
+                  className="reading-tracker-ring-val"
+                  cx="16"
+                  cy="16"
+                  r={desktopRadius}
+                  strokeWidth="2.5"
+                  strokeDasharray={desktopCircumference}
+                  strokeDashoffset={desktopDashoffset}
+                  transform="rotate(-90 16 16)"
+                />
+              )}
+            </svg>
+            <div className="reading-tracker-desktop-ring-icon">
+              {isTimingEnabled ? (
+                <span style={{ fontSize: '0.65rem', fontWeight: 800 }}>{percent}%</span>
+              ) : (
+                <Pause size={10} />
+              )}
+            </div>
           </div>
+
+          <div className="reading-tracker-desktop-data">
+            <div className="reading-tracker-desktop-time">
+              {formatMinSec(secondsRead)} / {formatMinSec(totalGoalSeconds)}
+            </div>
+            <div className="reading-tracker-desktop-pct">
+              {isGoalMet
+                ? (language === 'en' ? '100% Completed' : 'இலக்கு முடிந்தது')
+                : `${percent}% ${language === 'en' ? 'completed' : 'முடிந்தது'}`}
+            </div>
+          </div>
+
+          {/* Minimize button (user can minimize if desired) */}
+          <button
+            type="button"
+            className="reading-tracker-desktop-min-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsDesktopMinimized(true);
+            }}
+            title={language === 'en' ? 'Minimize Timer' : 'டைமரை சுருக்கு'}
+            aria-label="Minimize Timer"
+          >
+            <ChevronRight size={14} />
+          </button>
         </div>
       )}
 
-      {/* 3. EXPANDED DETAILS CARD POPOVER */}
+      {/* When minimized on desktop, show sleek side handle */}
+      {isDesktop && isDesktopMinimized && (
+        <button
+          type="button"
+          className="reading-tracker-handle"
+          onClick={() => setIsDesktopMinimized(false)}
+          title={`${formatMinSec(secondsRead)} (${percent}%) - ${language === 'en' ? 'Expand Timer' : 'டைமரை விரிக்க'}`}
+          aria-label="Expand Timer"
+        >
+          <ChevronLeft size={15} className="reading-tracker-handle-arrow" />
+        </button>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────
+          B. MOBILE / PHONE VIEW
+          Starts with percentage ring on first load.
+          Auto-minimizes into tiny side handle within 5s or on read.
+          ─────────────────────────────────────────────────────────── */}
+      {!isDesktop && (
+        <>
+          {/* 1. Collapsed handle attached to right edge */}
+          {uiState === 'handle' && (
+            <button
+              type="button"
+              className={`reading-tracker-handle ${!isTimingEnabled ? 'disabled' : ''}`}
+              onClick={() => setUiState('circle')}
+              title={
+                isTimingEnabled
+                  ? `${language === 'en' ? 'Reading Goal' : 'வாசிப்பு இலக்கு'}: ${percent}% (${formatMinSec(secondsRead)})`
+                  : `${language === 'en' ? 'Timer Paused' : 'டைமர் நிறுத்தம்'}`
+              }
+              aria-label="Toggle Reading Goal Indicator"
+            >
+              {isTimingEnabled ? (
+                <ChevronLeft size={15} className="reading-tracker-handle-arrow" />
+              ) : (
+                <Clock size={13} className="reading-tracker-handle-paused" />
+              )}
+            </button>
+          )}
+
+          {/* 2. Circular percentage widget (Auto-collapses in 5s on mobile) */}
+          {uiState === 'circle' && (
+            <div
+              className={`reading-tracker-circle ${isGoalMet ? 'completed' : ''}`}
+              onClick={() => setUiState('details')}
+              title={language === 'en' ? 'Click for goal settings' : 'இலக்கு அமைப்புகளுக்கு தட்டவும்'}
+              role="button"
+              tabIndex={0}
+            >
+              <svg className="reading-tracker-svg" viewBox="0 0 44 44">
+                <circle
+                  className="reading-tracker-ring-bg"
+                  cx="22"
+                  cy="22"
+                  r={radius}
+                />
+                {isTimingEnabled && (
+                  <circle
+                    className="reading-tracker-ring-val"
+                    cx="22"
+                    cy="22"
+                    r={radius}
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeDashoffset}
+                    transform="rotate(-90 22 22)"
+                  />
+                )}
+              </svg>
+              <div className="reading-tracker-percent-center">
+                {isTimingEnabled ? `${percent}%` : <Pause size={14} />}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────
+          C. EXPANDED GOAL & CUSTOM TIMER DETAILS CARD (Desktop & Mobile)
+          ─────────────────────────────────────────────────────────── */}
       {uiState === 'details' && (
         <div className="reading-tracker-popover" role="dialog" aria-modal="true">
           <div className="reading-tracker-popover-header">
@@ -348,10 +482,10 @@ export const ReadingGoalTracker: React.FC = () => {
             </button>
           </div>
 
-          {/* Quick Goal Selector */}
+          {/* Preset Goal Selector */}
           <div>
             <div className="reading-tracker-goal-label">
-              {language === 'en' ? 'Change Goal:' : 'இலக்கை மாற்றவும்:'}
+              {language === 'en' ? 'Select Goal:' : 'இலக்கு தேர்வு:'}
             </div>
             <div className="reading-tracker-goal-selector">
               <button
@@ -375,12 +509,41 @@ export const ReadingGoalTracker: React.FC = () => {
               >
                 30 {language === 'en' ? 'min' : 'நிமி'}
               </button>
+              {goalMinutes !== 5 && goalMinutes !== 15 && goalMinutes !== 30 && (
+                <button
+                  type="button"
+                  className="reading-tracker-goal-btn active"
+                >
+                  {goalMinutes} {language === 'en' ? 'min' : 'நிமி'}
+                </button>
+              )}
             </div>
+
+            {/* Custom Timer Input Field */}
+            <form onSubmit={handleSaveCustomGoal} className="reading-tracker-custom-box">
+              <input
+                type="number"
+                min="1"
+                max="360"
+                value={customMinutesInput}
+                onChange={(e) => setCustomMinutesInput(e.target.value)}
+                placeholder={language === 'en' ? 'Custom min (e.g. 20)' : 'தனிப்பயன் நிமி (எ.கா. 20)'}
+                className="reading-tracker-custom-input"
+              />
+              <button
+                type="submit"
+                className="reading-tracker-custom-btn"
+              >
+                {language === 'en' ? 'Set' : 'அமைக்க'}
+              </button>
+            </form>
           </div>
         </div>
       )}
 
-      {/* 4. GOAL REACHED CELEBRATION MODAL */}
+      {/* ───────────────────────────────────────────────────────────
+          D. GOAL REACHED CELEBRATION MODAL
+          ─────────────────────────────────────────────────────────── */}
       {showCelebration && (
         <div className="celebration-backdrop" role="dialog" aria-modal="true">
           <div className="celebration-card">
