@@ -13,7 +13,7 @@ export const ExitConfirmationModal: React.FC<ExitConfirmationModalProps> = ({
   onConfirmExit,
   onCancelExit
 }) => {
-  const { language, preferences } = useReading();
+  const { appLanguage, preferences } = useReading();
 
   // Close on Escape key press
   useEffect(() => {
@@ -28,7 +28,8 @@ export const ExitConfirmationModal: React.FC<ExitConfirmationModalProps> = ({
 
   if (!isOpen) return null;
 
-  const isTa = language === 'ta';
+  const isEnUI = (appLanguage || 'ta') === 'en';
+  const isTa = !isEnUI;
 
   const today = new Date().toISOString().split('T')[0];
   const goalMin = preferences.dailyGoalMinutes || 5;

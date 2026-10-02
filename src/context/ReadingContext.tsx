@@ -543,6 +543,16 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       savePreferences(updated, userId);
       return updated;
     });
+    if (newPrefs.appLanguage) {
+      setAppLanguageState(newPrefs.appLanguage);
+    }
+    if (newPrefs.bibleLanguage) {
+      setBibleLanguageState(newPrefs.bibleLanguage);
+      setLanguageState(newPrefs.bibleLanguage as Language);
+    } else if (newPrefs.language) {
+      setBibleLanguageState(newPrefs.language as BibleLanguage);
+      setLanguageState(newPrefs.language);
+    }
     if (userId) {
       trackActivity(userId, 'SETTINGS_CHANGED', currentBook.code, currentChapter, selectedVerse || 1, newPrefs);
     }

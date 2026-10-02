@@ -10,7 +10,8 @@ import {
   Play,
   Pause,
   Power,
-  Sliders
+  Sliders,
+  RotateCcw
 } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
@@ -21,9 +22,11 @@ import '../../styles/reading-tracker.css';
 type TimerUiState = 'handle' | 'circle' | 'details';
 
 export const ReadingGoalTracker: React.FC = () => {
-  const { preferences, updatePreferences, currentBook, currentChapter, language } = useReading();
+  const { preferences, updatePreferences, currentBook, currentChapter, language, appLanguage } = useReading();
   const { user } = useAuth();
   const userId = user?.id || null;
+
+  const isEnUI = (appLanguage || 'ta') === 'en';
 
   const goalMinutes = preferences.dailyGoalMinutes || 5;
   const totalGoalSeconds = goalMinutes * 60;
@@ -248,6 +251,18 @@ export const ReadingGoalTracker: React.FC = () => {
     };
   }, [uiState, isDesktop]);
 
+  // Reset today's timer to 0:00
+  const handleResetTimer = () => {
+    setSecondsRead(0);
+    setIsCelebratedToday(false);
+    try {
+      localStorage.setItem(getTodayKey(), '0');
+      localStorage.removeItem(getCelebratedKey());
+    } catch (e) {
+      // ignore
+    }
+  };
+
   return (
     <>
       {/* ───────────────────────────────────────────────────────────
@@ -261,8 +276,8 @@ export const ReadingGoalTracker: React.FC = () => {
           onClick={() => setUiState('details')}
           title={
             isTimingEnabled
-              ? `${language === 'en' ? 'Reading Goal' : 'வாசிப்பு இலக்கு'}: ${formatMinSec(secondsRead)} / ${formatMinSec(totalGoalSeconds)} (${percent}%) - ${language === 'en' ? 'Click for settings' : 'அமைப்புகளுக்கு தட்டவும்'}`
-              : `${language === 'en' ? 'Timer Paused (Click to resume)' : 'டைமர் நிறுத்தி வைக்கப்பட்டுள்ளது (தொடங்க தட்டவும்)'}`
+              ? `${isEnUI ? 'Reading Goal' : 'வாசிப்பு இலக்கு'}: ${formatMinSec(secondsRead)} / ${formatMinSec(totalGoalSeconds)} (${percent}%) - ${isEnUI ? 'Click for settings' : 'அமைப்புகளுக்கு தட்டவும்'}`
+              : `${isEnUI ? 'Timer Paused (Click to resume)' : 'டைமர் நிறுத்தி வைக்கப்பட்டுள்ளது (தொடங்க தட்டவும்)'}`
           }
         >
           <div className="reading-tracker-desktop-ring">
@@ -302,8 +317,8 @@ export const ReadingGoalTracker: React.FC = () => {
             </div>
             <div className="reading-tracker-desktop-pct">
               {isGoalMet
-                ? (language === 'en' ? '100% Completed' : 'இலக்கு முடிந்தது')
-                : `${percent}% ${language === 'en' ? 'completed' : 'முடிந்தது'}`}
+                ? (isEnUI ? '100% Completed' : 'இலக்கு முடிந்தது')
+                : `${percent}% ${isEnUI ? 'completed' : 'முடிந்தது'}`}
             </div>
           </div>
 
@@ -315,7 +330,7 @@ export const ReadingGoalTracker: React.FC = () => {
               e.stopPropagation();
               setIsDesktopMinimized(true);
             }}
-            title={language === 'en' ? 'Minimize Timer' : 'டைமரை சுருக்கு'}
+            title={isEnUI ? 'Minimize Timer' : 'டைமரை சுருக்கு'}
             aria-label="Minimize Timer"
           >
             <ChevronRight size={14} />
@@ -329,7 +344,7 @@ export const ReadingGoalTracker: React.FC = () => {
           type="button"
           className="reading-tracker-handle"
           onClick={() => setIsDesktopMinimized(false)}
-          title={`${formatMinSec(secondsRead)} (${percent}%) - ${language === 'en' ? 'Expand Timer' : 'டைமரை விரிக்க'}`}
+          title={`${formatMinSec(secondsRead)} (${percent}%) - ${isEnUI ? 'Expand Timer' : 'டைமரை விரிக்க'}`}
           aria-label="Expand Timer"
         >
           <ChevronLeft size={15} className="reading-tracker-handle-arrow" />
@@ -351,8 +366,8 @@ export const ReadingGoalTracker: React.FC = () => {
               onClick={() => setUiState('circle')}
               title={
                 isTimingEnabled
-                  ? `${language === 'en' ? 'Reading Goal' : 'வாசிப்பு இலக்கு'}: ${percent}% (${formatMinSec(secondsRead)})`
-                  : `${language === 'en' ? 'Timer Paused' : 'டைமர் நிறுத்தம்'}`
+                  ? `${isEnUI ? 'Reading Goal' : 'வாசிப்பு இலக்கு'}: ${percent}% (${formatMinSec(secondsRead)})`
+                  : `${isEnUI ? 'Timer Paused' : 'டைமர் நிறுத்தம்'}`
               }
               aria-label="Toggle Reading Goal Indicator"
             >
@@ -369,7 +384,7 @@ export const ReadingGoalTracker: React.FC = () => {
             <div
               className={`reading-tracker-circle ${isGoalMet ? 'completed' : ''}`}
               onClick={() => setUiState('details')}
-              title={language === 'en' ? 'Click for goal settings' : 'இலக்கு அமைப்புகளுக்கு தட்டவும்'}
+              title={isEnUI ? 'Click for goal settings' : 'இலக்கு அமைப்புகளுக்கு தட்டவும்'}
               role="button"
               tabIndex={0}
             >
@@ -408,18 +423,29 @@ export const ReadingGoalTracker: React.FC = () => {
           <div className="reading-tracker-popover-header">
             <h4 className="reading-tracker-popover-title">
               <Sparkles size={16} color="#2563eb" />
-              {language === 'en' ? "Today's Reading Goal" : 'இன்றைய வாசிப்பு இலக்கு'}
+              {isEnUI ? "Today's Reading Goal" : 'இன்றைய வாசிப்பு இலக்கு'}
             </h4>
-            <button
-              type="button"
-              className="reading-tracker-close-btn"
-              onClick={() => {
-                setUiState('handle');
-              }}
-              aria-label="Close"
-            >
-              <X size={16} />
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <button
+                type="button"
+                className="reading-tracker-close-btn"
+                onClick={handleResetTimer}
+                title={isEnUI ? "Reset today's timer (0:00)" : 'இன்றைய டைமரை மீட்டமை (0:00)'}
+                aria-label="Reset Timer"
+              >
+                <RotateCcw size={14} />
+              </button>
+              <button
+                type="button"
+                className="reading-tracker-close-btn"
+                onClick={() => {
+                  setUiState('handle');
+                }}
+                aria-label="Close"
+              >
+                <X size={16} />
+              </button>
+            </div>
           </div>
 
           <div>
@@ -428,7 +454,7 @@ export const ReadingGoalTracker: React.FC = () => {
                 {formatMinSec(secondsRead)}
               </span>
               <span className="reading-tracker-target-text">
-                {language === 'en' ? 'Goal' : 'இலக்கு'}: {goalMinutes} {language === 'en' ? 'min' : 'நிமி'} ({percent}%)
+                {isEnUI ? 'Goal' : 'இலக்கு'}: {goalMinutes} {isEnUI ? 'min' : 'நிமி'} ({percent}%)
               </span>
             </div>
 
@@ -441,15 +467,15 @@ export const ReadingGoalTracker: React.FC = () => {
 
             <p className="reading-tracker-status-text">
               {!isTimingEnabled ? (
-                language === 'en'
+                isEnUI
                   ? '⏸ Timer tracking is currently paused.'
                   : '⏸ வாசிப்பு நேரம் தற்போது நிறுத்தி வைக்கப்பட்டுள்ளது.'
               ) : isGoalMet ? (
-                language === 'en'
+                isEnUI
                   ? '🎉 Congratulations! You have completed today\'s goal!'
                   : '🎉 இன்றைய இலக்கை வெற்றிகரமாக முடித்துவிட்டீர்கள்!'
               ) : (
-                language === 'en'
+                isEnUI
                   ? `${formatMinSec(remainingSeconds)} remaining to reach goal.`
                   : `இலக்கை நிறைவு செய்ய இன்னும் ${formatMinSec(remainingSeconds)} தேவை.`
               )}
@@ -460,7 +486,7 @@ export const ReadingGoalTracker: React.FC = () => {
           <div className="reading-tracker-toggle-row">
             <span className="reading-tracker-toggle-label">
               <Power size={14} />
-              {language === 'en' ? 'Track Reading Time' : 'வாசிப்பு நேரத்தை பதிவு செய்'}
+              {isEnUI ? 'Track Reading Time' : 'வாசிப்பு நேரத்தை பதிவு செய்'}
             </span>
             <button
               type="button"
@@ -471,12 +497,12 @@ export const ReadingGoalTracker: React.FC = () => {
               {isTimingEnabled ? (
                 <>
                   <Pause size={12} />
-                  <span>{language === 'en' ? 'ON' : 'இயக்கம்'}</span>
+                  <span>{isEnUI ? 'ON' : 'இயக்கம்'}</span>
                 </>
               ) : (
                 <>
                   <Play size={12} />
-                  <span>{language === 'en' ? 'OFF' : 'நிறுத்தம்'}</span>
+                  <span>{isEnUI ? 'OFF' : 'நிறுத்தம்'}</span>
                 </>
               )}
             </button>
@@ -485,7 +511,7 @@ export const ReadingGoalTracker: React.FC = () => {
           {/* Preset Goal Selector */}
           <div>
             <div className="reading-tracker-goal-label">
-              {language === 'en' ? 'Select Goal:' : 'இலக்கு தேர்வு:'}
+              {isEnUI ? 'Select Goal:' : 'இலக்கு தேர்வு:'}
             </div>
             <div className="reading-tracker-goal-selector">
               <button
@@ -493,28 +519,28 @@ export const ReadingGoalTracker: React.FC = () => {
                 className={`reading-tracker-goal-btn ${goalMinutes === 5 ? 'active' : ''}`}
                 onClick={() => handleGoalChange(5)}
               >
-                5 {language === 'en' ? 'min' : 'நிமி'}
+                5 {isEnUI ? 'min' : 'நிமி'}
               </button>
               <button
                 type="button"
                 className={`reading-tracker-goal-btn ${goalMinutes === 15 ? 'active' : ''}`}
                 onClick={() => handleGoalChange(15)}
               >
-                15 {language === 'en' ? 'min' : 'நிமி'}
+                15 {isEnUI ? 'min' : 'நிமி'}
               </button>
               <button
                 type="button"
                 className={`reading-tracker-goal-btn ${goalMinutes === 30 ? 'active' : ''}`}
                 onClick={() => handleGoalChange(30)}
               >
-                30 {language === 'en' ? 'min' : 'நிமி'}
+                30 {isEnUI ? 'min' : 'நிமி'}
               </button>
               {goalMinutes !== 5 && goalMinutes !== 15 && goalMinutes !== 30 && (
                 <button
                   type="button"
                   className="reading-tracker-goal-btn active"
                 >
-                  {goalMinutes} {language === 'en' ? 'min' : 'நிமி'}
+                  {goalMinutes} {isEnUI ? 'min' : 'நிமி'}
                 </button>
               )}
             </div>
@@ -527,14 +553,14 @@ export const ReadingGoalTracker: React.FC = () => {
                 max="360"
                 value={customMinutesInput}
                 onChange={(e) => setCustomMinutesInput(e.target.value)}
-                placeholder={language === 'en' ? 'Custom min (e.g. 20)' : 'தனிப்பயன் நிமி (எ.கா. 20)'}
+                placeholder={isEnUI ? 'Custom min (e.g. 20)' : 'தனிப்பயன் நிமி (எ.கா. 20)'}
                 className="reading-tracker-custom-input"
               />
               <button
                 type="submit"
                 className="reading-tracker-custom-btn"
               >
-                {language === 'en' ? 'Set' : 'அமைக்க'}
+                {isEnUI ? 'Set' : 'அமைக்க'}
               </button>
             </form>
           </div>
@@ -553,10 +579,10 @@ export const ReadingGoalTracker: React.FC = () => {
 
             <div>
               <h3 style={{ margin: '0 0 0.35rem 0', fontSize: '1.35rem', fontWeight: 800 }}>
-                {language === 'en' ? '🎉 Congratulations! Goal Achieved!' : '🎉 வாழ்த்துகள்! இன்றைய இலக்கு நிறைவு!'}
+                {isEnUI ? '🎉 Congratulations! Goal Achieved!' : '🎉 வாழ்த்துகள்! இன்றைய இலக்கு நிறைவு!'}
               </h3>
               <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                {language === 'en'
+                {isEnUI
                   ? `You have successfully completed today's ${goalMinutes}-minute Scripture reading. Your daily spiritual streak is secured!`
                   : `இன்றைய ${goalMinutes} நிமிட வேத வாசிப்பை வெற்றிகரமாக முடித்துவிட்டீர்கள். உங்கள் ஆன்மீகத் தொடர் (Streak) உறுதி செய்யப்பட்டது!`}
               </p>
@@ -584,7 +610,7 @@ export const ReadingGoalTracker: React.FC = () => {
               style={{ width: '100%', marginTop: '0.5rem' }}
               onClick={() => setShowCelebration(false)}
             >
-              {language === 'en' ? 'Continue Reading' : 'தொடர்ந்து வாசிக்கிறேன் · Continue Reading'}
+              {isEnUI ? 'Continue Reading' : 'தொடர்ந்து வாசிக்கிறேன் · Continue Reading'}
             </button>
           </div>
         </div>

@@ -54,6 +54,7 @@ const SideNavContentBody: React.FC<{ onCloseNav?: () => void }> = ({ onCloseNav 
     currentBook,
     currentChapter,
     language,
+    appLanguage,
     setIsSearchOpen,
     setIsBookmarksOpen,
     setIsPreferencesOpen,
@@ -62,6 +63,7 @@ const SideNavContentBody: React.FC<{ onCloseNav?: () => void }> = ({ onCloseNav 
     toggleDesktopSidebar
   } = useReading();
 
+  const isEnUI = (appLanguage || 'ta') === 'en';
   const { user, profile, isAuthenticated, setIsAuthModalOpen } = useAuth();
 
   const [activeTestament, setActiveTestament] = useState<Testament>('OT');
@@ -92,7 +94,7 @@ const SideNavContentBody: React.FC<{ onCloseNav?: () => void }> = ({ onCloseNav 
           style={{ justifyContent: 'flex-start', fontSize: '0.8125rem', gap: '0.375rem', padding: '0.4375rem 0.625rem' }}
         >
           <Search size={15} />
-          <span>{language === 'en' ? 'Search' : 'தேடுதல்'}</span>
+          <span>{isEnUI ? 'Search' : 'தேடுதல்'}</span>
         </button>
 
         <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
@@ -105,13 +107,13 @@ const SideNavContentBody: React.FC<{ onCloseNav?: () => void }> = ({ onCloseNav 
             style={{ flex: 1, justifyContent: 'flex-start', fontSize: '0.8125rem', gap: '0.375rem', padding: '0.4375rem 0.625rem' }}
           >
             <Bookmark size={15} />
-            <span>{language === 'en' ? 'Bookmarks' : 'சேமிப்புகள்'}</span>
+            <span>{isEnUI ? 'Bookmarks' : 'சேமிப்புகள்'}</span>
           </button>
 
           <button
             className="btn-icon desktop-collapse-btn"
             onClick={toggleDesktopSidebar}
-            title={language === 'en' ? 'Collapse Side Navigation' : 'பக்கவாட்டு அட்டவணையை சுருக்கவும்'}
+            title={isEnUI ? 'Collapse Side Navigation' : 'பக்கவாட்டு அட்டவணையை சுருக்கவும்'}
             style={{ padding: '0.4375rem', flexShrink: 0 }}
           >
             <PanelLeftClose size={16} />
@@ -127,7 +129,7 @@ const SideNavContentBody: React.FC<{ onCloseNav?: () => void }> = ({ onCloseNav 
           style={{ justifyContent: 'flex-start', fontSize: '0.8125rem', gap: '0.375rem', padding: '0.4375rem 0.625rem' }}
         >
           <History size={15} />
-          <span>{language === 'en' ? 'History' : 'வரலாறு'}</span>
+          <span>{isEnUI ? 'History' : 'வரலாறு'}</span>
         </button>
 
         <button
@@ -139,7 +141,7 @@ const SideNavContentBody: React.FC<{ onCloseNav?: () => void }> = ({ onCloseNav 
           style={{ justifyContent: 'flex-start', fontSize: '0.8125rem', gap: '0.375rem', padding: '0.4375rem 0.625rem' }}
         >
           <Settings size={15} />
-          <span>{language === 'en' ? 'Settings' : 'அமைப்புகள்'}</span>
+          <span>{isEnUI ? 'Settings' : 'அமைப்புகள்'}</span>
         </button>
 
         <button
@@ -151,7 +153,7 @@ const SideNavContentBody: React.FC<{ onCloseNav?: () => void }> = ({ onCloseNav 
           style={{ justifyContent: 'flex-start', fontSize: '0.8125rem', gap: '0.375rem', padding: '0.4375rem 0.625rem' }}
         >
           <UserAvatar avatarUrl={profile?.avatar_url} name={profile?.display_name || user?.email} size={18} />
-          <span>{isAuthenticated ? (language === 'en' ? 'Account' : 'கணக்கு') : (language === 'en' ? 'Sign In' : 'உள்நுழைக')}</span>
+          <span>{isAuthenticated ? (isEnUI ? 'Account' : 'கணக்கு') : (isEnUI ? 'Sign In' : 'உள்நுழைக')}</span>
         </button>
       </div>
 
@@ -159,7 +161,7 @@ const SideNavContentBody: React.FC<{ onCloseNav?: () => void }> = ({ onCloseNav 
       <div style={{ marginBottom: '0.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
           <Compass size={14} />
-          <span>{language === 'en' ? 'Bible Catalog' : 'புத்தகங்கள்'}</span>
+          <span>{isEnUI ? 'Bible Catalog' : 'புத்தகங்கள்'}</span>
         </div>
 
         {/* Testament Tabs */}
@@ -169,21 +171,21 @@ const SideNavContentBody: React.FC<{ onCloseNav?: () => void }> = ({ onCloseNav 
             onClick={() => setActiveTestament('OT')}
             style={{ fontSize: '0.8125rem', padding: '0.375rem' }}
           >
-            {language === 'en' ? 'OT (39)' : 'பழைய ஏற்பாடு (39)'}
+            {isEnUI ? 'OT (39)' : 'பழைய ஏற்பாடு (39)'}
           </button>
           <button
             className={`tab-btn ${activeTestament === 'NT' ? 'active' : ''}`}
             onClick={() => setActiveTestament('NT')}
             style={{ fontSize: '0.8125rem', padding: '0.375rem' }}
           >
-            {language === 'en' ? 'NT (27)' : 'புதிய ஏற்பாடு (27)'}
+            {isEnUI ? 'NT (27)' : 'புதிய ஏற்பாடு (27)'}
           </button>
         </div>
 
         {/* Search Input */}
         <input
           type="text"
-          placeholder={language === 'en' ? 'Filter book...' : 'புத்தகத்தை வடிகட்டுக...'}
+          placeholder={isEnUI ? 'Filter book...' : 'புத்தகத்தை வடிகட்டுக...'}
           value={searchFilter}
           onChange={(e) => setSearchFilter(e.target.value)}
           style={{
@@ -224,7 +226,7 @@ const SideNavContentBody: React.FC<{ onCloseNav?: () => void }> = ({ onCloseNav 
               >
                 <span>{name}</span>
                 <span style={{ fontSize: '0.75rem', opacity: 0.75, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  {book.total_chapters} ch
+                  {book.total_chapters} {isEnUI ? 'ch' : 'அதி'}
                   <ChevronRight
                     size={14}
                     style={{
@@ -368,13 +370,14 @@ export const DesktopSidebar: React.FC = () => {
   const {
     isDesktopSidebarCollapsed,
     toggleDesktopSidebar,
-    language,
+    appLanguage,
     setIsSearchOpen,
     setIsBookmarksOpen,
     setIsReadingHistoryOpen,
     setIsPreferencesOpen
   } = useReading();
 
+  const isEnUI = (appLanguage || 'ta') === 'en';
   const { isAuthenticated, setIsAuthModalOpen } = useAuth();
 
   const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
@@ -416,7 +419,7 @@ export const DesktopSidebar: React.FC = () => {
       <aside
         className="desktop-sidebar collapsed"
         onClick={toggleDesktopSidebar}
-        title={language === 'en' ? 'Click anywhere to expand side navigation' : 'அட்டவணையை விரிவாக்க கிளிக் செய்யவும்'}
+        title={isEnUI ? 'Click anywhere to expand side navigation' : 'அட்டவணையை விரிவாக்க கிளிக் செய்யவும்'}
       >
         <div className="desktop-sidebar-collapsed-inner">
           <button
@@ -425,7 +428,7 @@ export const DesktopSidebar: React.FC = () => {
               e.stopPropagation();
               toggleDesktopSidebar();
             }}
-            title={language === 'en' ? 'Expand Side Navigation' : 'பக்கவாட்டு அட்டவணையை விரிவாக்கவும்'}
+            title={isEnUI ? 'Expand Side Navigation' : 'பக்கவாட்டு அட்டவணையை விரிவாக்கவும்'}
             style={{ marginBottom: '1rem' }}
           >
             <PanelLeftOpen size={20} style={{ color: 'var(--accent-color)' }} />
@@ -437,7 +440,7 @@ export const DesktopSidebar: React.FC = () => {
               e.stopPropagation();
               setIsSearchOpen(true);
             }}
-            title={language === 'en' ? 'Search' : 'தேடுதல்'}
+            title={isEnUI ? 'Search' : 'தேடுதல்'}
           >
             <Search size={18} />
           </button>
@@ -447,7 +450,7 @@ export const DesktopSidebar: React.FC = () => {
               e.stopPropagation();
               setIsBookmarksOpen(true);
             }}
-            title={language === 'en' ? 'Bookmarks' : 'சேமிப்புகள்'}
+            title={isEnUI ? 'Bookmarks' : 'சேமிப்புகள்'}
           >
             <Bookmark size={18} />
           </button>
@@ -457,7 +460,7 @@ export const DesktopSidebar: React.FC = () => {
               e.stopPropagation();
               setIsReadingHistoryOpen(true);
             }}
-            title={language === 'en' ? 'History' : 'வரலாறு'}
+            title={isEnUI ? 'History' : 'வரலாறு'}
           >
             <History size={18} />
           </button>
@@ -467,7 +470,7 @@ export const DesktopSidebar: React.FC = () => {
               e.stopPropagation();
               setIsPreferencesOpen(true);
             }}
-            title={language === 'en' ? 'Settings' : 'அமைப்புகள்'}
+            title={isEnUI ? 'Settings' : 'அமைப்புகள்'}
           >
             <Settings size={18} />
           </button>
@@ -477,7 +480,7 @@ export const DesktopSidebar: React.FC = () => {
               e.stopPropagation();
               setIsAuthModalOpen(true);
             }}
-            title={isAuthenticated ? (language === 'en' ? 'Account' : 'கணக்கு') : (language === 'en' ? 'Sign In' : 'உள்நுழைக')}
+            title={isAuthenticated ? (isEnUI ? 'Account' : 'கணக்கு') : (isEnUI ? 'Sign In' : 'உள்நுழைக')}
           >
             <User size={18} />
           </button>
@@ -498,7 +501,7 @@ export const DesktopSidebar: React.FC = () => {
       <div
         className="sidebar-resizer-handle"
         onMouseDown={handleMouseDown}
-        title={language === 'en' ? 'Drag right edge to resize sidebar' : 'அட்டவணை அகலத்தை மாற்ற வலது ஓரத்தில் இழுக்கவும்'}
+        title={isEnUI ? 'Drag right edge to resize sidebar' : 'அட்டவணை அகலத்தை மாற்ற வலது ஓரத்தில் இழுக்கவும்'}
       />
     </aside>
   );

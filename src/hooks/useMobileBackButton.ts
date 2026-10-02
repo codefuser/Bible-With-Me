@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { App as CapApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 import { useReading } from '../context/ReadingContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -22,6 +24,10 @@ export function useMobileBackButton() {
     setIsReadingHistoryOpen,
     isVerseCardOpen,
     closeVerseCard,
+    isFullscreenReaderOpen,
+    closeFullscreenReader,
+    isStreakModalOpen,
+    setIsStreakModalOpen,
     activeStudyType,
     closeStudy
   } = useReading();
@@ -35,14 +41,11 @@ export function useMobileBackButton() {
 
   const [isExitModalOpen, setIsExitModalOpen] = useState<boolean>(false);
 
-  // Flag set to true when popstate (hardware back button) is handling a modal close
-  const isHandlingPopState = useRef<boolean>(false);
-
-  // Flag set to true when we programmatically call history.back() after a UI modal close, so popstate listener ignores it
-  const ignoreNextPopState = useRef<boolean>(false);
-
-  // Track modal states to detect opening vs closing transitions
-  const prevModalState = useRef({
+  // Keep latest modal state in ref for capacitor event listener
+  const modalStateRef = useRef({
+    exitModal: isExitModalOpen,
+    fullscreenReader: isFullscreenReaderOpen,
+    streakModal: isStreakModalOpen,
     sideNav: isSideNavOpen,
     languageModal: isLanguageModalOpen,
     search: isSearchOpen,
@@ -57,35 +60,11 @@ export function useMobileBackButton() {
     sync: isSyncModalOpen
   });
 
-  const isAnyModalOpen =
-    isSideNavOpen ||
-    isLanguageModalOpen ||
-    isSearchOpen ||
-    isBookSelectorOpen ||
-    isPreferencesOpen ||
-    isBookmarksOpen ||
-    isDailyHistoryOpen ||
-    isReadingHistoryOpen ||
-    isVerseCardOpen ||
-    activeStudyType !== 'none' ||
-    isAuthModalOpen ||
-    isSyncModalOpen;
-
-  // Initialize history base guard entries on mount
   useEffect(() => {
-    try {
-      if (!window.history.state || !window.history.state.bibleAppGuard) {
-        window.history.replaceState({ bibleAppGuard: 'base' }, '');
-        window.history.pushState({ bibleAppGuard: 'home' }, '');
-      }
-    } catch (err) {
-      console.warn('Error setting history state:', err);
-    }
-  }, []);
-
-  // Synchronize modal state transitions with window.history
-  useEffect(() => {
-    const current = {
+    modalStateRef.current = {
+      exitModal: isExitModalOpen,
+      fullscreenReader: isFullscreenReaderOpen,
+      streakModal: isStreakModalOpen,
       sideNav: isSideNavOpen,
       languageModal: isLanguageModalOpen,
       search: isSearchOpen,
@@ -99,21 +78,173 @@ export function useMobileBackButton() {
       auth: isAuthModalOpen,
       sync: isSyncModalOpen
     };
+  }, [
+    isExitModalOpen,
+    isFullscreenReaderOpen,
+    isStreakModalOpen,
+    isSideNavOpen,
+    isLanguageModalOpen,
+    isSearchOpen,
+    isBookSelectorOpen,
+    isPreferencesOpen,
+    isBookmarksOpen,
+    isDailyHistoryOpen,
+    isReadingHistoryOpen,
+    isVerseCardOpen,
+    activeStudyType,
+    isAuthModalOpen,
+    isSyncModalOpen
+  ]);
 
+  const isHandlingPopState = useRef<boolean>(false);
+  const ignoreNextPopState = useRef<boolean>(false);
+
+  const prevModalState = useRef(modalStateRef.current);
+
+  const isAnyModalOpen =
+    isExitModalOpen ||
+    isFullscreenReaderOpen ||
+    isStreakModalOpen ||
+    isSideNavOpen ||
+    isLanguageModalOpen ||
+    isSearchOpen ||
+    isBookSelectorOpen ||
+    isPreferencesOpen ||
+    isBookmarksOpen ||
+    isDailyHistoryOpen ||
+    isReadingHistoryOpen ||
+    isVerseCardOpen ||
+    activeStudyType !== 'none' ||
+    isAuthModalOpen ||
+    isSyncModalOpen;
+
+  // Initialize history base guard entries on mount for web browsers
+  useEffect(() => {
+    try {
+      if (!window.history.state || !window.history.state.bibleAppGuard) {
+        window.history.replaceState({ bibleAppGuard: 'base' }, '');
+        window.history.pushState({ bibleAppGuard: 'home' }, '');
+      }
+    } catch (err) {
+      console.warn('Error setting history state:', err);
+    }
+  }, []);
+
+  // Centralized close highest priority modal function
+  const handleBackAction = useCallback((): boolean => {
+    const s = modalStateRef.current;
+
+    if (s.exitModal) {
+      setIsExitModalOpen(false);
+      return true;
+    }
+    if (s.fullscreenReader) {
+      closeFullscreenReader();
+      return true;
+    }
+    if (s.streakModal) {
+      setIsStreakModalOpen(false);
+      return true;
+    }
+    if (s.languageModal) {
+      setIsLanguageModalOpen(false);
+      return true;
+    }
+    if (s.verseCard) {
+      closeVerseCard();
+      return true;
+    }
+    if (s.auth) {
+      setIsAuthModalOpen(false);
+      return true;
+    }
+    if (s.sync) {
+      setIsSyncModalOpen(false);
+      return true;
+    }
+    if (s.dailyHistory) {
+      setIsDailyHistoryOpen(false);
+      return true;
+    }
+    if (s.readingHistory) {
+      setIsReadingHistoryOpen(false);
+      return true;
+    }
+    if (s.bookmarks) {
+      setIsBookmarksOpen(false);
+      return true;
+    }
+    if (s.preferences) {
+      setIsPreferencesOpen(false);
+      return true;
+    }
+    if (s.search) {
+      setIsSearchOpen(false);
+      return true;
+    }
+    if (s.bookSelector) {
+      setIsBookSelectorOpen(false);
+      return true;
+    }
+    if (s.sideNav) {
+      setIsSideNavOpen(false);
+      return true;
+    }
+    if (s.study) {
+      closeStudy();
+      return true;
+    }
+
+    // No modal open -> Show exit confirmation
+    setIsExitModalOpen(true);
+    return false;
+  }, [
+    closeFullscreenReader,
+    setIsStreakModalOpen,
+    setIsLanguageModalOpen,
+    closeVerseCard,
+    setIsAuthModalOpen,
+    setIsSyncModalOpen,
+    setIsDailyHistoryOpen,
+    setIsReadingHistoryOpen,
+    setIsBookmarksOpen,
+    setIsPreferencesOpen,
+    setIsSearchOpen,
+    setIsBookSelectorOpen,
+    setIsSideNavOpen,
+    closeStudy
+  ]);
+
+  // 1. Capacitor Native Android Hardware Back Button Listener
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    let subHandle: any = null;
+    CapApp.addListener('backButton', () => {
+      handleBackAction();
+    }).then((sub) => {
+      subHandle = sub;
+    });
+
+    return () => {
+      if (subHandle) subHandle.remove();
+    };
+  }, [handleBackAction]);
+
+  // 2. Synchronize modal state transitions with window.history (Web/PWA)
+  useEffect(() => {
+    const current = modalStateRef.current;
     const prev = prevModalState.current;
 
-    // Check if any modal just OPENED
     const modalJustOpened = Object.keys(current).some(
-      (key) => current[key as keyof typeof current] && !prev[key as keyof typeof prev]
+      (key) => key !== 'exitModal' && (current as any)[key] && !(prev as any)[key]
     );
 
-    // Check if any modal just CLOSED
     const modalJustClosed = Object.keys(current).some(
-      (key) => !current[key as keyof typeof current] && prev[key as keyof typeof prev]
+      (key) => key !== 'exitModal' && !(current as any)[key] && (prev as any)[key]
     );
 
     if (modalJustOpened) {
-      // Push history entry only if opened via UI click (not popstate)
       if (!isHandlingPopState.current) {
         try {
           window.history.pushState({ bibleAppGuard: 'modal' }, '');
@@ -122,8 +253,6 @@ export function useMobileBackButton() {
         }
       }
     } else if (modalJustClosed) {
-      // If modal was closed via UI click (e.g. 'X' button, backdrop tap, or selection action),
-      // we must pop the history state we pushed, BUT set ignoreNextPopState so popstate handler doesn't open Exit Confirmation!
       if (!isHandlingPopState.current) {
         try {
           if (window.history.state && window.history.state.bibleAppGuard === 'modal') {
@@ -147,61 +276,32 @@ export function useMobileBackButton() {
     isDailyHistoryOpen,
     isReadingHistoryOpen,
     isVerseCardOpen,
+    isFullscreenReaderOpen,
+    isStreakModalOpen,
     activeStudyType,
     isAuthModalOpen,
     isSyncModalOpen
   ]);
 
-  // Global popstate event handler (intercepts mobile hardware Back button press)
+  // 3. Web Popstate Listener (Mobile Browser / PWA)
   useEffect(() => {
-    const handlePopState = (e: PopStateEvent) => {
-      // If popstate was triggered by our own programmatic history.back() call, ignore it completely
+    const handlePopState = () => {
       if (ignoreNextPopState.current) {
         ignoreNextPopState.current = false;
         return;
       }
 
       isHandlingPopState.current = true;
+      const handled = handleBackAction();
 
-      // Close open modals in top-to-bottom priority order
-      if (isExitModalOpen) {
-        setIsExitModalOpen(false);
-      } else if (isLanguageModalOpen) {
-        setIsLanguageModalOpen(false);
-      } else if (isVerseCardOpen) {
-        closeVerseCard();
-      } else if (isAuthModalOpen) {
-        setIsAuthModalOpen(false);
-      } else if (isSyncModalOpen) {
-        setIsSyncModalOpen(false);
-      } else if (isDailyHistoryOpen) {
-        setIsDailyHistoryOpen(false);
-      } else if (isReadingHistoryOpen) {
-        setIsReadingHistoryOpen(false);
-      } else if (isBookmarksOpen) {
-        setIsBookmarksOpen(false);
-      } else if (isPreferencesOpen) {
-        setIsPreferencesOpen(false);
-      } else if (isSearchOpen) {
-        setIsSearchOpen(false);
-      } else if (isBookSelectorOpen) {
-        setIsBookSelectorOpen(false);
-      } else if (isSideNavOpen) {
-        setIsSideNavOpen(false);
-      } else if (activeStudyType !== 'none') {
-        closeStudy();
-      } else {
-        // No modals open: User pressed hardware Back button on root/home screen -> Show Exit Confirmation Popup
-        setIsExitModalOpen(true);
+      if (!handled) {
         try {
-          // Re-push home guard state so user remains guarded if they decline exit
           window.history.pushState({ bibleAppGuard: 'home' }, '');
         } catch {
           // ignore
         }
       }
 
-      // Reset popstate handling flag after state update cycle completes
       setTimeout(() => {
         isHandlingPopState.current = false;
       }, 100);
@@ -209,38 +309,18 @@ export function useMobileBackButton() {
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [
-    isExitModalOpen,
-    isVerseCardOpen,
-    closeVerseCard,
-    isAuthModalOpen,
-    setIsAuthModalOpen,
-    isSyncModalOpen,
-    setIsSyncModalOpen,
-    isDailyHistoryOpen,
-    setIsDailyHistoryOpen,
-    isReadingHistoryOpen,
-    setIsReadingHistoryOpen,
-    isBookmarksOpen,
-    setIsBookmarksOpen,
-    isPreferencesOpen,
-    setIsPreferencesOpen,
-    isSearchOpen,
-    setIsSearchOpen,
-    isBookSelectorOpen,
-    setIsBookSelectorOpen,
-    isSideNavOpen,
-    setIsSideNavOpen,
-    activeStudyType,
-    closeStudy
-  ]);
+  }, [handleBackAction]);
 
   const handleConfirmExit = useCallback(() => {
     setIsExitModalOpen(false);
-    try {
-      window.history.go(-2);
-    } catch {
-      window.history.back();
+    if (Capacitor.isNativePlatform()) {
+      CapApp.exitApp();
+    } else {
+      try {
+        window.history.go(-2);
+      } catch {
+        window.history.back();
+      }
     }
   }, []);
 

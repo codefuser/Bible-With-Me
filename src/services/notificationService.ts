@@ -1,13 +1,16 @@
 // ==========================================================================
 // DAILY BIBLE READING NATIVE & LOCAL NOTIFICATIONS SERVICE
 // Supports Offline Scheduled Reminders, Android System Alarms & App Language
+// Multiple Custom Times, Verse with Reference (Erupidam) & App Logo
 // ==========================================================================
 
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 import { AppLanguage } from '../types/bible';
+import { CURATED_DAILY_VERSES } from './dailyVerseService';
+import { getBookMetaById, getVerseByLocation } from './csvBibleService';
 
-const NOTIFICATION_SETTINGS_KEY = 'bible_notification_settings_v2';
+const NOTIFICATION_SETTINGS_KEY = 'bible_notification_settings_v3';
 const LAST_APP_OPEN_NOTIF_KEY = 'bible_last_app_open_notif_time';
 
 export interface ReminderSlot {
@@ -16,6 +19,14 @@ export interface ReminderSlot {
   nameEn: string;
   nameTa: string;
   time: string; // "HH:MM" 24h
+  enabled: boolean;
+}
+
+export interface CustomReminderTime {
+  id: number;
+  time: string; // "HH:MM" e.g. "07:30"
+  labelEn: string;
+  labelTa: string;
   enabled: boolean;
 }
 
@@ -30,6 +41,7 @@ export interface NotificationScheduleConfig {
     night: ReminderSlot;
     custom: ReminderSlot;
   };
+  customTimes: CustomReminderTime[];
 }
 
 export const DEFAULT_NOTIFICATION_CONFIG: NotificationScheduleConfig = {
@@ -41,15 +53,15 @@ export const DEFAULT_NOTIFICATION_CONFIG: NotificationScheduleConfig = {
     morning: {
       id: 101,
       key: 'morning',
-      nameEn: 'Morning Reading',
-      nameTa: 'விடியற்காலை வாசிப்பு',
+      nameEn: 'Morning Devotional',
+      nameTa: 'விடியற்காலை வேத வாசிப்பு',
       time: '06:00',
       enabled: true
     },
     afternoon: {
       id: 102,
       key: 'afternoon',
-      nameEn: 'Midday Reminder',
+      nameEn: 'Midday Meditation',
       nameTa: 'மதிய வேத தியானம்',
       time: '12:30',
       enabled: false
@@ -58,7 +70,7 @@ export const DEFAULT_NOTIFICATION_CONFIG: NotificationScheduleConfig = {
       id: 103,
       key: 'night',
       nameEn: 'Night Devotional',
-      nameTa: 'இரவு தியானம்',
+      nameTa: 'இரவு வேத தியானம்',
       time: '21:00',
       enabled: true
     },
@@ -70,7 +82,8 @@ export const DEFAULT_NOTIFICATION_CONFIG: NotificationScheduleConfig = {
       time: '08:00',
       enabled: false
     }
-  }
+  },
+  customTimes: []
 };
 
 export const isNativePlatform = (): boolean => {
@@ -136,7 +149,7 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
  */
 export const getNotificationSchedule = (): NotificationScheduleConfig => {
   try {
-    const raw = localStorage.getItem(NOTIFICATION_SETTINGS_KEY);
+    const raw = localStorage.getItem(NOTIFICATION_SETTINGS_KEY) || localStorage.getItem('bible_notification_settings_v2');
     if (raw) {
       const parsed = JSON.parse(raw);
       return {
@@ -145,7 +158,8 @@ export const getNotificationSchedule = (): NotificationScheduleConfig => {
         slots: {
           ...DEFAULT_NOTIFICATION_CONFIG.slots,
           ...(parsed.slots || {})
-        }
+        },
+        customTimes: Array.isArray(parsed.customTimes) ? parsed.customTimes : []
       };
     }
   } catch {
@@ -168,7 +182,8 @@ export const saveNotificationSchedule = async (
     slots: {
       ...current.slots,
       ...(config.slots || {})
-    }
+    },
+    customTimes: Array.isArray(config.customTimes) ? config.customTimes : current.customTimes
   };
 
   try {
@@ -183,6 +198,68 @@ export const saveNotificationSchedule = async (
 };
 
 /**
+ * Adds a new custom reminder time to the user schedule
+ */
+export const addCustomReminderTime = async (
+  time: string,
+  appLang: AppLanguage = 'ta'
+): Promise<NotificationScheduleConfig> => {
+  const current = getNotificationSchedule();
+  const newId = 300 + current.customTimes.length + 1;
+  const newCustom: CustomReminderTime = {
+    id: newId,
+    time,
+    labelEn: `Reminder ${current.customTimes.length + 1}`,
+    labelTa: `தியான நேரம் ${current.customTimes.length + 1}`,
+    enabled: true
+  };
+
+  const updatedCustomTimes = [...current.customTimes, newCustom];
+  return saveNotificationSchedule({ customTimes: updatedCustomTimes }, appLang);
+};
+
+/**
+ * Removes a custom reminder time
+ */
+export const removeCustomReminderTime = async (
+  id: number,
+  appLang: AppLanguage = 'ta'
+): Promise<NotificationScheduleConfig> => {
+  const current = getNotificationSchedule();
+  const updatedCustomTimes = current.customTimes.filter((item) => item.id !== id);
+  return saveNotificationSchedule({ customTimes: updatedCustomTimes }, appLang);
+};
+
+/**
+ * Helper to fetch a devotional verse with reference (erupidam) and text
+ */
+export const getVerseForNotification = (indexOffset: number = 0, isTa: boolean = true) => {
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+  const targetIndex = (dayOfYear + indexOffset) % CURATED_DAILY_VERSES.length;
+  const ref = CURATED_DAILY_VERSES[targetIndex];
+
+  const meta = getBookMetaById(ref.book_id);
+  const bookName = meta ? (isTa ? meta.name_ta : meta.name_en) : '';
+  const verseRef = `${bookName} ${ref.chapter}:${ref.verse}`;
+
+  const loadedVerse = getVerseByLocation(ref.book_id, ref.chapter, ref.verse);
+  let text = '';
+  if (loadedVerse) {
+    text = isTa ? loadedVerse.text_ta : loadedVerse.text_en;
+  } else {
+    text = isTa ? ref.prompt_ta : ref.prompt_en;
+  }
+
+  return {
+    verseRef,
+    verseText: text,
+    bookId: ref.book_id,
+    chapter: ref.chapter,
+    verse: ref.verse
+  };
+};
+
+/**
  * Completely cancels and re-schedules active daily alarms
  * Uses native Android AlarmManager via @capacitor/local-notifications
  * Works 100% offline, when app is closed, and survives device reboots.
@@ -191,13 +268,16 @@ export const rescheduleAllNotifications = async (
   config: NotificationScheduleConfig,
   appLang: AppLanguage = 'ta'
 ): Promise<void> => {
-  const slotIds = [101, 102, 103, 104, 201]; // 201 is app-open reminder
+  // Cancel slot IDs (101-104), app open (201), and custom slot range (300-350)
+  const allPossibleIds = [101, 102, 103, 104, 201];
+  for (let i = 301; i <= 350; i++) {
+    allPossibleIds.push(i);
+  }
 
   if (isNativePlatform()) {
     try {
-      // 1. Cancel all existing alarms to avoid duplicates
       await LocalNotifications.cancel({
-        notifications: slotIds.map((id) => ({ id }))
+        notifications: allPossibleIds.map((id) => ({ id }))
       });
 
       if (!config.enabled) {
@@ -211,9 +291,12 @@ export const rescheduleAllNotifications = async (
         return;
       }
 
-      // 2. Schedule each enabled daily slot
       const notificationsToSchedule = [];
+      const isTa = appLang === 'ta';
+
+      // 1. Standard Daily Slots
       const slots = Object.values(config.slots);
+      let offset = 0;
 
       for (const slot of slots) {
         if (!slot.enabled) continue;
@@ -224,32 +307,71 @@ export const rescheduleAllNotifications = async (
 
         if (isNaN(hour) || isNaN(minute)) continue;
 
-        const isTa = appLang === 'ta';
-        const title = isTa
-          ? `📖 ${slot.nameTa}`
-          : `📖 ${slot.nameEn}`;
-        const body = isTa
-          ? `இன்றைய ${config.goalMinutes} நிமிட வேத வாசிப்பு நேரம் வந்துவிட்டது. இறைவார்த்தையை தியானியுங்கள்!`
-          : `Your ${config.goalMinutes}-minute Scripture time is here. Keep your reading streak alive!`;
+        const { verseRef, verseText, bookId, chapter, verse } = getVerseForNotification(offset, isTa);
+        offset++;
+
+        const title = `📖 ${verseRef}`;
+        const body = `${verseText}\n${isTa ? 'இன்றைய வேத வாசிப்பு நேரம் · தட்டவும்' : 'Today\'s Scripture reading time · Tap to read'}`;
 
         notificationsToSchedule.push({
           id: slot.id,
           title,
           body,
           schedule: {
-            on: {
-              hour,
-              minute
-            },
+            on: { hour, minute },
             allowWhileIdle: true
           },
           sound: undefined,
           smallIcon: 'ic_launcher',
+          largeIcon: 'res://icon',
           extra: {
             slotKey: slot.key,
+            bookId,
+            chapter,
+            verse,
             goalMinutes: config.goalMinutes
           }
         });
+      }
+
+      // 2. Custom Multiple Times
+      if (Array.isArray(config.customTimes)) {
+        for (const customSlot of config.customTimes) {
+          if (!customSlot.enabled) continue;
+
+          const [hourStr, minStr] = customSlot.time.split(':');
+          const hour = parseInt(hourStr, 10);
+          const minute = parseInt(minStr, 10);
+
+          if (isNaN(hour) || isNaN(minute)) continue;
+
+          const { verseRef, verseText, bookId, chapter, verse } = getVerseForNotification(offset, isTa);
+          offset++;
+
+          const label = isTa ? customSlot.labelTa : customSlot.labelEn;
+          const title = `📖 ${verseRef} · ${label}`;
+          const body = `${verseText}\n${isTa ? 'உங்கள் வேத தியான நேரம் · தட்டவும்' : 'Your personal Scripture time · Tap to read'}`;
+
+          notificationsToSchedule.push({
+            id: customSlot.id,
+            title,
+            body,
+            schedule: {
+              on: { hour, minute },
+              allowWhileIdle: true
+            },
+            sound: undefined,
+            smallIcon: 'ic_launcher',
+            largeIcon: 'res://icon',
+            extra: {
+              slotKey: 'custom-multiple',
+              bookId,
+              chapter,
+              verse,
+              goalMinutes: config.goalMinutes
+            }
+          });
+        }
       }
 
       if (notificationsToSchedule.length > 0) {
@@ -262,7 +384,51 @@ export const rescheduleAllNotifications = async (
       console.error('[NotificationService] Failed to schedule native local notifications:', err);
     }
   } else {
-    console.log('[NotificationService] Running in web environment; fallback interval active.');
+    console.log('[NotificationService] Web environment active; web intervals scheduled.');
+  }
+};
+
+/**
+ * Triggers an immediate notification for Admin push broadcasts or test alerts
+ */
+export const triggerInstantNotification = async (
+  title: string,
+  body: string,
+  bookId?: number,
+  chapter?: number,
+  verse?: number
+): Promise<void> => {
+  const notifId = Math.floor(Math.random() * 800000) + 100000;
+
+  if (isNativePlatform()) {
+    try {
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            id: notifId,
+            title,
+            body,
+            schedule: { at: new Date(Date.now() + 500) },
+            smallIcon: 'ic_launcher',
+            largeIcon: 'res://icon',
+            extra: { bookId, chapter, verse }
+          }
+        ]
+      });
+    } catch (err) {
+      console.warn('Instant native notification error:', err);
+    }
+  } else if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+    try {
+      new Notification(title, {
+        body,
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        data: { bookId, chapter, verse }
+      });
+    } catch {
+      // ignore
+    }
   }
 };
 
@@ -288,10 +454,10 @@ export const checkAppOpenReminder = async (appLang: AppLanguage = 'ta'): Promise
   localStorage.setItem(LAST_APP_OPEN_NOTIF_KEY, now.toString());
 
   const isTa = appLang === 'ta';
-  const title = isTa ? '📖 வேத வாசிப்பை தொடங்குங்கள்' : '📖 Continue Your Bible Reading';
-  const body = isTa
-    ? `இன்றைய ${config.goalMinutes} நிமிட இலக்கை நோக்கி வாசிக்க ஆரம்பியுங்கள்.`
-    : `Open God's Word today and reach your ${config.goalMinutes}-minute goal.`;
+  const { verseRef, verseText, bookId, chapter, verse } = getVerseForNotification(0, isTa);
+
+  const title = `📖 ${verseRef}`;
+  const body = `${verseText}\n${isTa ? `இன்றைய ${config.goalMinutes} நிமிட வேத வாசிப்பை தொடங்குங்கள்.` : `Start your ${config.goalMinutes}-min Scripture reading today.`}`;
 
   if (isNativePlatform()) {
     try {
@@ -302,7 +468,9 @@ export const checkAppOpenReminder = async (appLang: AppLanguage = 'ta'): Promise
             title,
             body,
             schedule: { at: new Date(Date.now() + 1500) },
-            smallIcon: 'ic_launcher'
+            smallIcon: 'ic_launcher',
+            largeIcon: 'res://icon',
+            extra: { bookId, chapter, verse }
           }
         ]
       });
@@ -311,7 +479,12 @@ export const checkAppOpenReminder = async (appLang: AppLanguage = 'ta'): Promise
     }
   } else if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
     try {
-      new Notification(title, { body });
+      new Notification(title, {
+        body,
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        data: { bookId, chapter, verse }
+      });
     } catch {
       // ignore
     }
@@ -331,6 +504,20 @@ export const initNotificationScheduler = (appLang: AppLanguage = 'ta'): (() => v
   // Trigger app open check once on startup
   checkAppOpenReminder(appLang);
 
+  // Setup Notification Click listener on native platform
+  if (isNativePlatform()) {
+    try {
+      LocalNotifications.addListener('localNotificationActionPerformed', (notificationAction) => {
+        const extra = notificationAction.notification.extra;
+        if (extra && extra.bookId && extra.chapter) {
+          window.location.hash = `#/${extra.bookId}/${extra.chapter}${extra.verse ? `/${extra.verse}` : ''}`;
+        }
+      });
+    } catch {
+      // ignore
+    }
+  }
+
   if (!isNativePlatform()) {
     webInterval = setInterval(() => {
       const config = getNotificationSchedule();
@@ -341,19 +528,42 @@ export const initNotificationScheduler = (appLang: AppLanguage = 'ta'): (() => v
       const currentH = now.getHours();
       const currentM = now.getMinutes();
 
+      // Check standard slots
       for (const slot of Object.values(config.slots)) {
         if (!slot.enabled) continue;
         const [h, m] = slot.time.split(':').map(Number);
         if (h === currentH && m === currentM && now.getSeconds() < 10) {
           const isTa = appLang === 'ta';
+          const { verseRef, verseText } = getVerseForNotification(0, isTa);
           try {
-            new Notification(isTa ? `📖 ${slot.nameTa}` : `📖 ${slot.nameEn}`, {
-              body: isTa
-                ? `இன்றைய ${config.goalMinutes} நிமிட வேத வாசிப்பு நேரம் வந்துவிட்டது.`
-                : `Your ${config.goalMinutes}-minute Bible reading time is here.`
+            new Notification(`📖 ${verseRef}`, {
+              body: `${verseText}\n${isTa ? `இன்றைய ${config.goalMinutes} நிமிட வாசிப்பு நேரம் வந்துவிட்டது.` : `Your ${config.goalMinutes}-min Scripture time is here.`}`,
+              icon: '/icon-192.png',
+              badge: '/icon-192.png'
             });
           } catch {
             // ignore
+          }
+        }
+      }
+
+      // Check custom slots
+      if (Array.isArray(config.customTimes)) {
+        for (const customSlot of config.customTimes) {
+          if (!customSlot.enabled) continue;
+          const [h, m] = customSlot.time.split(':').map(Number);
+          if (h === currentH && m === currentM && now.getSeconds() < 10) {
+            const isTa = appLang === 'ta';
+            const { verseRef, verseText } = getVerseForNotification(1, isTa);
+            try {
+              new Notification(`📖 ${verseRef}`, {
+                body: `${verseText}\n${isTa ? 'தனிப்பயன் தியான நேரம் வந்துவிட்டது.' : 'Your custom meditation time is here.'}`,
+                icon: '/icon-192.png',
+                badge: '/icon-192.png'
+              });
+            } catch {
+              // ignore
+            }
           }
         }
       }

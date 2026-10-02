@@ -82,5 +82,22 @@ export interface AdminDashboardStats {
   totalStudiesConducted: number;
   customMeditationsCount: number;
   scheduledRevivalWordsCount: number;
+  scheduledNotificationsCount?: number;
   recentActivities: AdminAuditLog[];
 }
+
+export interface AdminScheduledNotification {
+  id: string;
+  title: string;
+  book_id: number;
+  chapter: number;
+  verse: number;
+  verse_text_ta: string;
+  verse_text_en: string;
+  scheduled_time: string; // e.g. "06:00"
+  frequency: 'daily' | 'once';
+  status: 'active' | 'sent' | 'paused';
+  created_at: string;
+  created_by?: string;
+}
+

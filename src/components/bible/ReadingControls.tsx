@@ -8,6 +8,7 @@ export const ReadingControls: React.FC = () => {
     currentBook,
     currentChapter,
     language,
+    appLanguage,
     setBookAndChapter,
     setChapter,
     setIsBookSelectorOpen,
@@ -19,6 +20,7 @@ export const ReadingControls: React.FC = () => {
     return null;
   }
 
+  const isEnUI = (appLanguage || 'ta') === 'en';
   const isFirstChapter = currentBook.book_number === 1 && currentChapter === 1;
   const isLastChapter = currentBook.book_number === 66 && currentChapter === currentBook.total_chapters;
 
@@ -47,18 +49,32 @@ export const ReadingControls: React.FC = () => {
   return (
     <div className="reading-controls-wrapper">
       <div className="reading-controls">
-        <button className="nav-btn" onClick={handlePrev} disabled={isFirstChapter} title="Previous Chapter">
+        <button
+          className="nav-btn"
+          onClick={handlePrev}
+          disabled={isFirstChapter}
+          title={isEnUI ? 'Previous Chapter' : 'முந்தைய அதிகாரம்'}
+        >
           <ChevronLeft size={18} />
-          <span className="nav-btn-label">{language === 'ta' ? 'முந்தைய' : 'Previous'}</span>
+          <span className="nav-btn-label">{isEnUI ? 'Previous' : 'முந்தைய'}</span>
         </button>
 
-        <button className="btn-pill header-book-btn" onClick={() => setIsBookSelectorOpen(true)} title="Select Chapter">
+        <button
+          className="btn-pill header-book-btn"
+          onClick={() => setIsBookSelectorOpen(true)}
+          title={isEnUI ? 'Select Chapter' : 'அதிகாரத்தைத் தேர்ந்தெடுக்கவும்'}
+        >
           <BookOpen size={15} />
-          <span>{language === 'ta' ? currentBook.name_ta : currentBook.name_en} {currentChapter}</span>
+          <span>{language === 'en' ? currentBook.name_en : currentBook.name_ta} {currentChapter}</span>
         </button>
 
-        <button className="nav-btn" onClick={handleNext} disabled={isLastChapter} title="Next Chapter">
-          <span className="nav-btn-label">{language === 'ta' ? 'அடுத்த' : 'Next'}</span>
+        <button
+          className="nav-btn"
+          onClick={handleNext}
+          disabled={isLastChapter}
+          title={isEnUI ? 'Next Chapter' : 'அடுத்த அதிகாரம்'}
+        >
+          <span className="nav-btn-label">{isEnUI ? 'Next' : 'அடுத்த'}</span>
           <ChevronRight size={18} />
         </button>
       </div>
