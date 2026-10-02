@@ -36,83 +36,87 @@ import { BookOpen, Clock, ArrowRight } from 'lucide-react';
 
 // ─── App Init Splash (while checking session) ─────────────────────────────────
 
-const AppSplash: React.FC = () => (
+// ─── Devotional App Loading Screen (Splash & CSV Initialization) ─────────────
+
+const DevotionalLoadingScreen: React.FC<{ messageTa: string; messageEn: string }> = ({
+  messageTa,
+  messageEn
+}) => (
   <div
     style={{
-      minHeight: '100vh',
+      minHeight: '100dvh',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'var(--bg-primary)',
-      gap: '1rem'
-    }}
-  >
-    <div
-      style={{
-        width: '48px',
-        height: '48px',
-        borderRadius: '12px',
-        background: 'var(--accent-color)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}
-    >
-      <BookOpen size={24} color="#fff" />
-    </div>
-    <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: 0 }}>
-      வேதாகமம் தயாராகிறது...
-    </p>
-  </div>
-);
-
-// ─── Bible Loading Screen (while CSV files load) ──────────────────────────────
-
-const BibleLoadingScreen: React.FC = () => (
-  <div
-    style={{
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'var(--bg-primary)',
+      background: 'var(--bg-primary, #0f172a)',
       gap: '1.25rem',
-      padding: '2rem'
+      padding: '2rem',
+      boxSizing: 'border-box'
     }}
   >
     <div
       style={{
-        width: '48px',
-        height: '48px',
-        borderRadius: '12px',
-        background: 'var(--accent-color)',
+        width: '76px',
+        height: '76px',
+        borderRadius: '20px',
+        overflow: 'hidden',
+        boxShadow: '0 12px 28px -4px rgba(0, 0, 0, 0.35), 0 0 24px rgba(217, 119, 6, 0.25)',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        background: '#1e293b'
       }}
     >
-      <BookOpen size={24} color="#fff" />
+      <img
+        src="/icon-192.png"
+        alt="Bible Logo"
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+      />
     </div>
+
+    <div
+      style={{
+        width: '28px',
+        height: '28px',
+        border: '3px solid var(--border-color, rgba(148, 163, 184, 0.25))',
+        borderTopColor: 'var(--accent-color, #f59e0b)',
+        borderRadius: '50%',
+        animation: 'spin 0.85s linear infinite'
+      }}
+    />
 
     <div style={{ textAlign: 'center' }}>
       <p
         style={{
-          fontSize: '0.9375rem',
+          fontSize: '1rem',
           fontWeight: 600,
-          color: 'var(--text-primary)',
-          margin: '0 0 0.25rem',
-          fontFamily: 'var(--font-tamil)'
+          color: 'var(--text-primary, #f8fafc)',
+          margin: '0 0 0.35rem',
+          fontFamily: 'var(--font-tamil, inherit)'
         }}
       >
-        வேதாகம வசனங்கள் ஏற்றப்படுகின்றன...
+        {messageTa}
       </p>
-      <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: 0 }}>
-        Loading Bible verses...
+      <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #94a3b8)', margin: 0 }}>
+        {messageEn}
       </p>
     </div>
   </div>
+);
+
+const AppSplash: React.FC = () => (
+  <DevotionalLoadingScreen
+    messageTa="வேதாகமம் தயாராகிறது..."
+    messageEn="Preparing Holy Bible..."
+  />
+);
+
+const BibleLoadingScreen: React.FC = () => (
+  <DevotionalLoadingScreen
+    messageTa="வேதாகம வசனங்கள் ஏற்றப்படுகின்றன..."
+    messageEn="Loading Bible verses..."
+  />
 );
 
 // ─── Main Bible Layout (shown after loading + auth) ───────────────────────────
