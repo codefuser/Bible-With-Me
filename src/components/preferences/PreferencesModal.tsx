@@ -4,7 +4,15 @@ import { useReading } from '../../context/ReadingContext';
 import { FontSizeOption, LineHeightOption, MaxWidthOption, TamilFontOption, EnglishFontOption, ThemeOption, CustomThemeColors } from '../../types/bible';
 import { AccountPanel } from '../auth/AccountPanel';
 import { ContinuousSnapSlider } from '../common/ContinuousSnapSlider';
-import { getNotificationSchedule, saveNotificationSchedule, requestNotificationPermission, getNotificationPermission, NotificationScheduleConfig } from '../../services/notificationService';
+import {
+  getNotificationSchedule,
+  saveNotificationSchedule,
+  requestNotificationPermission,
+  getNotificationPermission,
+  NotificationScheduleConfig,
+  addCustomReminderTime,
+  removeCustomReminderTime
+} from '../../services/notificationService';
 
 interface FontItem<T> {
   id: T;
@@ -414,6 +422,19 @@ export const PreferencesModal: React.FC = () => {
     saveNotificationSchedule(updated);
   };
 
+  const [newPrefTime, setNewPrefTime] = useState('15:00');
+
+  const handleAddCustomTimeSlot = async () => {
+    if (!newPrefTime) return;
+    const updated = await addCustomReminderTime(newPrefTime, appLanguage);
+    setNotifConfig(updated);
+  };
+
+  const handleRemovePrefCustomTime = async (id: number) => {
+    const updated = await removeCustomReminderTime(id, appLanguage);
+    setNotifConfig(updated);
+  };
+
   const handleToggleAppOpen = (enabled: boolean, hours: number = 3) => {
     const updated: NotificationScheduleConfig = {
       ...notifConfig,
@@ -421,21 +442,31 @@ export const PreferencesModal: React.FC = () => {
       appOpenFrequencyHours: hours
     };
     setNotifConfig(updated);
-    saveNotificationSchedule(updated);
+    saveNotificationSchedule(updated, appLanguage);
   };
 
   if (!isPreferencesOpen) return null;
 
-  const isEn = language === 'en';
-  const isTa = language === 'ta';
+  const isEn = appLanguage === 'en';
+  const isTa = appLanguage !== 'en';
 
   const handleReturnHome = () => {
     setIsPreferencesOpen(false);
   };
 
-  // Instant Zero-Lag Synchronous Theme Switcher
+  // Instant Zero-Lag Synchronous Theme Switcher with localStorage persistence
   const handleThemeChange = (newTheme: ThemeOption, customColors?: CustomThemeColors) => {
     document.documentElement.setAttribute('data-theme', newTheme);
+    try {
+      const raw = localStorage.getItem('bible_app_preferences');
+      const p = raw ? JSON.parse(raw) : {};
+      p.theme = newTheme;
+      if (customColors) p.customThemeColors = customColors;
+      localStorage.setItem('bible_app_preferences', JSON.stringify(p));
+    } catch {
+      // ignore
+    }
+
     if (newTheme === 'custom' && customColors) {
       document.documentElement.style.setProperty('--bg-primary', customColors.bgPrimary);
       document.documentElement.style.setProperty('--bg-secondary', customColors.bgSecondary);
@@ -1273,6 +1304,92 @@ export const PreferencesModal: React.FC = () => {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Multiple Custom Reminder Times Section */}
+          {notifConfig.enabled && (
+            <div style={{ marginTop: '0.85rem', paddingTop: '0.85rem', borderTop: '1px solid var(--border-color)', marginBottom: '0.85rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {isEn ? 'Custom Reminder Times' : 'கூடுதல் தனிப்பயன் நேரங்கள்'}
+                </span>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                  {isEn ? 'Set as many times as you like' : 'எத்தனை நேரங்கள் வேண்டுமானாலும் வைக்கலாம்'}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.65rem' }}>
+                <input
+                  type="time"
+                  value={newPrefTime}
+                  onChange={(e) => setNewPrefTime(e.target.value)}
+                  style={{
+                    padding: '0.35rem 0.6rem',
+                    borderRadius: '0.5rem',
+                    border: '1px solid var(--border-color)',
+                    backgroundColor: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    flex: 1
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddCustomTimeSlot}
+                  style={{
+                    padding: '0.35rem 0.85rem',
+                    borderRadius: '0.5rem',
+                    backgroundColor: 'var(--accent-color)',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontSize: '0.8125rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  + {isEn ? 'Add Time' : 'நேரம் சேர்'}
+                </button>
+              </div>
+
+              {notifConfig.customTimes && notifConfig.customTimes.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  {notifConfig.customTimes.map((ct) => (
+                    <div
+                      key={ct.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0.4rem 0.65rem',
+                        borderRadius: '0.5rem',
+                        backgroundColor: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-color)'
+                      }}
+                    >
+                      <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                        ⏰ {ct.time} — {isEn ? ct.labelEn : ct.labelTa}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePrefCustomTime(ct.id)}
+                        style={{
+                          border: 'none',
+                          background: 'transparent',
+                          color: '#ef4444',
+                          cursor: 'pointer',
+                          fontWeight: 700,
+                          fontSize: '0.8125rem',
+                          padding: '0.2rem 0.4rem'
+                        }}
+                      >
+                        {isEn ? 'Delete' : 'நீக்கு'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

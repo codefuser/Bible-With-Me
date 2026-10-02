@@ -105,7 +105,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.625rem 1rem;
+  padding: max(0.625rem, env(safe-area-inset-top, 0px)) 1rem 0.625rem 1rem;
   background-color: var(--fsr-nav-bg);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);

@@ -73,7 +73,7 @@ const CustomBookSelect: React.FC<CustomBookSelectProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const selectedBook = books.find((b) => b.id === value);
-  const displayText = selectedBook ? (language === 'ta' ? selectedBook.name_ta : selectedBook.name_en) : placeholder;
+  const displayText = selectedBook ? (language === 'en' ? selectedBook.name_en : selectedBook.name_ta) : placeholder;
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -140,7 +140,7 @@ const CustomBookSelect: React.FC<CustomBookSelectProps> = ({
           <div style={{ padding: '0.375rem', borderBottom: '1px solid var(--border-color)' }}>
             <input
               type="text"
-              placeholder={language === 'ta' ? 'தேடு...' : 'Search...'}
+              placeholder={language === 'en' ? 'Search...' : 'தேடு...'}
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
               onClick={(e) => e.stopPropagation()}
@@ -180,7 +180,7 @@ const CustomBookSelect: React.FC<CustomBookSelectProps> = ({
                     setIsOpen(false);
                   }}
                 >
-                  <span>{language === 'ta' ? b.name_ta : b.name_en}</span>
+                  <span>{language === 'en' ? b.name_en : b.name_ta}</span>
                   {isSelected && <Check size={13} style={{ color: 'var(--accent-color)' }} />}
                 </div>
               );
@@ -352,6 +352,7 @@ export const SearchModal: React.FC = () => {
     books,
     currentBook,
     language,
+    appLanguage,
     setLanguage,
     isSearchOpen,
     setIsSearchOpen,
@@ -359,6 +360,7 @@ export const SearchModal: React.FC = () => {
     preferences
   } = useReading();
 
+  const isEnUI = (appLanguage || 'ta') === 'en';
   const { user } = useAuth();
   const userId = user?.id || null;
 
@@ -703,9 +705,9 @@ export const SearchModal: React.FC = () => {
                 ref={inputRef}
                 type="text"
                 placeholder={
-                  language === 'ta'
-                    ? 'தேடுங்கள்... பெரிய, அன்பு, anbu, யோவான் 3:16, 1 சாமுவேல் 7:1'
-                    : 'Search... love, anbu, John 3:16, 1 Sam 7:1'
+                  isEnUI
+                    ? 'Search... love, anbu, John 3:16, 1 Sam 7:1'
+                    : 'தேடுங்கள்... பெரிய, அன்பு, anbu, யோவான் 3:16, 1 சாமுவேல் 7:1'
                 }
                 value={query}
                 onChange={(e) => {
@@ -725,7 +727,7 @@ export const SearchModal: React.FC = () => {
                     setShowSuggestions(false);
                     setResults([]);
                   }}
-                  title="Clear Search"
+                  title={isEnUI ? 'Clear Search' : 'தேடலை அழி'}
                   style={{ width: '1.75rem', height: '1.75rem' }}
                 >
                   <X size={14} />
@@ -733,7 +735,7 @@ export const SearchModal: React.FC = () => {
               )}
             </div>
 
-            <button className="btn-icon" onClick={handleClose} style={{ marginLeft: '0.25rem' }}>
+            <button className="btn-icon" onClick={handleClose} title={isEnUI ? 'Close' : 'மூடு'} style={{ marginLeft: '0.25rem' }}>
               <X size={20} />
             </button>
           </div>
@@ -758,7 +760,7 @@ export const SearchModal: React.FC = () => {
                   </div>
                 ) : (
                   <div style={{ padding: '0.875rem', fontSize: '0.8125rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-                    {language === 'ta' ? 'வேதாகமத்தில் தேட தட்டச்சு செய்க...' : 'Type to search Scripture...'}
+                    {isEnUI ? 'Type to search Scripture...' : 'வேதாகமத்தில் தேட தட்டச்சு செய்க...'}
                   </div>
                 )
               ) : suggestions.length > 0 ? (
@@ -792,7 +794,7 @@ export const SearchModal: React.FC = () => {
               }}
             >
               <Layers size={14} />
-              <span>{language === 'ta' ? 'அனைத்தும்' : 'All'}</span>
+              <span>{isEnUI ? 'All' : 'அனைத்தும்'}</span>
             </button>
 
             <button
@@ -805,7 +807,7 @@ export const SearchModal: React.FC = () => {
               }}
             >
               <BookOpen size={14} />
-              <span>{language === 'ta' ? 'பழைய ஏற்பாடு' : 'Old Testament'}</span>
+              <span>{isEnUI ? 'Old Testament' : 'பழைய ஏற்பாடு'}</span>
             </button>
 
             <button
@@ -818,7 +820,7 @@ export const SearchModal: React.FC = () => {
               }}
             >
               <BookOpen size={14} />
-              <span>{language === 'ta' ? 'புதிய ஏற்பாடு' : 'New Testament'}</span>
+              <span>{isEnUI ? 'New Testament' : 'புதிய ஏற்பாடு'}</span>
             </button>
 
             <button
@@ -826,13 +828,13 @@ export const SearchModal: React.FC = () => {
               onClick={() => setShowBookRange(!showBookRange)}
             >
               <SlidersHorizontal size={14} />
-              <span>{language === 'ta' ? 'புத்தகத் தெரிவு' : 'Book Range'}</span>
+              <span>{isEnUI ? 'Book Range' : 'புத்தகத் தெரிவு'}</span>
             </button>
 
             <button
               className="segmented-filter-tab language-tab"
               onClick={cycleLanguage}
-              title="Switch Language"
+              title={isEnUI ? 'Switch Language' : 'மொழியை மாற்றுக'}
             >
               <Globe size={14} />
               <span>
@@ -854,7 +856,7 @@ export const SearchModal: React.FC = () => {
                   setShowBookRange(false);
                 }}
               >
-                <span>{language === 'ta' ? 'அனைத்தும்' : 'All'}</span>
+                <span>{isEnUI ? 'All' : 'அனைத்தும்'}</span>
               </button>
               <button
                 className={`mobile-seg-btn ${testamentFilter === 'OT' && !fromBookId ? 'active' : ''}`}
@@ -865,7 +867,7 @@ export const SearchModal: React.FC = () => {
                   setShowBookRange(false);
                 }}
               >
-                <span>{language === 'ta' ? 'பழைய' : 'OT'}</span>
+                <span>{isEnUI ? 'OT' : 'பழைய'}</span>
               </button>
               <button
                 className={`mobile-seg-btn ${testamentFilter === 'NT' && !fromBookId ? 'active' : ''}`}
@@ -876,7 +878,7 @@ export const SearchModal: React.FC = () => {
                   setShowBookRange(false);
                 }}
               >
-                <span>{language === 'ta' ? 'புதிய' : 'NT'}</span>
+                <span>{isEnUI ? 'NT' : 'புதிய'}</span>
               </button>
             </div>
 
@@ -887,7 +889,7 @@ export const SearchModal: React.FC = () => {
                 onClick={() => setShowBookRange(!showBookRange)}
               >
                 <SlidersHorizontal size={14} />
-                <span>{language === 'ta' ? 'புத்தகத் தெரிவு' : 'Books'}</span>
+                <span>{isEnUI ? 'Books' : 'புத்தகத் தெரிவு'}</span>
               </button>
 
               <button
@@ -905,7 +907,7 @@ export const SearchModal: React.FC = () => {
             <div className="book-range-filter-container">
               <CustomBookSelect
                 value={fromBookId}
-                placeholder={language === 'ta' ? 'முதல் புத்தகம்...' : 'From Book...'}
+                placeholder={isEnUI ? 'From Book...' : 'முதல் புத்தகம்...'}
                 books={books}
                 language={language}
                 alignRight={false}
@@ -913,12 +915,12 @@ export const SearchModal: React.FC = () => {
               />
 
               <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', fontWeight: 500, flexShrink: 0 }}>
-                {language === 'ta' ? 'முதல்' : 'to'}
+                {isEnUI ? 'to' : 'முதல்'}
               </span>
 
               <CustomBookSelect
                 value={toBookId}
-                placeholder={language === 'ta' ? 'வரை...' : 'To Book...'}
+                placeholder={isEnUI ? 'To Book...' : 'வரை...'}
                 books={books}
                 language={language}
                 alignRight={true}
@@ -932,7 +934,7 @@ export const SearchModal: React.FC = () => {
                     setFromBookId(undefined);
                     setToBookId(undefined);
                   }}
-                  title="Reset Book Filter"
+                  title={isEnUI ? 'Reset Book Filter' : 'புத்தக வடிகட்டலை மீட்டமை'}
                   style={{ width: '1.75rem', height: '1.75rem', flexShrink: 0 }}
                 >
                   <X size={14} />
@@ -950,18 +952,18 @@ export const SearchModal: React.FC = () => {
           style={{ flex: 1, overflowY: 'auto' }}
         >
           {loading ? (
-            <LoadingState message={language === 'ta' ? 'தேடுகிறது...' : 'Searching...'} />
+            <LoadingState message={isEnUI ? 'Searching...' : 'தேடுகிறது...'} />
           ) : isSubmitted && results.length === 0 ? (
             /* No Results State */
             <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-secondary)' }}>
               <BookOpen size={36} style={{ margin: '0 auto 0.75rem', color: 'var(--text-muted)' }} />
               <h3 style={{ fontSize: '1.0625rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.375rem' }}>
-                {language === 'ta' ? 'தேடல் முடிவுகள் இல்லை' : 'No results found'}
+                {isEnUI ? 'No results found' : 'தேடல் முடிவுகள் இல்லை'}
               </h3>
               <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                {language === 'ta'
-                  ? 'வேறு வார்த்தை அல்லது வசன குறிப்பை முயற்சிக்கவும் (எ.கா: அன்பு, anbu, யோவான் 3:16).'
-                  : 'Try searching another word or reference (e.g. love, anbu, John 3:16).'}
+                {isEnUI
+                  ? 'Try searching another word or reference (e.g. love, anbu, John 3:16).'
+                  : 'வேறு வார்த்தை அல்லது வசன குறிப்பை முயற்சிக்கவும் (எ.கா: அன்பு, anbu, யோவான் 3:16).'}
               </p>
             </div>
           ) : results.length > 0 ? (
@@ -977,7 +979,7 @@ export const SearchModal: React.FC = () => {
                 }}
               >
                 <span>
-                  {results.length} {language === 'ta' ? 'முடிவுகள்' : 'results'}
+                  {results.length} {isEnUI ? 'results' : 'முடிவுகள்'}
                 </span>
               </div>
 
@@ -1004,7 +1006,7 @@ export const SearchModal: React.FC = () => {
                   color: 'var(--text-muted)'
                 }}
               >
-                <span>{language === 'ta' ? 'இறுதியாகத் திறக்கப்பட்ட வசனங்கள்' : 'Recently Opened Verses'}</span>
+                <span>{isEnUI ? 'Recently Opened Verses' : 'இறுதியாகத் திறக்கப்பட்ட வசனங்கள்'}</span>
               </div>
 
               {openedVerses.map((res) => (
@@ -1023,12 +1025,12 @@ export const SearchModal: React.FC = () => {
             <div style={{ textAlign: 'center', padding: '4rem 1.5rem', color: 'var(--text-secondary)' }}>
               <Search size={40} style={{ margin: '0 auto 1rem', color: 'var(--accent-color)', opacity: 0.8 }} />
               <h3 style={{ fontSize: '1.0625rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.375rem' }}>
-                {language === 'ta' ? 'வேதாகமத் தேடல்' : 'Scripture Search'}
+                {isEnUI ? 'Scripture Search' : 'வேதாகமத் தேடல்'}
               </h3>
               <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', maxWidth: '420px', margin: '0 auto' }}>
-                {language === 'ta'
-                  ? 'வசனங்கள், வார்த்தைகள் அல்லது யோவான் 3:16 போன்ற வசனக் குறிப்புகளைத் தேட மேலே உள்ள பெட்டியில் தட்டச்சு செய்க.'
-                  : 'Type words, themes, or references like John 3:16 in the box above to search.'}
+                {isEnUI
+                  ? 'Type words, themes, or references like John 3:16 in the box above to search.'
+                  : 'வசனங்கள், வார்த்தைகள் அல்லது யோவான் 3:16 போன்ற வசனக் குறிப்புகளைத் தேட மேலே உள்ள பெட்டியில் தட்டச்சு செய்க.'}
               </p>
             </div>
           )}

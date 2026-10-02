@@ -9,78 +9,79 @@ export interface BookMeta {
   name_en: string;
   name_ta: string;
   code: string;
+  totalChapters: number;
 }
 
 export const BOOK_METADATA_LIST: BookMeta[] = [
   // OT (0..38)
-  { bookIndex: 0, id: 1, testament: 'OT', name_en: 'Genesis', name_ta: 'ஆதியாகமம்', code: 'GEN' },
-  { bookIndex: 1, id: 2, testament: 'OT', name_en: 'Exodus', name_ta: 'யாத்திராகமம்', code: 'EXO' },
-  { bookIndex: 2, id: 3, testament: 'OT', name_en: 'Leviticus', name_ta: 'லேவியராகமம்', code: 'LEV' },
-  { bookIndex: 3, id: 4, testament: 'OT', name_en: 'Numbers', name_ta: 'எண்ணாகமம்', code: 'NUM' },
-  { bookIndex: 4, id: 5, testament: 'OT', name_en: 'Deuteronomy', name_ta: 'உபாகமம்', code: 'DEU' },
-  { bookIndex: 5, id: 6, testament: 'OT', name_en: 'Joshua', name_ta: 'யோசுவா', code: 'JOSH' },
-  { bookIndex: 6, id: 7, testament: 'OT', name_en: 'Judges', name_ta: 'நியாயாதிபதிகள்', code: 'JUDG' },
-  { bookIndex: 7, id: 8, testament: 'OT', name_en: 'Ruth', name_ta: 'ரூத்', code: 'RUTH' },
-  { bookIndex: 8, id: 9, testament: 'OT', name_en: '1 Samuel', name_ta: '1 சாமுவேல்', code: '1SAM' },
-  { bookIndex: 9, id: 10, testament: 'OT', name_en: '2 Samuel', name_ta: '2 சாமுவேல்', code: '2SAM' },
-  { bookIndex: 10, id: 11, testament: 'OT', name_en: '1 Kings', name_ta: '1 இராஜாக்கள்', code: '1KNG' },
-  { bookIndex: 11, id: 12, testament: 'OT', name_en: '2 Kings', name_ta: '2 இராஜாக்கள்', code: '2KNG' },
-  { bookIndex: 12, id: 13, testament: 'OT', name_en: '1 Chronicles', name_ta: '1 நாளாகமம்', code: '1CHR' },
-  { bookIndex: 13, id: 14, testament: 'OT', name_en: '2 Chronicles', name_ta: '2 நாளாகமம்', code: '2CHR' },
-  { bookIndex: 14, id: 15, testament: 'OT', name_en: 'Ezra', name_ta: 'எஸ்றா', code: 'EZRA' },
-  { bookIndex: 15, id: 16, testament: 'OT', name_en: 'Nehemiah', name_ta: 'நெகேமியா', code: 'NEH' },
-  { bookIndex: 16, id: 17, testament: 'OT', name_en: 'Esther', name_ta: 'எஸ்தர்', code: 'ESTH' },
-  { bookIndex: 17, id: 18, testament: 'OT', name_en: 'Job', name_ta: 'யோபு', code: 'JOB' },
-  { bookIndex: 18, id: 19, testament: 'OT', name_en: 'Psalms', name_ta: 'சங்கீதம்', code: 'PSA' },
-  { bookIndex: 19, id: 20, testament: 'OT', name_en: 'Proverbs', name_ta: 'நீதிமொழிகள்', code: 'PROV' },
-  { bookIndex: 20, id: 21, testament: 'OT', name_en: 'Ecclesiastes', name_ta: 'பிரசங்கி', code: 'ECCL' },
-  { bookIndex: 21, id: 22, testament: 'OT', name_en: 'Song of Solomon', name_ta: 'உன்னதப்பாட்டு', code: 'SONG' },
-  { bookIndex: 22, id: 23, testament: 'OT', name_en: 'Isaiah', name_ta: 'ஏசாயா', code: 'ISA' },
-  { bookIndex: 23, id: 24, testament: 'OT', name_en: 'Jeremiah', name_ta: 'எரேமியா', code: 'JER' },
-  { bookIndex: 24, id: 25, testament: 'OT', name_en: 'Lamentations', name_ta: 'புலம்பல்', code: 'LAM' },
-  { bookIndex: 25, id: 26, testament: 'OT', name_en: 'Ezekiel', name_ta: 'எசேக்கியேல்', code: 'EZEK' },
-  { bookIndex: 26, id: 27, testament: 'OT', name_en: 'Daniel', name_ta: 'தானியேல்', code: 'DAN' },
-  { bookIndex: 27, id: 28, testament: 'OT', name_en: 'Hosea', name_ta: 'ஓசியா', code: 'HOS' },
-  { bookIndex: 28, id: 29, testament: 'OT', name_en: 'Joel', name_ta: 'யோவேல்', code: 'JOEL' },
-  { bookIndex: 29, id: 30, testament: 'OT', name_en: 'Amos', name_ta: 'ஆமோஸ்', code: 'AMOS' },
-  { bookIndex: 30, id: 31, testament: 'OT', name_en: 'Obadiah', name_ta: 'ஒபதியா', code: 'OBAD' },
-  { bookIndex: 31, id: 32, testament: 'OT', name_en: 'Jonah', name_ta: 'யோனா', code: 'JONAH' },
-  { bookIndex: 32, id: 33, testament: 'OT', name_en: 'Micah', name_ta: 'மீகா', code: 'MIC' },
-  { bookIndex: 33, id: 34, testament: 'OT', name_en: 'Nahum', name_ta: 'நாகூம்', code: 'NAH' },
-  { bookIndex: 34, id: 35, testament: 'OT', name_en: 'Habakkuk', name_ta: 'அபகூக்', code: 'HAB' },
-  { bookIndex: 35, id: 36, testament: 'OT', name_en: 'Zephaniah', name_ta: 'செப்பனியா', code: 'ZEPH' },
-  { bookIndex: 36, id: 37, testament: 'OT', name_en: 'Haggai', name_ta: 'ஆகாய்', code: 'HAG' },
-  { bookIndex: 37, id: 38, testament: 'OT', name_en: 'Zechariah', name_ta: 'சகரியா', code: 'ZECH' },
-  { bookIndex: 38, id: 39, testament: 'OT', name_en: 'Malachi', name_ta: 'மல்கியா', code: 'MAL' },
+  { bookIndex: 0, id: 1, testament: 'OT', name_en: 'Genesis', name_ta: 'ஆதியாகமம்', code: 'GEN', totalChapters: 50 },
+  { bookIndex: 1, id: 2, testament: 'OT', name_en: 'Exodus', name_ta: 'யாத்திராகமம்', code: 'EXO', totalChapters: 40 },
+  { bookIndex: 2, id: 3, testament: 'OT', name_en: 'Leviticus', name_ta: 'லேவியராகமம்', code: 'LEV', totalChapters: 27 },
+  { bookIndex: 3, id: 4, testament: 'OT', name_en: 'Numbers', name_ta: 'எண்ணாகமம்', code: 'NUM', totalChapters: 36 },
+  { bookIndex: 4, id: 5, testament: 'OT', name_en: 'Deuteronomy', name_ta: 'உபாகமம்', code: 'DEU', totalChapters: 34 },
+  { bookIndex: 5, id: 6, testament: 'OT', name_en: 'Joshua', name_ta: 'யோசுவா', code: 'JOSH', totalChapters: 24 },
+  { bookIndex: 6, id: 7, testament: 'OT', name_en: 'Judges', name_ta: 'நியாயாதிபதிகள்', code: 'JUDG', totalChapters: 21 },
+  { bookIndex: 7, id: 8, testament: 'OT', name_en: 'Ruth', name_ta: 'ரூத்', code: 'RUTH', totalChapters: 4 },
+  { bookIndex: 8, id: 9, testament: 'OT', name_en: '1 Samuel', name_ta: '1 சாமுவேல்', code: '1SAM', totalChapters: 31 },
+  { bookIndex: 9, id: 10, testament: 'OT', name_en: '2 Samuel', name_ta: '2 சாமுவேல்', code: '2SAM', totalChapters: 24 },
+  { bookIndex: 10, id: 11, testament: 'OT', name_en: '1 Kings', name_ta: '1 இராஜாக்கள்', code: '1KNG', totalChapters: 22 },
+  { bookIndex: 11, id: 12, testament: 'OT', name_en: '2 Kings', name_ta: '2 இராஜாக்கள்', code: '2KNG', totalChapters: 25 },
+  { bookIndex: 12, id: 13, testament: 'OT', name_en: '1 Chronicles', name_ta: '1 நாளாகமம்', code: '1CHR', totalChapters: 29 },
+  { bookIndex: 13, id: 14, testament: 'OT', name_en: '2 Chronicles', name_ta: '2 நாளாகமம்', code: '2CHR', totalChapters: 36 },
+  { bookIndex: 14, id: 15, testament: 'OT', name_en: 'Ezra', name_ta: 'எஸ்றா', code: 'EZRA', totalChapters: 10 },
+  { bookIndex: 15, id: 16, testament: 'OT', name_en: 'Nehemiah', name_ta: 'நெகேமியா', code: 'NEH', totalChapters: 13 },
+  { bookIndex: 16, id: 17, testament: 'OT', name_en: 'Esther', name_ta: 'எஸ்தர்', code: 'ESTH', totalChapters: 10 },
+  { bookIndex: 17, id: 18, testament: 'OT', name_en: 'Job', name_ta: 'யோபு', code: 'JOB', totalChapters: 42 },
+  { bookIndex: 18, id: 19, testament: 'OT', name_en: 'Psalms', name_ta: 'சங்கீதம்', code: 'PSA', totalChapters: 150 },
+  { bookIndex: 19, id: 20, testament: 'OT', name_en: 'Proverbs', name_ta: 'நீதிமொழிகள்', code: 'PROV', totalChapters: 31 },
+  { bookIndex: 20, id: 21, testament: 'OT', name_en: 'Ecclesiastes', name_ta: 'பிரசங்கி', code: 'ECCL', totalChapters: 12 },
+  { bookIndex: 21, id: 22, testament: 'OT', name_en: 'Song of Solomon', name_ta: 'உன்னதப்பாட்டு', code: 'SONG', totalChapters: 8 },
+  { bookIndex: 22, id: 23, testament: 'OT', name_en: 'Isaiah', name_ta: 'ஏசாயா', code: 'ISA', totalChapters: 66 },
+  { bookIndex: 23, id: 24, testament: 'OT', name_en: 'Jeremiah', name_ta: 'எரேமியா', code: 'JER', totalChapters: 52 },
+  { bookIndex: 24, id: 25, testament: 'OT', name_en: 'Lamentations', name_ta: 'புலம்பல்', code: 'LAM', totalChapters: 5 },
+  { bookIndex: 25, id: 26, testament: 'OT', name_en: 'Ezekiel', name_ta: 'எசேக்கியேல்', code: 'EZEK', totalChapters: 48 },
+  { bookIndex: 26, id: 27, testament: 'OT', name_en: 'Daniel', name_ta: 'தானியேல்', code: 'DAN', totalChapters: 12 },
+  { bookIndex: 27, id: 28, testament: 'OT', name_en: 'Hosea', name_ta: 'ஓசியா', code: 'HOS', totalChapters: 14 },
+  { bookIndex: 28, id: 29, testament: 'OT', name_en: 'Joel', name_ta: 'யோவேல்', code: 'JOEL', totalChapters: 3 },
+  { bookIndex: 29, id: 30, testament: 'OT', name_en: 'Amos', name_ta: 'ஆமோஸ்', code: 'AMOS', totalChapters: 9 },
+  { bookIndex: 30, id: 31, testament: 'OT', name_en: 'Obadiah', name_ta: 'ஒபதியா', code: 'OBAD', totalChapters: 1 },
+  { bookIndex: 31, id: 32, testament: 'OT', name_en: 'Jonah', name_ta: 'யோனா', code: 'JONAH', totalChapters: 4 },
+  { bookIndex: 32, id: 33, testament: 'OT', name_en: 'Micah', name_ta: 'மீகா', code: 'MIC', totalChapters: 7 },
+  { bookIndex: 33, id: 34, testament: 'OT', name_en: 'Nahum', name_ta: 'நாகூம்', code: 'NAH', totalChapters: 3 },
+  { bookIndex: 34, id: 35, testament: 'OT', name_en: 'Habakkuk', name_ta: 'அபகூக்', code: 'HAB', totalChapters: 3 },
+  { bookIndex: 35, id: 36, testament: 'OT', name_en: 'Zephaniah', name_ta: 'செப்பனியா', code: 'ZEPH', totalChapters: 3 },
+  { bookIndex: 36, id: 37, testament: 'OT', name_en: 'Haggai', name_ta: 'ஆகாய்', code: 'HAG', totalChapters: 2 },
+  { bookIndex: 37, id: 38, testament: 'OT', name_en: 'Zechariah', name_ta: 'சகரியா', code: 'ZECH', totalChapters: 14 },
+  { bookIndex: 38, id: 39, testament: 'OT', name_en: 'Malachi', name_ta: 'மல்கியா', code: 'MAL', totalChapters: 4 },
 
   // NT (39..65)
-  { bookIndex: 39, id: 40, testament: 'NT', name_en: 'Matthew', name_ta: 'மத்தேயு', code: 'MATT' },
-  { bookIndex: 40, id: 41, testament: 'NT', name_en: 'Mark', name_ta: 'மாற்கு', code: 'MARK' },
-  { bookIndex: 41, id: 42, testament: 'NT', name_en: 'Luke', name_ta: 'லூக்கா', code: 'LUKE' },
-  { bookIndex: 42, id: 43, testament: 'NT', name_en: 'John', name_ta: 'யோவான்', code: 'JOHN' },
-  { bookIndex: 43, id: 44, testament: 'NT', name_en: 'Acts', name_ta: 'அப்போஸ்தலர்', code: 'ACTS' },
-  { bookIndex: 44, id: 45, testament: 'NT', name_en: 'Romans', name_ta: 'ரோமர்', code: 'ROM' },
-  { bookIndex: 45, id: 46, testament: 'NT', name_en: '1 Corinthians', name_ta: '1 கொரிந்தியர்', code: '1COR' },
-  { bookIndex: 46, id: 47, testament: 'NT', name_en: '2 Corinthians', name_ta: '2 கொரிந்தியர்', code: '2COR' },
-  { bookIndex: 47, id: 48, testament: 'NT', name_en: 'Galatians', name_ta: 'கலாத்தியர்', code: 'GAL' },
-  { bookIndex: 48, id: 49, testament: 'NT', name_en: 'Ephesians', name_ta: 'எபேசியர்', code: 'EPH' },
-  { bookIndex: 49, id: 50, testament: 'NT', name_en: 'Philippians', name_ta: 'பிலிப்பியர்', code: 'PHIL' },
-  { bookIndex: 50, id: 51, testament: 'NT', name_en: 'Colossians', name_ta: 'கொலோசெயர்', code: 'COL' },
-  { bookIndex: 51, id: 52, testament: 'NT', name_en: '1 Thessalonians', name_ta: '1 தெசலோனிக்கேயர்', code: '1THES' },
-  { bookIndex: 52, id: 53, testament: 'NT', name_en: '2 Thessalonians', name_ta: '2 தெசலோனிக்கேயர்', code: '2THES' },
-  { bookIndex: 53, id: 54, testament: 'NT', name_en: '1 Timothy', name_ta: '1 தீமோத்தேவு', code: '1TIM' },
-  { bookIndex: 54, id: 55, testament: 'NT', name_en: '2 Timothy', name_ta: '2 தீமோத்தேவு', code: '2TIM' },
-  { bookIndex: 55, id: 56, testament: 'NT', name_en: 'Titus', name_ta: 'தீத்து', code: 'TITUS' },
-  { bookIndex: 56, id: 57, testament: 'NT', name_en: 'Philemon', name_ta: 'பிலேமோன்', code: 'PHILEM' },
-  { bookIndex: 57, id: 58, testament: 'NT', name_en: 'Hebrews', name_ta: 'எபிரெயர்', code: 'HEB' },
-  { bookIndex: 58, id: 59, testament: 'NT', name_en: 'James', name_ta: 'யாக்கோபு', code: 'JAS' },
-  { bookIndex: 59, id: 60, testament: 'NT', name_en: '1 Peter', name_ta: '1 பேதுரு', code: '1PET' },
-  { bookIndex: 60, id: 61, testament: 'NT', name_en: '2 Peter', name_ta: '2 பேதுரு', code: '2PET' },
-  { bookIndex: 61, id: 62, testament: 'NT', name_en: '1 John', name_ta: '1 யோவான்', code: '1JOHN' },
-  { bookIndex: 62, id: 63, testament: 'NT', name_en: '2 John', name_ta: '2 யோவான்', code: '2JOHN' },
-  { bookIndex: 63, id: 64, testament: 'NT', name_en: '3 John', name_ta: '3 யோவான்', code: '3JOHN' },
-  { bookIndex: 64, id: 65, testament: 'NT', name_en: 'Jude', name_ta: 'யூதா', code: 'JUDE' },
-  { bookIndex: 65, id: 66, testament: 'NT', name_en: 'Revelation', name_ta: 'வெளிப்படுத்தின விசேஷம்', code: 'REV' }
+  { bookIndex: 39, id: 40, testament: 'NT', name_en: 'Matthew', name_ta: 'மத்தேயு', code: 'MATT', totalChapters: 28 },
+  { bookIndex: 40, id: 41, testament: 'NT', name_en: 'Mark', name_ta: 'மாற்கு', code: 'MARK', totalChapters: 16 },
+  { bookIndex: 41, id: 42, testament: 'NT', name_en: 'Luke', name_ta: 'லூக்கா', code: 'LUKE', totalChapters: 24 },
+  { bookIndex: 42, id: 43, testament: 'NT', name_en: 'John', name_ta: 'யோவான்', code: 'JOHN', totalChapters: 21 },
+  { bookIndex: 43, id: 44, testament: 'NT', name_en: 'Acts', name_ta: 'அப்போஸ்தலர்', code: 'ACTS', totalChapters: 28 },
+  { bookIndex: 44, id: 45, testament: 'NT', name_en: 'Romans', name_ta: 'ரோமர்', code: 'ROM', totalChapters: 16 },
+  { bookIndex: 45, id: 46, testament: 'NT', name_en: '1 Corinthians', name_ta: '1 கொரிந்தியர்', code: '1COR', totalChapters: 16 },
+  { bookIndex: 46, id: 47, testament: 'NT', name_en: '2 Corinthians', name_ta: '2 கொரிந்தியர்', code: '2COR', totalChapters: 13 },
+  { bookIndex: 47, id: 48, testament: 'NT', name_en: 'Galatians', name_ta: 'கலாத்தியர்', code: 'GAL', totalChapters: 6 },
+  { bookIndex: 48, id: 49, testament: 'NT', name_en: 'Ephesians', name_ta: 'எபேசியர்', code: 'EPH', totalChapters: 6 },
+  { bookIndex: 49, id: 50, testament: 'NT', name_en: 'Philippians', name_ta: 'பிலிப்பியர்', code: 'PHIL', totalChapters: 4 },
+  { bookIndex: 50, id: 51, testament: 'NT', name_en: 'Colossians', name_ta: 'கொலோசெயர்', code: 'COL', totalChapters: 4 },
+  { bookIndex: 51, id: 52, testament: 'NT', name_en: '1 Thessalonians', name_ta: '1 தெசலோனிக்கேயர்', code: '1THES', totalChapters: 5 },
+  { bookIndex: 52, id: 53, testament: 'NT', name_en: '2 Thessalonians', name_ta: '2 தெசலோனிக்கேயர்', code: '2THES', totalChapters: 3 },
+  { bookIndex: 53, id: 54, testament: 'NT', name_en: '1 Timothy', name_ta: '1 தீமோத்தேவு', code: '1TIM', totalChapters: 6 },
+  { bookIndex: 54, id: 55, testament: 'NT', name_en: '2 Timothy', name_ta: '2 தீமோத்தேவு', code: '2TIM', totalChapters: 4 },
+  { bookIndex: 55, id: 56, testament: 'NT', name_en: 'Titus', name_ta: 'தீத்து', code: 'TITUS', totalChapters: 3 },
+  { bookIndex: 56, id: 57, testament: 'NT', name_en: 'Philemon', name_ta: 'பிலேமோன்', code: 'PHILEM', totalChapters: 1 },
+  { bookIndex: 57, id: 58, testament: 'NT', name_en: 'Hebrews', name_ta: 'எபிரெயர்', code: 'HEB', totalChapters: 13 },
+  { bookIndex: 58, id: 59, testament: 'NT', name_en: 'James', name_ta: 'யாக்கோபு', code: 'JAS', totalChapters: 5 },
+  { bookIndex: 59, id: 60, testament: 'NT', name_en: '1 Peter', name_ta: '1 பேதுரு', code: '1PET', totalChapters: 5 },
+  { bookIndex: 60, id: 61, testament: 'NT', name_en: '2 Peter', name_ta: '2 பேதுரு', code: '2PET', totalChapters: 3 },
+  { bookIndex: 61, id: 62, testament: 'NT', name_en: '1 John', name_ta: '1 யோவான்', code: '1JOHN', totalChapters: 5 },
+  { bookIndex: 62, id: 63, testament: 'NT', name_en: '2 John', name_ta: '2 யோவான்', code: '2JOHN', totalChapters: 1 },
+  { bookIndex: 63, id: 64, testament: 'NT', name_en: '3 John', name_ta: '3 யோவான்', code: '3JOHN', totalChapters: 1 },
+  { bookIndex: 64, id: 65, testament: 'NT', name_en: 'Jude', name_ta: 'யூதா', code: 'JUDE', totalChapters: 1 },
+  { bookIndex: 65, id: 66, testament: 'NT', name_en: 'Revelation', name_ta: 'வெளிப்படுத்தின விசேஷம்', code: 'REV', totalChapters: 22 }
 ];
 
 // Explicit Canonical Lookup Functions
@@ -304,7 +305,55 @@ export const loadBibleDatasets = (): Promise<void> => {
     }
 
     try {
-      // 2. Fallback: Fetch CSV files concurrently
+      // 2. High-speed Compact JSON fetch (single request, ~34ms C++ parse)
+      const compactRes = await fetch('/bible-datasets/bible-compact.json').catch(() => null);
+
+      if (compactRes && compactRes.ok) {
+        const compactData: [number, number, number, number, string, string][] = await compactRes.json();
+        
+        allVersesStore.length = 0;
+        verseStore.clear();
+        bookMaxChapters.clear();
+
+        for (let i = 0; i < compactData.length; i++) {
+          const [verseId, bookIndex, chapter, verseNum, textEn, textTa] = compactData[i];
+
+          const currentMax = bookMaxChapters.get(bookIndex) || 0;
+          if (chapter > currentMax) {
+            bookMaxChapters.set(bookIndex, chapter);
+          }
+
+          const bookMeta = getBookMetaByIndex(bookIndex);
+          const canonicalBookId = bookMeta ? bookMeta.id : bookIndex + 1;
+
+          const verseObj: BibleVerse = {
+            id: verseId,
+            book_id: canonicalBookId,
+            chapter,
+            verse: verseNum,
+            text_en: textEn,
+            text_ta: textTa,
+            norm_ta: textTa ? textTa.normalize('NFC') : '',
+            lower_en: textEn ? textEn.toLowerCase() : ''
+          };
+
+          const key = `${bookIndex}_${chapter}_${verseNum}`;
+          verseStore.set(key, verseObj);
+          allVersesStore.push(verseObj);
+        }
+
+        isLoaded = true;
+        console.log(`[csvBibleService] Loaded ${allVersesStore.length} verses in <50ms from compact JSON!`);
+
+        saveToIndexedDB(allVersesStore, Array.from(bookMaxChapters.entries())).catch((err) =>
+          console.warn('[csvBibleService] Cache save error:', err)
+        );
+
+        scheduleWordIndexing();
+        return;
+      }
+
+      // 3. Fallback: Fetch CSV files concurrently if compact JSON unavailable
       const [enRes, taRes] = await Promise.all([
         fetch('/bible-datasets/english-bible.csv'),
         fetch('/bible-datasets/tamil-bible.csv')
@@ -315,13 +364,11 @@ export const loadBibleDatasets = (): Promise<void> => {
         taRes.text()
       ]);
 
-      // 3. Parse CSVs using PapaParse
       const enParsed = Papa.parse<CsvRow>(enCsvText, { header: true, skipEmptyLines: true });
       const taParsed = Papa.parse<CsvRow>(taCsvText, { header: true, skipEmptyLines: true });
 
       const enRows = enParsed.data;
       const taRows = taParsed.data;
-
       const totalCount = Math.min(enRows.length, taRows.length);
 
       for (let i = 0; i < totalCount; i++) {
@@ -335,7 +382,6 @@ export const loadBibleDatasets = (): Promise<void> => {
 
         if (isNaN(bookIndex) || isNaN(chapter) || isNaN(verseNum)) continue;
 
-        // Track max chapter count per book
         const currentMax = bookMaxChapters.get(bookIndex) || 0;
         if (chapter > currentMax) {
           bookMaxChapters.set(bookIndex, chapter);
@@ -369,15 +415,13 @@ export const loadBibleDatasets = (): Promise<void> => {
       isLoaded = true;
       console.log(`[csvBibleService] Successfully parsed ${allVersesStore.length} verses from CSVs!`);
 
-      // Persist parsed dataset to IndexedDB for next cold boot
       saveToIndexedDB(allVersesStore, Array.from(bookMaxChapters.entries())).catch((err) =>
         console.warn('[csvBibleService] Cache save error:', err)
       );
 
-      // Lazy background word indexing without blocking the main thread
       scheduleWordIndexing();
     } catch (err) {
-      console.error('Failed loading Bible CSV datasets:', err);
+      console.error('Failed loading Bible datasets:', err);
       throw err;
     }
   })();
@@ -385,7 +429,7 @@ export const loadBibleDatasets = (): Promise<void> => {
   return loadPromise;
 };
 
-// Return all 66 books with dynamically calculated chapter counts
+// Return all 66 books with dynamically calculated or standard chapter counts
 export const getBibleBooks = (): BibleBook[] => {
   return BOOK_METADATA_LIST.map((meta) => ({
     id: meta.id,
@@ -395,7 +439,7 @@ export const getBibleBooks = (): BibleBook[] => {
     name_en: meta.name_en,
     name_ta: meta.name_ta,
     code: meta.code,
-    total_chapters: bookMaxChapters.get(meta.bookIndex) || 1
+    total_chapters: bookMaxChapters.get(meta.bookIndex) || meta.totalChapters
   }));
 };
 

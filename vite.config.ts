@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'bible-datasets/*.csv'],
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'bible-datasets/*.json', 'bible-datasets/*.csv'],
       manifest: {
         name: 'Bible - Personal Reading & Study',
         short_name: 'Bible',
@@ -32,8 +32,8 @@ export default defineConfig({
         ]
       },
       workbox: {
-        maximumFileSizeToCacheInBytes: 15 * 1024 * 1024,
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,csv}']
+        maximumFileSizeToCacheInBytes: 25 * 1024 * 1024,
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,csv,json}']
       }
     })
   ],

@@ -124,7 +124,7 @@ const BibleLoadingScreen: React.FC = () => (
 // ─── Main Bible Layout (shown after loading + auth) ───────────────────────────
 
 const MainLayout: React.FC = () => {
-  const { historyItem, books, language, setBookAndChapter, preferences, isBibleDataLoading, isPreferencesOpen, isSearchOpen } =
+  const { historyItem, books, language, appLanguage, setBookAndChapter, preferences, isBibleDataLoading, isPreferencesOpen, isSearchOpen } =
     useReading();
   const { isExitModalOpen, handleConfirmExit, handleCancelExit } = useMobileBackButton();
   const [isAdminView, setIsAdminView] = useState<boolean>(() => isAdminRoute());
@@ -178,7 +178,7 @@ const MainLayout: React.FC = () => {
       <KeyboardShortcuts />
       <Header />
       <AnnouncementBanner />
-      <OfflineBanner language={language} />
+      <OfflineBanner language={appLanguage} />
 
       <div className="app-body-layout">
         {/* Permanent Desktop Side Navigation Sidebar */}
@@ -248,7 +248,7 @@ const MainLayout: React.FC = () => {
 
 // ─── App Gate — decides what to show based on auth state ─────────────────────
 
-const GUEST_MODE_KEY = 'bible_guest_mode_entered';
+const GUEST_MODE_KEY = 'bible_guest_mode_entered_v2';
 const ONBOARDED_KEY = 'bible_user_onboarded_v1';
 
 const AppGate: React.FC = () => {
@@ -258,19 +258,19 @@ const AppGate: React.FC = () => {
     () => localStorage.getItem(ONBOARDED_KEY) === 'true'
   );
   const [guestModeEntered, setGuestModeEntered] = useState<boolean>(
-    () => sessionStorage.getItem(GUEST_MODE_KEY) === 'true'
+    () => localStorage.getItem(GUEST_MODE_KEY) === 'true'
   );
 
   // If user logs in after being on landing page, update guestMode
   useEffect(() => {
     if (isAuthenticated) {
-      sessionStorage.removeItem(GUEST_MODE_KEY);
+      localStorage.removeItem(GUEST_MODE_KEY);
       setGuestModeEntered(false);
     }
   }, [isAuthenticated]);
 
   const handleEnterAsGuest = () => {
-    sessionStorage.setItem(GUEST_MODE_KEY, 'true');
+    localStorage.setItem(GUEST_MODE_KEY, 'true');
     setGuestModeEntered(true);
   };
 
@@ -297,9 +297,10 @@ const AppGate: React.FC = () => {
       onboardingCompleted: true
     });
     if (data.action === 'guest') {
-      sessionStorage.setItem(GUEST_MODE_KEY, 'true');
+      localStorage.setItem(GUEST_MODE_KEY, 'true');
       setGuestModeEntered(true);
     } else {
+      localStorage.setItem(GUEST_MODE_KEY, 'true');
       setIsAuthModalOpen(true);
     }
   };

@@ -899,3 +899,73 @@ export const initAdminRealtimeSync = (): (() => void) => {
     supabase?.removeChannel(channel);
   };
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ADMIN AUTOMATED / SCHEDULED PUSH NOTIFICATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { AdminScheduledNotification } from '../types/adminTypes';
+import { triggerInstantNotification } from './notificationService';
+import { getBookMetaById } from './csvBibleService';
+
+const ADMIN_NOTIFICATIONS_KEY = 'bible_admin_scheduled_notifications_v1';
+
+export const getAdminNotifications = (): AdminScheduledNotification[] => {
+  try {
+    const raw = localStorage.getItem(ADMIN_NOTIFICATIONS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {
+    // fallback
+  }
+  return [
+    {
+      id: 'notif-def-1',
+      title: 'இன்றைய ஆசீர்வாத வசனம் · Daily Blessing Word',
+      book_id: 43,
+      chapter: 3,
+      verse: 16,
+      verse_text_ta: 'தேவன், தம்முடைய ஒரேபேறான குமாரனை விசுவாசிக்கிறவன் எவனோ அவன் கெட்டுப்போகாமல் நித்தியஜீவனை அடையும்படிக்கு, அவரைத் தந்தருளி, இவ்வளவாய் உலகத்தில் அன்புகூர்ந்தார்.',
+      verse_text_en: 'For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.',
+      scheduled_time: '06:30',
+      frequency: 'daily',
+      status: 'active',
+      created_at: new Date().toISOString()
+    }
+  ];
+};
+
+export const saveAdminNotification = (notif: AdminScheduledNotification, adminEmail: string = 'Admin'): AdminScheduledNotification[] => {
+  const current = getAdminNotifications();
+  const index = current.findIndex((n) => n.id === notif.id);
+  let updated: AdminScheduledNotification[];
+  if (index >= 0) {
+    updated = [...current];
+    updated[index] = notif;
+  } else {
+    updated = [notif, ...current];
+  }
+  localStorage.setItem(ADMIN_NOTIFICATIONS_KEY, JSON.stringify(updated));
+  addAuditLog('Scheduled Notification Saved', 'content', `Notification "${notif.title}" (${notif.scheduled_time}) saved`, adminEmail);
+  window.dispatchEvent(new CustomEvent('admin-notification-updated', { detail: updated }));
+  return updated;
+};
+
+export const deleteAdminNotification = (id: string, adminEmail: string = 'Admin'): AdminScheduledNotification[] => {
+  const current = getAdminNotifications();
+  const updated = current.filter((n) => n.id !== id);
+  localStorage.setItem(ADMIN_NOTIFICATIONS_KEY, JSON.stringify(updated));
+  addAuditLog('Scheduled Notification Deleted', 'content', `Notification ${id} deleted`, adminEmail);
+  window.dispatchEvent(new CustomEvent('admin-notification-updated', { detail: updated }));
+  return updated;
+};
+
+export const broadcastAdminNotificationNow = async (notif: AdminScheduledNotification): Promise<void> => {
+  const meta = getBookMetaById(notif.book_id);
+  const bookNameTa = meta ? meta.name_ta : '';
+  const bookNameEn = meta ? meta.name_en : '';
+  const refTitle = `📖 ${bookNameTa || bookNameEn} ${notif.chapter}:${notif.verse} · ${notif.title}`;
+  const bodyText = notif.verse_text_ta || notif.verse_text_en;
+
+  await triggerInstantNotification(refTitle, bodyText, notif.book_id, notif.chapter, notif.verse);
+};
+

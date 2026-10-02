@@ -58,6 +58,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
 
   // Step 3: Notifications
   const [reminderTime, setReminderTime] = useState<string>('07:00');
+  const [customTimesList, setCustomTimesList] = useState<string[]>([]);
+  const [newCustomTime, setNewCustomTime] = useState<string>('18:00');
   const [morningSlot, setMorningSlot] = useState<boolean>(true);
   const [afternoonSlot, setAfternoonSlot] = useState<boolean>(false);
   const [nightSlot, setNightSlot] = useState<boolean>(true);
@@ -73,10 +75,29 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
 
   const isTa = appLang === 'ta';
 
-  // Handle Theme Change with real-time DOM update preview
+  // Handle Theme Change with real-time DOM update preview & localStorage persistence
   const handleThemeSelect = (theme: ThemeOption) => {
     setSelectedTheme(theme);
     document.documentElement.setAttribute('data-theme', theme);
+    try {
+      const raw = localStorage.getItem('bible_app_preferences');
+      const prefs = raw ? JSON.parse(raw) : {};
+      prefs.theme = theme;
+      localStorage.setItem('bible_app_preferences', JSON.stringify(prefs));
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleAddCustomTime = () => {
+    if (!newCustomTime) return;
+    if (!customTimesList.includes(newCustomTime)) {
+      setCustomTimesList([...customTimesList, newCustomTime]);
+    }
+  };
+
+  const handleRemoveCustomTime = (timeToRemove: string) => {
+    setCustomTimesList(customTimesList.filter((t) => t !== timeToRemove));
   };
 
   // Handle Push Permission Request
@@ -102,7 +123,32 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
   const effectiveGoal = isCustomGoal ? Math.max(1, customGoalValue) : goalMinutes;
 
   const finishOnboarding = (action: 'guest' | 'auth') => {
+    // Persist all preferences to localStorage immediately so app restart maintains them perfectly
+    try {
+      const raw = localStorage.getItem('bible_app_preferences');
+      const prefs = raw ? JSON.parse(raw) : {};
+      prefs.theme = selectedTheme;
+      prefs.appLanguage = appLang;
+      prefs.bibleLanguage = bibleLang;
+      prefs.language = bibleLang;
+      prefs.dailyGoalMinutes = effectiveGoal;
+      prefs.reminderTime = reminderTime;
+      prefs.notificationsEnabled = notifGranted;
+      prefs.onboardingCompleted = true;
+      localStorage.setItem('bible_app_preferences', JSON.stringify(prefs));
+    } catch {
+      // ignore
+    }
+
     const existing = getNotificationSchedule();
+    const mappedCustoms = customTimesList.map((t, idx) => ({
+      id: 301 + idx,
+      time: t,
+      labelEn: `Custom Reminder ${idx + 1}`,
+      labelTa: `தனிப்பயன் நேரம் ${idx + 1}`,
+      enabled: true
+    }));
+
     saveNotificationSchedule({
       ...existing,
       enabled: notifGranted,
@@ -112,8 +158,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
         afternoon: { ...existing.slots.afternoon, enabled: afternoonSlot, time: '12:30' },
         night: { ...existing.slots.night, enabled: nightSlot, time: '21:00' },
         custom: { ...existing.slots.custom, enabled: notifGranted, time: reminderTime }
-      }
-    });
+      },
+      customTimes: mappedCustoms
+    }, appLang);
 
     onComplete({
       goalMinutes: effectiveGoal,
@@ -524,13 +571,94 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
               <div className="onboarding-custom-time">
                 <Clock size={18} color="var(--text-muted)" />
                 <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                  {isTa ? 'தனிப்பயன் நேரம்:' : 'Custom Time:'}
+                  {isTa ? 'முதன்மை நேரம்:' : 'Primary Time:'}
                 </span>
                 <input
                   type="time"
                   value={reminderTime}
                   onChange={(e) => setReminderTime(e.target.value)}
                 />
+              </div>
+
+              {/* Multiple Custom Notification Times */}
+              <div style={{ marginTop: '0.75rem', background: 'var(--bg-secondary)', padding: '0.75rem', borderRadius: '10px' }}>
+                <div style={{ fontSize: '0.8125rem', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>{isTa ? 'கூடுதல் தனிப்பயன் நேரங்கள்' : 'Multiple Custom Times'}</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                    {isTa ? 'எத்தனை வேண்டுமானாலும் சேர்க்கலாம்' : 'Add as many as you want'}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <input
+                    type="time"
+                    value={newCustomTime}
+                    onChange={(e) => setNewCustomTime(e.target.value)}
+                    style={{
+                      background: 'var(--bg-surface)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '8px',
+                      padding: '0.4rem 0.6rem',
+                      fontSize: '0.85rem',
+                      color: 'var(--text-primary)',
+                      flex: 1
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCustomTime}
+                    style={{
+                      background: 'var(--accent-color)',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.4rem 0.85rem',
+                      fontSize: '0.8125rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    + {isTa ? 'சேர்' : 'Add'}
+                  </button>
+                </div>
+
+                {customTimesList.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                    {customTimesList.map((t) => (
+                      <span
+                        key={t}
+                        style={{
+                          background: 'var(--bg-surface)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '16px',
+                          padding: '0.2rem 0.6rem',
+                          fontSize: '0.75rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          fontWeight: 600
+                        }}
+                      >
+                        ⏰ {t}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCustomTime(t)}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#ef4444',
+                            cursor: 'pointer',
+                            fontSize: '0.85rem',
+                            padding: 0,
+                            lineHeight: 1
+                          }}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Multi-slot Reminder Toggles (Requirement 10) */}

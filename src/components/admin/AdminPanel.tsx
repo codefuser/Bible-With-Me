@@ -11,7 +11,8 @@ import {
   Lock,
   ExternalLink,
   CheckCircle,
-  Radio
+  Radio,
+  Bell
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useReading } from '../../context/ReadingContext';
@@ -52,6 +53,7 @@ import { AdminRevivalWordTab } from './AdminRevivalWordTab';
 import { AdminStudyManagerTab } from './AdminStudyManagerTab';
 import { AdminSettingsTab } from './AdminSettingsTab';
 import { AdminActivityLogsTab } from './AdminActivityLogsTab';
+import { AdminNotificationsTab } from './AdminNotificationsTab';
 import '../../styles/admin.css';
 
 export const AdminPanel: React.FC = () => {
@@ -295,6 +297,16 @@ export const AdminPanel: React.FC = () => {
             </button>
 
             <button
+              className={`admin-tab-btn ${activeTab === 'notifications' ? 'active' : ''}`}
+              onClick={() => setActiveTab('notifications')}
+            >
+              <span className="admin-tab-icon icon-flame">
+                <Bell size={16} />
+              </span>
+              <span>Notifications</span>
+            </button>
+
+            <button
               className={`admin-tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
               onClick={() => setActiveTab('settings')}
             >
@@ -336,6 +348,10 @@ export const AdminPanel: React.FC = () => {
             onToggleSuspend={handleToggleSuspend}
             isEn={isEn}
           />
+        )}
+
+        {activeTab === 'notifications' && (
+          <AdminNotificationsTab isEn={isEn} />
         )}
 
         {activeTab === 'revival' && (

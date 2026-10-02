@@ -9,11 +9,13 @@ export const BookSelectorModal: React.FC = () => {
     currentBook,
     currentChapter,
     language,
+    appLanguage,
     isBookSelectorOpen,
     setIsBookSelectorOpen,
     setBookAndChapter
   } = useReading();
 
+  const isEnUI = (appLanguage || 'ta') === 'en';
   const [activeTestament, setActiveTestament] = useState<Testament>(currentBook.testament || 'OT');
   const [selectedBookForChapters, setSelectedBookForChapters] = useState<BibleBook | null>(null);
 
@@ -48,15 +50,19 @@ export const BookSelectorModal: React.FC = () => {
         <div className="modal-header">
           {selectedBookForChapters ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-              <button className="btn-icon" onClick={() => setSelectedBookForChapters(null)} title="Back to Book List">
+              <button
+                className="btn-icon"
+                onClick={() => setSelectedBookForChapters(null)}
+                title={isEnUI ? 'Back to Book List' : 'புத்தகப் பட்டியலுக்குத் திரும்பு'}
+              >
                 <ArrowLeft size={18} />
               </button>
               <div>
                 <h2 className="modal-title">
-                  {language === 'ta' ? selectedBookForChapters.name_ta : selectedBookForChapters.name_en}
+                  {language === 'en' ? selectedBookForChapters.name_en : selectedBookForChapters.name_ta}
                 </h2>
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                  {selectedBookForChapters.total_chapters} {language === 'ta' ? 'அதிகாரங்கள்' : 'Chapters'}
+                  {selectedBookForChapters.total_chapters} {isEnUI ? 'Chapters' : 'அதிகாரங்கள்'}
                 </p>
               </div>
             </div>
@@ -64,11 +70,15 @@ export const BookSelectorModal: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <BookOpen size={20} style={{ color: 'var(--accent-color)' }} />
               <h2 className="modal-title">
-                {language === 'ta' ? 'வேதாகம புத்தகங்கள்' : 'Select Bible Book'}
+                {isEnUI ? 'Select Bible Book' : 'வேதாகம புத்தகங்கள்'}
               </h2>
             </div>
           )}
-          <button className="btn-icon" onClick={handleClose} title="Close Modal">
+          <button
+            className="btn-icon"
+            onClick={handleClose}
+            title={isEnUI ? 'Close' : 'மூடு'}
+          >
             <X size={18} />
           </button>
         </div>
@@ -82,13 +92,13 @@ export const BookSelectorModal: React.FC = () => {
                   className={`tab-btn ${activeTestament === 'OT' ? 'active' : ''}`}
                   onClick={() => setActiveTestament('OT')}
                 >
-                  {language === 'ta' ? 'பழைய ஏற்பாடு (39)' : 'Old Testament (39)'}
+                  {isEnUI ? 'Old Testament (39)' : 'பழைய ஏற்பாடு (39)'}
                 </button>
                 <button
                   className={`tab-btn ${activeTestament === 'NT' ? 'active' : ''}`}
                   onClick={() => setActiveTestament('NT')}
                 >
-                  {language === 'ta' ? 'புதிய ஏற்பாடு (27)' : 'New Testament (27)'}
+                  {isEnUI ? 'New Testament (27)' : 'புதிய ஏற்பாடு (27)'}
                 </button>
               </div>
 
@@ -96,7 +106,7 @@ export const BookSelectorModal: React.FC = () => {
               <div className="book-grid">
                 {filteredBooks.map((book) => {
                   const isSelected = currentBook.id === book.id;
-                  const name = language === 'ta' ? book.name_ta : book.name_en;
+                  const name = language === 'en' ? book.name_en : book.name_ta;
                   return (
                     <button
                       key={book.id}
@@ -107,7 +117,7 @@ export const BookSelectorModal: React.FC = () => {
                         {name}
                       </div>
                       <div className="book-card-sub">
-                        {book.total_chapters} {language === 'ta' ? 'அதிகாரங்கள்' : 'ch'}
+                        {book.total_chapters} {isEnUI ? 'ch' : 'அதி'}
                       </div>
                     </button>
                   );
@@ -119,10 +129,10 @@ export const BookSelectorModal: React.FC = () => {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.875rem' }}>
                 <p style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
-                  {language === 'ta' ? 'அதிகாரத்தைத் தேர்ந்தெடுக்கவும்:' : 'Select a Chapter:'}
+                  {isEnUI ? 'Select a Chapter:' : 'அதிகாரத்தைத் தேர்ந்தெடுக்கவும்:'}
                 </p>
                 <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-                  {language === 'ta' ? 'தற்போதைய அதிகாரம்:' : 'Current:'} <strong>{currentChapter}</strong>
+                  {isEnUI ? 'Current:' : 'தற்போதைய அதிகாரம்:'} <strong>{currentChapter}</strong>
                 </span>
               </div>
 
