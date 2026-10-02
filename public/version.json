@@ -1,0 +1,20 @@
+{
+  "latestVersion": "1.0.0",
+  "minVersion": "1.0.0",
+  "releaseDate": "2026-10-02",
+  "downloadUrl": "https://github.com/codefuser/Bible-With-Me/releases/latest",
+  "changelog": {
+    "ta": [
+      "ஆண்ட்ராய்டு மொபைல் இடைமுகம் & Safe Area மேம்படுத்தப்பட்டது",
+      "ஆஃப்லைன் நேரடி அலாரம் நினைவூட்டல் அறிவிப்புகள்",
+      "வசன புக்மார்க் & 3-புள்ளி மெனு முதல் வரிக்கு சீரமைக்கப்பட்டது",
+      "தனிப்பயன் வாசிப்பு கால அளவு & இருமொழி அமைப்புகள்"
+    ],
+    "en": [
+      "Optimized Android mobile layout and safe areas",
+      "Offline local daily reminder notifications",
+      "First-line bookmark and menu button alignment",
+      "Custom reading duration & dual language settings"
+    ]
+  }
+}

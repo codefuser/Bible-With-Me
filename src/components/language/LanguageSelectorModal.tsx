@@ -1,10 +1,17 @@
-import React, { useEffect } from 'react';
-import { Globe, Check, X, BookOpen } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Globe, Check, X, BookOpen, Smartphone } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
-import { Language } from '../../types/bible';
+import { AppLanguage, BibleLanguage } from '../../types/bible';
 
 export const LanguageSelectorModal: React.FC = () => {
-  const { language, setLanguage, isLanguageModalOpen, setIsLanguageModalOpen } = useReading();
+  const {
+    appLanguage,
+    setAppLanguage,
+    bibleLanguage,
+    setBibleLanguage,
+    isLanguageModalOpen,
+    setIsLanguageModalOpen
+  } = useReading();
 
   // Close on Escape key press
   useEffect(() => {
@@ -19,15 +26,10 @@ export const LanguageSelectorModal: React.FC = () => {
 
   if (!isLanguageModalOpen) return null;
 
-  const handleSelect = (lang: Language) => {
-    setLanguage(lang);
-    setIsLanguageModalOpen(false);
-  };
+  const isTaUI = appLanguage === 'ta';
 
-  const isTa = language === 'ta';
-
-  const languageOptions: {
-    id: Language;
+  const bibleOptions: {
+    id: BibleLanguage;
     flag: string;
     title: string;
     versionName: string;
@@ -133,147 +135,229 @@ export const LanguageSelectorModal: React.FC = () => {
                   fontWeight: 700,
                   color: 'var(--text-primary)',
                   margin: 0,
-                  fontFamily: isTa ? 'var(--font-tamil)' : 'inherit',
                   lineHeight: 1.2
                 }}
               >
-                {isTa ? 'மொழி & வேதாகம பதிப்பு' : 'Language & Version'}
+                {isTaUI ? 'மொழி அமைப்புகள்' : 'Language Settings'}
               </h3>
               <p
                 style={{
                   fontSize: '0.8125rem',
                   color: 'var(--text-muted)',
-                  margin: '0.25rem 0 0 0',
-                  fontFamily: isTa ? 'var(--font-tamil)' : 'inherit'
+                  margin: '0.15rem 0 0 0'
                 }}
               >
-                {isTa ? 'வாசிக்க விரும்பும் பதிப்பைத் தேர்ந்தெடுக்கவும்' : 'Choose your Bible translation'}
+                {isTaUI ? 'செயலி மற்றும் வேதாகம மொழியைத் தனித்தனியே தேர்ந்தெடுக்கவும்' : 'Set App UI & Bible scripture language independently'}
               </p>
             </div>
           </div>
-
           <button
-            className="btn-icon"
             onClick={() => setIsLanguageModalOpen(false)}
-            title="Close"
-            style={{ width: '2rem', height: '2rem' }}
+            aria-label="Close"
+            style={{
+              padding: '0.5rem',
+              borderRadius: '0.5rem',
+              color: 'var(--text-muted)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer'
+            }}
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
-        {/* Language Options Cards */}
+        {/* Content Body */}
         <div
           style={{
             padding: '1.25rem',
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.875rem',
+            gap: '1.25rem',
             overflowY: 'auto'
           }}
         >
-          {languageOptions.map((opt) => {
-            const isSelected = language === opt.id;
-            return (
-              <div
-                key={opt.id}
-                onClick={() => handleSelect(opt.id)}
+          {/* SECTION A: APP UI LANGUAGE */}
+          <div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                marginBottom: '0.6rem',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                color: 'var(--accent-color)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em'
+              }}
+            >
+              <Smartphone size={14} />
+              <span>{isTaUI ? 'பயன்பாட்டு இடைமுக மொழி (App UI Language)' : 'App Interface Language'}</span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+              <button
+                type="button"
+                onClick={() => setAppLanguage('ta')}
                 style={{
-                  padding: '1rem 1.125rem',
-                  borderRadius: '0.875rem',
-                  border: isSelected
-                    ? '2px solid var(--accent-color)'
-                    : '1px solid var(--border-color)',
-                  backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--bg-secondary)',
-                  cursor: 'pointer',
-                  transition: 'all 180ms ease',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '0.75rem',
+                  border: `2px solid ${appLanguage === 'ta' ? 'var(--accent-color)' : 'var(--border-color)'}`,
+                  backgroundColor: appLanguage === 'ta' ? 'var(--accent-soft)' : 'var(--bg-secondary)',
+                  color: 'var(--text-primary)',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
                   display: 'flex',
-                  alignItems: 'flex-start',
+                  alignItems: 'center',
                   justifyContent: 'space-between',
-                  gap: '1rem',
-                  boxShadow: isSelected ? '0 4px 14px rgba(59, 130, 246, 0.15)' : 'none'
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
                 }}
               >
-                <div style={{ display: 'flex', gap: '0.875rem', alignItems: 'flex-start' }}>
-                  <span style={{ fontSize: '1.5rem', lineHeight: 1, marginTop: '2px' }}>
-                    {opt.flag}
-                  </span>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <span
+                <span>🇮🇳 தமிழ்</span>
+                {appLanguage === 'ta' && <Check size={16} color="var(--accent-color)" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setAppLanguage('en')}
+                style={{
+                  padding: '0.75rem 1rem',
+                  borderRadius: '0.75rem',
+                  border: `2px solid ${appLanguage === 'en' ? 'var(--accent-color)' : 'var(--border-color)'}`,
+                  backgroundColor: appLanguage === 'en' ? 'var(--accent-soft)' : 'var(--bg-secondary)',
+                  color: 'var(--text-primary)',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <span>🇬🇧 English</span>
+                {appLanguage === 'en' && <Check size={16} color="var(--accent-color)" />}
+              </button>
+            </div>
+          </div>
+
+          {/* SECTION B: BIBLE SCRIPTURE TRANSLATION */}
+          <div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                marginBottom: '0.6rem',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                color: '#16a34a',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em'
+              }}
+            >
+              <BookOpen size={14} />
+              <span>{isTaUI ? 'வேதாகம வாசிப்பு பதிப்பு (Bible Translation)' : 'Bible Scripture Translation'}</span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              {bibleOptions.map((opt) => {
+                const isSelected = bibleLanguage === opt.id;
+                return (
+                  <div
+                    key={opt.id}
+                    onClick={() => setBibleLanguage(opt.id)}
+                    style={{
+                      padding: '0.875rem 1rem',
+                      borderRadius: '0.85rem',
+                      border: `1.5px solid ${isSelected ? 'var(--accent-color)' : 'var(--border-color)'}`,
+                      backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--bg-surface)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      transition: 'all 0.18s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <span style={{ fontSize: '1.4rem' }}>{opt.flag}</span>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.15rem' }}>
+                          <span style={{ fontWeight: 700, fontSize: '0.925rem', color: 'var(--text-primary)' }}>
+                            {opt.title}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '0.6875rem',
+                              fontWeight: 700,
+                              padding: '0.1rem 0.4rem',
+                              borderRadius: '9999px',
+                              backgroundColor: 'var(--bg-secondary)',
+                              color: 'var(--text-muted)',
+                              border: '1px solid var(--border-color)'
+                            }}
+                          >
+                            {opt.badge}
+                          </span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '0.785rem', color: 'var(--text-muted)' }}>
+                          {opt.versionName}
+                        </p>
+                      </div>
+                    </div>
+                    {isSelected && (
+                      <div
                         style={{
-                          fontSize: '1rem',
-                          fontWeight: 700,
-                          color: isSelected ? 'var(--accent-color)' : 'var(--text-primary)',
-                          fontFamily: isTa ? 'var(--font-tamil)' : 'inherit'
-                        }}
-                      >
-                        {opt.title}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: '0.6875rem',
-                          fontWeight: 600,
-                          padding: '0.125rem 0.5rem',
+                          width: '1.5rem',
+                          height: '1.5rem',
                           borderRadius: '9999px',
-                          backgroundColor: isSelected ? 'var(--accent-color)' : 'var(--border-color)',
-                          color: isSelected ? '#ffffff' : 'var(--text-muted)',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.04em'
+                          backgroundColor: 'var(--accent-color)',
+                          color: '#ffffff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
                         }}
                       >
-                        {opt.badge}
-                      </span>
-                    </div>
-
-                    <div
-                      style={{
-                        fontSize: '0.875rem',
-                        fontWeight: 600,
-                        color: 'var(--text-secondary)',
-                        marginTop: '0.25rem',
-                        fontFamily: isTa ? 'var(--font-tamil)' : 'inherit'
-                      }}
-                    >
-                      {opt.versionName}
-                    </div>
-
-                    <div
-                      style={{
-                        fontSize: '0.78125rem',
-                        color: 'var(--text-muted)',
-                        marginTop: '0.25rem',
-                        lineHeight: 1.4,
-                        fontFamily: isTa ? 'var(--font-tamil)' : 'inherit'
-                      }}
-                    >
-                      {opt.description}
-                    </div>
+                        <Check size={14} />
+                      </div>
+                    )}
                   </div>
-                </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
 
-                {/* Selection Checkmark */}
-                <div
-                  style={{
-                    width: '1.375rem',
-                    height: '1.375rem',
-                    borderRadius: '50%',
-                    border: isSelected ? 'none' : '2px solid var(--border-color)',
-                    backgroundColor: isSelected ? 'var(--accent-color)' : 'transparent',
-                    color: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    marginTop: '2px',
-                    transition: 'all 180ms ease'
-                  }}
-                >
-                  {isSelected && <Check size={13} strokeWidth={3} />}
-                </div>
-              </div>
-            );
-          })}
+        {/* Footer */}
+        <div
+          style={{
+            padding: '0.875rem 1.25rem',
+            borderTop: '1px solid var(--border-color)',
+            backgroundColor: 'var(--bg-secondary)',
+            display: 'flex',
+            justifyContent: 'flex-end'
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setIsLanguageModalOpen(false)}
+            style={{
+              padding: '0.55rem 1.25rem',
+              borderRadius: '0.625rem',
+              backgroundColor: 'var(--accent-color)',
+              color: '#ffffff',
+              fontWeight: 700,
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              border: 'none'
+            }}
+          >
+            {isTaUI ? 'முடிந்தது' : 'Done'}
+          </button>
         </div>
       </div>
     </div>

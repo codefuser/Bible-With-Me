@@ -3,6 +3,8 @@ import {
   BibleBook,
   BibleVerse,
   Language,
+  AppLanguage,
+  BibleLanguage,
   ReadingPreferences,
   Bookmark,
   ReadingHistoryItem,
@@ -41,6 +43,8 @@ interface ReadingContextType {
   currentChapter: number;
   selectedVerse: number | null;
   language: Language;
+  appLanguage: AppLanguage;
+  bibleLanguage: BibleLanguage;
   preferences: ReadingPreferences;
   bookmarks: Bookmark[];
   notes: VerseNote[];
@@ -81,6 +85,8 @@ interface ReadingContextType {
   setBookAndChapter: (book: BibleBook, chapter: number, verse?: number) => void;
   setChapter: (chapter: number) => void;
   setLanguage: (lang: Language) => void;
+  setAppLanguage: (lang: AppLanguage) => void;
+  setBibleLanguage: (lang: BibleLanguage) => void;
   toggleLanguage: () => void;
   updatePreferences: (newPrefs: Partial<ReadingPreferences>) => void;
   resetPreferences: () => void;
@@ -115,7 +121,9 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [selectedVerse, setSelectedVerse] = useState<number | null>(null);
 
   const [preferences, setPreferencesState] = useState<ReadingPreferences>(getStoredPreferences);
-  const [language, setLanguageState] = useState<Language>(preferences.language || 'en');
+  const [appLanguage, setAppLanguageState] = useState<AppLanguage>(preferences.appLanguage || 'ta');
+  const [bibleLanguage, setBibleLanguageState] = useState<BibleLanguage>(preferences.bibleLanguage || (preferences.language as BibleLanguage) || 'ta');
+  const [language, setLanguageState] = useState<Language>(preferences.bibleLanguage || preferences.language || 'ta');
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [notes, setNotes] = useState<VerseNote[]>([]);
   const [highlights, setHighlights] = useState<Record<string, HighlightColor>>({});
@@ -505,18 +513,28 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
-    updatePreferences({ language: lang });
-    updateReadingHistory(currentBook, currentChapter, selectedVerse || 1, lang, userId);
+  const setAppLanguage = (lang: AppLanguage) => {
+    setAppLanguageState(lang);
+    updatePreferences({ appLanguage: lang });
+  };
+
+  const setBibleLanguage = (lang: BibleLanguage) => {
+    setBibleLanguageState(lang);
+    setLanguageState(lang as Language);
+    updatePreferences({ bibleLanguage: lang, language: lang as Language });
+    updateReadingHistory(currentBook, currentChapter, selectedVerse || 1, lang as Language, userId);
     if (userId) {
       trackActivity(userId, 'LANGUAGE_CHANGED', currentBook.code, currentChapter, selectedVerse || 1, { language: lang });
     }
   };
 
+  const setLanguage = (lang: Language) => {
+    setBibleLanguage(lang as BibleLanguage);
+  };
+
   const toggleLanguage = () => {
-    const nextLang: Language = language === 'ta' ? 'en' : language === 'en' ? 'parallel' : 'ta';
-    setLanguage(nextLang);
+    const nextLang: BibleLanguage = bibleLanguage === 'ta' ? 'en' : bibleLanguage === 'en' ? 'parallel' : 'ta';
+    setBibleLanguage(nextLang);
   };
 
   const updatePreferences = (newPrefs: Partial<ReadingPreferences>) => {
@@ -669,7 +687,11 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setBookAndChapter,
         setChapter,
         setLanguage,
+        setAppLanguage,
+        setBibleLanguage,
         toggleLanguage,
+        appLanguage,
+        bibleLanguage,
         updatePreferences,
         resetPreferences,
         handleToggleBookmark,

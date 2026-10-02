@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Sun, Moon, BookOpen, Check, Type, MoreVertical, Sliders, Globe, Layout, User, ChevronDown, Palette, Sparkles, SlidersHorizontal, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Sun, Moon, BookOpen, Check, Type, MoreVertical, Sliders, Globe, Layout, User, ChevronDown, Palette, Sparkles, SlidersHorizontal, RotateCcw, Bell } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { FontSizeOption, LineHeightOption, MaxWidthOption, TamilFontOption, EnglishFontOption, ThemeOption, CustomThemeColors } from '../../types/bible';
 import { AccountPanel } from '../auth/AccountPanel';
 import { ContinuousSnapSlider } from '../common/ContinuousSnapSlider';
+import { getNotificationSchedule, saveNotificationSchedule, requestNotificationPermission, getNotificationPermission, NotificationScheduleConfig } from '../../services/notificationService';
 
 interface FontItem<T> {
   id: T;
@@ -354,6 +355,10 @@ export const PreferencesModal: React.FC = () => {
     preferences,
     updatePreferences,
     resetPreferences,
+    appLanguage,
+    setAppLanguage,
+    bibleLanguage,
+    setBibleLanguage,
     language,
     setLanguage,
     isPreferencesOpen,
@@ -363,6 +368,61 @@ export const PreferencesModal: React.FC = () => {
   } = useReading();
 
   const [showMoreThemes, setShowMoreThemes] = useState(false);
+  const [notifConfig, setNotifConfig] = useState<NotificationScheduleConfig>(() => getNotificationSchedule());
+  const [notifPermission, setNotifPermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
+
+  useEffect(() => {
+    if (isPreferencesOpen) {
+      setNotifConfig(getNotificationSchedule());
+      getNotificationPermission().then(setNotifPermission);
+    }
+  }, [isPreferencesOpen]);
+
+  const handleToggleNotifMaster = async (enabled: boolean) => {
+    if (enabled && notifPermission !== 'granted') {
+      const granted = await requestNotificationPermission();
+      setNotifPermission(granted ? 'granted' : 'denied');
+      if (!granted) return;
+    }
+    const updated: NotificationScheduleConfig = { ...notifConfig, enabled };
+    setNotifConfig(updated);
+    saveNotificationSchedule(updated);
+    updatePreferences({ notificationsEnabled: enabled });
+  };
+
+  const handleToggleSlot = (key: 'morning' | 'afternoon' | 'night' | 'custom', enabled: boolean) => {
+    const updated: NotificationScheduleConfig = {
+      ...notifConfig,
+      slots: {
+        ...notifConfig.slots,
+        [key]: { ...notifConfig.slots[key], enabled }
+      }
+    };
+    setNotifConfig(updated);
+    saveNotificationSchedule(updated);
+  };
+
+  const handleChangeSlotTime = (key: 'morning' | 'afternoon' | 'night' | 'custom', time: string) => {
+    const updated: NotificationScheduleConfig = {
+      ...notifConfig,
+      slots: {
+        ...notifConfig.slots,
+        [key]: { ...notifConfig.slots[key], time }
+      }
+    };
+    setNotifConfig(updated);
+    saveNotificationSchedule(updated);
+  };
+
+  const handleToggleAppOpen = (enabled: boolean, hours: number = 3) => {
+    const updated: NotificationScheduleConfig = {
+      ...notifConfig,
+      appOpenReminderEnabled: enabled,
+      appOpenFrequencyHours: hours
+    };
+    setNotifConfig(updated);
+    saveNotificationSchedule(updated);
+  };
 
   if (!isPreferencesOpen) return null;
 
@@ -1121,6 +1181,169 @@ export const PreferencesModal: React.FC = () => {
               {preferences.verseOptionsStyle === 'buttons' && <Check size={16} style={{ color: 'var(--accent-color)', flexShrink: 0 }} />}
             </button>
           </div>
+        </div>
+
+        {/* Group 4.5: Daily Notifications & Reminders (Requirements 8, 9, 10, 13) */}
+        <div
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '1rem',
+            padding: '1.125rem 1.25rem',
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+            <label style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.375rem', margin: 0 }}>
+              <Bell size={15} style={{ color: 'var(--accent-color)' }} />
+              <span>{isEn ? 'Daily Reminders' : 'தினசரி நினைவூட்டல்'}</span>
+            </label>
+
+            {/* Master toggle */}
+            <button
+              type="button"
+              onClick={() => handleToggleNotifMaster(!notifConfig.enabled)}
+              style={{
+                padding: '0.35rem 0.75rem',
+                borderRadius: '9999px',
+                border: 'none',
+                backgroundColor: notifConfig.enabled ? 'var(--accent-color)' : 'var(--bg-secondary)',
+                color: notifConfig.enabled ? '#ffffff' : 'var(--text-muted)',
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                cursor: 'pointer'
+              }}
+            >
+              {notifConfig.enabled ? (isEn ? 'ACTIVE' : 'இயங்குகிறது') : (isEn ? 'OFF' : 'அணைக்கப்பட்டது')}
+            </button>
+          </div>
+
+          <p style={{ margin: '0 0 0.85rem 0', fontSize: '0.785rem', color: 'var(--text-muted)' }}>
+            {isEn
+              ? 'Receive offline local alarms to keep your daily Bible reading consistent.'
+              : 'செயலி மூடப்பட்டிருந்தாலும் சாதனத்தில் ஆஃப்லைனிலும் நினைவூட்டும்.'}
+          </p>
+
+          {/* Slot Rows */}
+          {notifConfig.enabled && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.85rem' }}>
+              {(['morning', 'afternoon', 'night', 'custom'] as const).map((key) => {
+                const slot = notifConfig.slots[key];
+                return (
+                  <div
+                    key={key}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '0.625rem',
+                      border: '1px solid var(--border-color)',
+                      backgroundColor: slot.enabled ? 'var(--accent-soft)' : 'var(--bg-secondary)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={slot.enabled}
+                        onChange={(e) => handleToggleSlot(key, e.target.checked)}
+                        style={{ width: '16px', height: '16px', accentColor: 'var(--accent-color)', cursor: 'pointer' }}
+                      />
+                      <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {isEn ? slot.nameEn : slot.nameTa}
+                      </span>
+                    </div>
+
+                    <input
+                      type="time"
+                      value={slot.time}
+                      onChange={(e) => handleChangeSlotTime(key, e.target.value)}
+                      disabled={!slot.enabled}
+                      style={{
+                        padding: '0.2rem 0.4rem',
+                        borderRadius: '0.375rem',
+                        border: '1px solid var(--border-color)',
+                        backgroundColor: 'var(--bg-surface)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.8125rem',
+                        fontWeight: 700,
+                        opacity: slot.enabled ? 1 : 0.4
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* App Open Reminder Frequency Selector (Requirement 13 & 35) */}
+          {notifConfig.enabled && (
+            <div
+              style={{
+                padding: '0.65rem 0.75rem',
+                borderRadius: '0.625rem',
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--bg-secondary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}
+            >
+              <span style={{ fontSize: '0.785rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                {isEn ? 'App-Open Reminder' : 'செயலி திறக்கும்போது நினைவூட்டல்'}
+              </span>
+              <div style={{ display: 'flex', gap: '0.35rem' }}>
+                <button
+                  type="button"
+                  onClick={() => handleToggleAppOpen(false)}
+                  style={{
+                    padding: '0.25rem 0.5rem',
+                    borderRadius: '6px',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    border: '1px solid var(--border-color)',
+                    backgroundColor: !notifConfig.appOpenReminderEnabled ? 'var(--accent-color)' : 'var(--bg-surface)',
+                    color: !notifConfig.appOpenReminderEnabled ? '#ffffff' : 'var(--text-primary)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {isEn ? 'Off' : 'இல்லை'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleToggleAppOpen(true, 2)}
+                  style={{
+                    padding: '0.25rem 0.5rem',
+                    borderRadius: '6px',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    border: '1px solid var(--border-color)',
+                    backgroundColor: notifConfig.appOpenReminderEnabled && notifConfig.appOpenFrequencyHours === 2 ? 'var(--accent-color)' : 'var(--bg-surface)',
+                    color: notifConfig.appOpenReminderEnabled && notifConfig.appOpenFrequencyHours === 2 ? '#ffffff' : 'var(--text-primary)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  2h
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleToggleAppOpen(true, 3)}
+                  style={{
+                    padding: '0.25rem 0.5rem',
+                    borderRadius: '6px',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    border: '1px solid var(--border-color)',
+                    backgroundColor: notifConfig.appOpenReminderEnabled && notifConfig.appOpenFrequencyHours === 3 ? 'var(--accent-color)' : 'var(--bg-surface)',
+                    color: notifConfig.appOpenReminderEnabled && notifConfig.appOpenFrequencyHours === 3 ? '#ffffff' : 'var(--text-primary)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  3h
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Group 5: Account */}

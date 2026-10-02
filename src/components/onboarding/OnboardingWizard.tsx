@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Clock,
   BookOpen,
   Bell,
-  ShieldCheck,
   Sparkles,
   ChevronRight,
   ChevronLeft,
@@ -15,13 +14,15 @@ import {
   User,
   LogIn,
   Flame,
-  CheckCircle2
+  CheckCircle2,
+  Globe
 } from 'lucide-react';
-import { ThemeOption } from '../../types/bible';
+import { ThemeOption, AppLanguage, BibleLanguage } from '../../types/bible';
 import {
   requestNotificationPermission,
   getNotificationPermission,
-  saveNotificationSchedule
+  saveNotificationSchedule,
+  getNotificationSchedule
 } from '../../services/notificationService';
 import '../../styles/onboarding.css';
 
@@ -31,6 +32,8 @@ interface OnboardingWizardProps {
     theme: ThemeOption;
     reminderTime: string;
     notificationsEnabled: boolean;
+    appLanguage: AppLanguage;
+    bibleLanguage: BibleLanguage;
     action: 'guest' | 'auth';
   }) => void;
 }
@@ -39,8 +42,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
   const [step, setStep] = useState<number>(1);
   const totalSteps = 5;
 
+  // Language separation (App UI vs Scripture Translation)
+  const [appLang, setAppLang] = useState<AppLanguage>('ta');
+  const [bibleLang, setBibleLang] = useState<BibleLanguage>('ta');
+
   // Step 1: Goal
   const [goalMinutes, setGoalMinutes] = useState<number>(15);
+  const [isCustomGoal, setIsCustomGoal] = useState<boolean>(false);
+  const [customGoalValue, setCustomGoalValue] = useState<number>(20);
 
   // Step 2: Theme
   const [selectedTheme, setSelectedTheme] = useState<ThemeOption>(() => {
@@ -49,13 +58,20 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
 
   // Step 3: Notifications
   const [reminderTime, setReminderTime] = useState<string>('07:00');
-  const [notifGranted, setNotifGranted] = useState<boolean>(() => {
-    return getNotificationPermission() === 'granted';
-  });
+  const [morningSlot, setMorningSlot] = useState<boolean>(true);
+  const [afternoonSlot, setAfternoonSlot] = useState<boolean>(false);
+  const [nightSlot, setNightSlot] = useState<boolean>(true);
+  const [notifGranted, setNotifGranted] = useState<boolean>(false);
   const [isRequestingNotif, setIsRequestingNotif] = useState<boolean>(false);
+
+  useEffect(() => {
+    getNotificationPermission().then((p) => setNotifGranted(p === 'granted'));
+  }, []);
 
   // Step 4: Strict Commitment Covenant
   const [covenantAccepted, setCovenantAccepted] = useState<boolean>(true);
+
+  const isTa = appLang === 'ta';
 
   // Handle Theme Change with real-time DOM update preview
   const handleThemeSelect = (theme: ThemeOption) => {
@@ -83,18 +99,29 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
     }
   };
 
+  const effectiveGoal = isCustomGoal ? Math.max(1, customGoalValue) : goalMinutes;
+
   const finishOnboarding = (action: 'guest' | 'auth') => {
+    const existing = getNotificationSchedule();
     saveNotificationSchedule({
+      ...existing,
       enabled: notifGranted,
-      time: reminderTime,
-      goalMinutes
+      goalMinutes: effectiveGoal,
+      slots: {
+        morning: { ...existing.slots.morning, enabled: morningSlot, time: '06:00' },
+        afternoon: { ...existing.slots.afternoon, enabled: afternoonSlot, time: '12:30' },
+        night: { ...existing.slots.night, enabled: nightSlot, time: '21:00' },
+        custom: { ...existing.slots.custom, enabled: notifGranted, time: reminderTime }
+      }
     });
 
     onComplete({
-      goalMinutes,
+      goalMinutes: effectiveGoal,
       theme: selectedTheme,
       reminderTime,
       notificationsEnabled: notifGranted,
+      appLanguage: appLang,
+      bibleLanguage: bibleLang,
       action
     });
   };
@@ -112,86 +139,201 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
           />
         </div>
 
-        {/* STEP 1: Daily Reading Goal */}
+        {/* STEP 1: Daily Reading Goal & Language */}
         {step === 1 && (
           <>
             <div className="onboarding-header">
               <div className="onboarding-step-indicator">
-                <Sparkles size={13} /> படி 1 / 5 · Step 1 of 5
+                <Sparkles size={13} /> {isTa ? 'படி 1 / 5' : 'Step 1 of 5'}
               </div>
-              <h2 className="onboarding-title">தினம் எவ்வளவு நேரம் வாசிக்க விரும்புகிறீர்கள்?</h2>
+              <h2 className="onboarding-title">
+                {isTa ? 'தினசரி வாசிப்பு இலக்கு' : 'Daily Reading Goal'}
+              </h2>
               <p className="onboarding-subtitle">
-                Choose your daily scripture reading goal to build a lifelong spiritual habit.
+                {isTa
+                  ? 'தினம் எவ்வளவு நேரம் வேதாகமம் வாசிக்க விரும்புகிறீர்கள்?'
+                  : 'How many minutes per day do you want to read?'}
               </p>
             </div>
 
             <div className="onboarding-body">
+              {/* Separate Language Configurations (Requirement 4 & 5) */}
+              <div className="onboarding-lang-section">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+                  <Globe size={14} color="#2563eb" />
+                  <span className="onboarding-lang-label">
+                    {isTa ? 'பயன்பாட்டு மொழி (App UI Language)' : 'App Language'}
+                  </span>
+                </div>
+                <div className="onboarding-lang-pills">
+                  <button
+                    type="button"
+                    className={`onboarding-lang-pill ${appLang === 'ta' ? 'selected' : ''}`}
+                    onClick={() => setAppLang('ta')}
+                  >
+                    🇮🇳 தமிழ்
+                  </button>
+                  <button
+                    type="button"
+                    className={`onboarding-lang-pill ${appLang === 'en' ? 'selected' : ''}`}
+                    onClick={() => setAppLang('en')}
+                  >
+                    🇬🇧 English
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.35rem', marginBottom: '0.2rem' }}>
+                  <BookOpen size={14} color="#16a34a" />
+                  <span className="onboarding-lang-label">
+                    {isTa ? 'வேதாகம மொழி (Bible Translation)' : 'Bible Scripture Language'}
+                  </span>
+                </div>
+                <div className="onboarding-lang-pills">
+                  <button
+                    type="button"
+                    className={`onboarding-lang-pill ${bibleLang === 'ta' ? 'selected' : ''}`}
+                    onClick={() => setBibleLang('ta')}
+                  >
+                    தமிழ் (BSI)
+                  </button>
+                  <button
+                    type="button"
+                    className={`onboarding-lang-pill ${bibleLang === 'en' ? 'selected' : ''}`}
+                    onClick={() => setBibleLang('en')}
+                  >
+                    English (KJV)
+                  </button>
+                  <button
+                    type="button"
+                    className={`onboarding-lang-pill ${bibleLang === 'parallel' ? 'selected' : ''}`}
+                    onClick={() => setBibleLang('parallel')}
+                  >
+                    தமிழ் + English
+                  </button>
+                </div>
+              </div>
+
+              {/* Reading Duration Options */}
               <div className="onboarding-options-list">
                 {/* 5 Min Option */}
                 <div
-                  className={`onboarding-option-card ${goalMinutes === 5 ? 'selected' : ''}`}
-                  onClick={() => setGoalMinutes(5)}
+                  className={`onboarding-option-card ${!isCustomGoal && goalMinutes === 5 ? 'selected' : ''}`}
+                  onClick={() => {
+                    setIsCustomGoal(false);
+                    setGoalMinutes(5);
+                  }}
                 >
                   <div className="onboarding-option-left">
                     <div className="onboarding-option-icon" style={{ background: '#eff6ff', color: '#2563eb' }}>
                       <Clock size={20} />
                     </div>
                     <div className="onboarding-option-text">
-                      <h4>
-                        5 நிமிடங்கள் / நாள்
+                      <div className="onboarding-option-title-row">
+                        <h4>{isTa ? '5 நிமிடங்கள் / நாள்' : '5 minutes / day'}</h4>
                         <span className="onboarding-option-badge" style={{ background: '#e0e7ff', color: '#4338ca' }}>
-                          Quick Habit
+                          {isTa ? 'விரைவு' : 'Quick'}
                         </span>
-                      </h4>
-                      <p>சுருக்கமான தியானம் (1-2 அதிகாரங்கள்) · Quick spiritual spark</p>
+                      </div>
+                      <p>{isTa ? '1-2 அதிகாரங்கள் சுருக்கமான தியானம்' : 'Quick spiritual spark (1-2 chapters)'}</p>
                     </div>
                   </div>
-                  {goalMinutes === 5 && <CheckCircle2 size={20} color="#2563eb" />}
+                  {!isCustomGoal && goalMinutes === 5 && <CheckCircle2 size={20} color="#2563eb" />}
                 </div>
 
                 {/* 15 Min Option */}
                 <div
-                  className={`onboarding-option-card ${goalMinutes === 15 ? 'selected' : ''}`}
-                  onClick={() => setGoalMinutes(15)}
+                  className={`onboarding-option-card ${!isCustomGoal && goalMinutes === 15 ? 'selected' : ''}`}
+                  onClick={() => {
+                    setIsCustomGoal(false);
+                    setGoalMinutes(15);
+                  }}
                 >
                   <div className="onboarding-option-left">
                     <div className="onboarding-option-icon" style={{ background: '#f0fdf4', color: '#16a34a' }}>
                       <BookOpen size={20} />
                     </div>
                     <div className="onboarding-option-text">
-                      <h4>
-                        15 நிமிடங்கள் / நாள்
+                      <div className="onboarding-option-title-row">
+                        <h4>{isTa ? '15 நிமிடங்கள் / நாள்' : '15 minutes / day'}</h4>
                         <span className="onboarding-option-badge" style={{ background: '#dcfce7', color: '#15803d' }}>
-                          Recommended
+                          {isTa ? 'பரிந்துரை' : 'Suggested'}
                         </span>
-                      </h4>
-                      <p>ஆழமான வேத தியானம் (3-4 அதிகாரங்கள்) · Daily devotional walk</p>
+                      </div>
+                      <p>{isTa ? '3-4 அதிகாரங்கள் தினசரி வேதாகம வாசிப்பு' : 'Daily devotional walk (3-4 chapters)'}</p>
                     </div>
                   </div>
-                  {goalMinutes === 15 && <CheckCircle2 size={20} color="#2563eb" />}
+                  {!isCustomGoal && goalMinutes === 15 && <CheckCircle2 size={20} color="#2563eb" />}
                 </div>
 
                 {/* 30 Min Option */}
                 <div
-                  className={`onboarding-option-card ${goalMinutes === 30 ? 'selected' : ''}`}
-                  onClick={() => setGoalMinutes(30)}
+                  className={`onboarding-option-card ${!isCustomGoal && goalMinutes === 30 ? 'selected' : ''}`}
+                  onClick={() => {
+                    setIsCustomGoal(false);
+                    setGoalMinutes(30);
+                  }}
                 >
                   <div className="onboarding-option-left">
                     <div className="onboarding-option-icon" style={{ background: '#faf5ff', color: '#9333ea' }}>
                       <Flame size={20} />
                     </div>
                     <div className="onboarding-option-text">
-                      <h4>
-                        30 நிமிடங்கள் / நாள்
+                      <div className="onboarding-option-title-row">
+                        <h4>{isTa ? '30 நிமிடங்கள் / நாள்' : '30 minutes / day'}</h4>
                         <span className="onboarding-option-badge" style={{ background: '#f3e8ff', color: '#7e22ce' }}>
-                          Discipline
+                          {isTa ? 'ஆழமான' : 'Deep'}
                         </span>
-                      </h4>
-                      <p>முழுமையான ஆய்வு & ஜெபம் (5+ அதிகாரங்கள்) · Deep immersion</p>
+                      </div>
+                      <p>{isTa ? '5+ அதிகாரங்கள் ஆழமான ஆய்வு & ஜெபம்' : 'Deep scripture study (5+ chapters)'}</p>
                     </div>
                   </div>
-                  {goalMinutes === 30 && <CheckCircle2 size={20} color="#2563eb" />}
+                  {!isCustomGoal && goalMinutes === 30 && <CheckCircle2 size={20} color="#2563eb" />}
                 </div>
+
+                {/* Custom Option (Requirement 2) */}
+                <div
+                  className={`onboarding-option-card ${isCustomGoal ? 'selected' : ''}`}
+                  onClick={() => setIsCustomGoal(true)}
+                >
+                  <div className="onboarding-option-left">
+                    <div className="onboarding-option-icon" style={{ background: '#fffbeb', color: '#d97706' }}>
+                      <Clock size={20} />
+                    </div>
+                    <div className="onboarding-option-text">
+                      <div className="onboarding-option-title-row">
+                        <h4>{isTa ? 'தனிப்பயன் கால அளவு' : 'Custom Duration'}</h4>
+                        <span className="onboarding-option-badge" style={{ background: '#fef3c7', color: '#92400e' }}>
+                          {isCustomGoal ? `${customGoalValue} ${isTa ? 'நிமிடம்' : 'min'}` : (isTa ? 'மாற்றக்கூடியது' : 'Flexible')}
+                        </span>
+                      </div>
+                      <p>{isTa ? 'உங்கள் வசதிக்கேற்ப வாசிப்பு நேரத்தை நிர்ணயிக்கவும்' : 'Set your own reading goal'}</p>
+                    </div>
+                  </div>
+                  {isCustomGoal && <CheckCircle2 size={20} color="#2563eb" />}
+                </div>
+
+                {/* Custom Goal Input Box when Custom is selected */}
+                {isCustomGoal && (
+                  <div className="onboarding-custom-box active">
+                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                      {isTa ? 'தினசரி இலக்கு (நிமிடங்கள்):' : 'Enter target minutes:'}
+                    </span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={180}
+                      className="onboarding-custom-input"
+                      value={customGoalValue}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (!isNaN(val) && val > 0) setCustomGoalValue(val);
+                      }}
+                    />
+                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                      {isTa ? 'நிமிடங்கள் / நாள்' : 'mins / day'}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -202,7 +344,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                 className="onboarding-btn onboarding-btn-primary"
                 onClick={handleNext}
               >
-                அடுத்தது · Continue <ChevronRight size={18} />
+                {isTa ? 'அடுத்தது' : 'Continue'} <ChevronRight size={18} />
               </button>
             </div>
           </>
@@ -213,11 +355,13 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
           <>
             <div className="onboarding-header">
               <div className="onboarding-step-indicator">
-                <Sparkles size={13} /> படி 2 / 5 · Step 2 of 5
+                <Sparkles size={13} /> {isTa ? 'படி 2 / 5' : 'Step 2 of 5'}
               </div>
-              <h2 className="onboarding-title">வாசிப்பு சூழல் & வண்ணம்</h2>
+              <h2 className="onboarding-title">{isTa ? 'வாசிப்பு சூழல் & வண்ணம்' : 'Reading Ambiance'}</h2>
               <p className="onboarding-subtitle">
-                Select your comfortable reading ambiance with real-time live preview.
+                {isTa
+                  ? 'கண்களுக்கு இதமான வண்ண அமைப்பைத் தேர்ந்தெடுக்கவும்.'
+                  : 'Select your comfortable reading theme.'}
               </p>
             </div>
 
@@ -236,8 +380,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                     <div className="onboarding-theme-preview-line short" style={{ background: '#64748b' }} />
                   </div>
                   <div className="onboarding-theme-label">
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Sun size={15} color="#d97706" /> வெளிச்சம் (Light)
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <Sun size={15} color="#d97706" /> {isTa ? 'வெளிச்சம் (Light)' : 'Light'}
                     </span>
                     {selectedTheme === 'light' && <Check size={16} color="#2563eb" />}
                   </div>
@@ -256,8 +400,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                     <div className="onboarding-theme-preview-line short" style={{ background: '#8c7355' }} />
                   </div>
                   <div className="onboarding-theme-label">
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Scroll size={15} color="#b45309" /> செப்பியா (Sepia)
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <Scroll size={15} color="#b45309" /> {isTa ? 'செப்பியா (Sepia)' : 'Sepia'}
                     </span>
                     {selectedTheme === 'sepia' && <Check size={16} color="#2563eb" />}
                   </div>
@@ -276,8 +420,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                     <div className="onboarding-theme-preview-line short" style={{ background: '#94a3b8' }} />
                   </div>
                   <div className="onboarding-theme-label">
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Moon size={15} color="#818cf8" /> இருள் (Dark)
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <Moon size={15} color="#818cf8" /> {isTa ? 'இருள் (Dark)' : 'Dark'}
                     </span>
                     {selectedTheme === 'dark' && <Check size={16} color="#2563eb" />}
                   </div>
@@ -296,8 +440,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                     <div className="onboarding-theme-preview-line short" style={{ background: '#6ee7b7' }} />
                   </div>
                   <div className="onboarding-theme-label">
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Trees size={15} color="#10b981" /> வனம் (Forest)
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <Trees size={15} color="#10b981" /> {isTa ? 'வனம் (Forest)' : 'Forest'}
                     </span>
                     {selectedTheme === 'forest' && <Check size={16} color="#2563eb" />}
                   </div>
@@ -311,33 +455,38 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                 className="onboarding-btn onboarding-btn-secondary"
                 onClick={handlePrev}
               >
-                <ChevronLeft size={18} /> பின்னால் · Back
+                <ChevronLeft size={18} /> {isTa ? 'பின்னால்' : 'Back'}
               </button>
               <button
                 type="button"
                 className="onboarding-btn onboarding-btn-primary"
                 onClick={handleNext}
               >
-                அடுத்தது · Continue <ChevronRight size={18} />
+                {isTa ? 'அடுத்தது' : 'Continue'} <ChevronRight size={18} />
               </button>
             </div>
           </>
         )}
 
-        {/* STEP 3: Notification & Reminder */}
+        {/* STEP 3: Notification & Reminder (Requirements 7, 8, 9, 10, 11, 12) */}
         {step === 3 && (
           <>
             <div className="onboarding-header">
               <div className="onboarding-step-indicator">
-                <Sparkles size={13} /> படி 3 / 5 · Step 3 of 5
+                <Sparkles size={13} /> {isTa ? 'படி 3 / 5' : 'Step 3 of 5'}
               </div>
-              <h2 className="onboarding-title">தினசரி நினைவூட்டல் நேரம்</h2>
+              <h2 className="onboarding-title">
+                {isTa ? 'தினசரி நினைவூட்டல்' : 'Daily Bible Reminders'}
+              </h2>
               <p className="onboarding-subtitle">
-                Set a daily reminder time so you never break your reading streak.
+                {isTa
+                  ? 'வேதாகம வாசிப்பைத் தவறவிடாமல் இருக்க நினைவூட்டலை அமைக்கவும்.'
+                  : 'Receive daily scripture alerts even while offline.'}
               </p>
             </div>
 
             <div className="onboarding-body">
+              {/* Presets */}
               <div className="onboarding-time-presets">
                 <button
                   type="button"
@@ -345,15 +494,19 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                   onClick={() => setReminderTime('06:00')}
                 >
                   🌅 06:00 AM
-                  <div style={{ fontSize: '0.7rem', opacity: 0.8, fontWeight: 500 }}>விடியற்காலை</div>
+                  <div style={{ fontSize: '0.6875rem', opacity: 0.8, fontWeight: 500 }}>
+                    {isTa ? 'காலை' : 'Morning'}
+                  </div>
                 </button>
                 <button
                   type="button"
-                  className={`onboarding-time-btn ${reminderTime === '08:00' ? 'selected' : ''}`}
-                  onClick={() => setReminderTime('08:00')}
+                  className={`onboarding-time-btn ${reminderTime === '12:30' ? 'selected' : ''}`}
+                  onClick={() => setReminderTime('12:30')}
                 >
-                  ☀️ 08:00 AM
-                  <div style={{ fontSize: '0.7rem', opacity: 0.8, fontWeight: 500 }}>காலை தியானம்</div>
+                  ☀️ 12:30 PM
+                  <div style={{ fontSize: '0.6875rem', opacity: 0.8, fontWeight: 500 }}>
+                    {isTa ? 'மதியம்' : 'Midday'}
+                  </div>
                 </button>
                 <button
                   type="button"
@@ -361,13 +514,18 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                   onClick={() => setReminderTime('21:00')}
                 >
                   🌙 09:00 PM
-                  <div style={{ fontSize: '0.7rem', opacity: 0.8, fontWeight: 500 }}>இரவு ஜெபம்</div>
+                  <div style={{ fontSize: '0.6875rem', opacity: 0.8, fontWeight: 500 }}>
+                    {isTa ? 'இரவு' : 'Night'}
+                  </div>
                 </button>
               </div>
 
+              {/* Custom Time */}
               <div className="onboarding-custom-time">
                 <Clock size={18} color="var(--text-muted)" />
-                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>தனிப்பயன் நேரம் (Custom Time):</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                  {isTa ? 'தனிப்பயன் நேரம்:' : 'Custom Time:'}
+                </span>
                 <input
                   type="time"
                   value={reminderTime}
@@ -375,31 +533,75 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                 />
               </div>
 
-              {/* Notification Permission Card */}
+              {/* Multi-slot Reminder Toggles (Requirement 10) */}
+              <div className="onboarding-slots-grid">
+                <label className={`onboarding-slot-row ${morningSlot ? 'active' : ''}`} style={{ cursor: 'pointer' }}>
+                  <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                    🌅 {isTa ? 'விடியற்காலை நினைவூட்டல் (06:00 AM)' : 'Morning Reminder (06:00 AM)'}
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={morningSlot}
+                    onChange={(e) => setMorningSlot(e.target.checked)}
+                    style={{ width: '18px', height: '18px', accentColor: '#2563eb' }}
+                  />
+                </label>
+                <label className={`onboarding-slot-row ${afternoonSlot ? 'active' : ''}`} style={{ cursor: 'pointer' }}>
+                  <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                    ☀️ {isTa ? 'மதிய வேத வசனம் (12:30 PM)' : 'Afternoon Verse (12:30 PM)'}
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={afternoonSlot}
+                    onChange={(e) => setAfternoonSlot(e.target.checked)}
+                    style={{ width: '18px', height: '18px', accentColor: '#2563eb' }}
+                  />
+                </label>
+                <label className={`onboarding-slot-row ${nightSlot ? 'active' : ''}`} style={{ cursor: 'pointer' }}>
+                  <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                    🌙 {isTa ? 'இரவு தியானம் & ஜெபம் (09:00 PM)' : 'Night Devotional (09:00 PM)'}
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={nightSlot}
+                    onChange={(e) => setNightSlot(e.target.checked)}
+                    style={{ width: '18px', height: '18px', accentColor: '#2563eb' }}
+                  />
+                </label>
+              </div>
+
+              {/* Vertical Notification Permission Section (Requirement 7) */}
               <div className="onboarding-notif-cta">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div className="onboarding-notif-header">
                   <div
                     style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '10px',
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '8px',
                       background: notifGranted ? '#dcfce7' : '#dbeafe',
                       color: notifGranted ? '#16a34a' : '#2563eb',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center'
+                      justifyContent: 'center',
+                      flexShrink: 0
                     }}
                   >
-                    <Bell size={20} />
+                    <Bell size={18} />
                   </div>
                   <div>
                     <h5 style={{ margin: '0 0 0.15rem 0', fontSize: '0.875rem', fontWeight: 700 }}>
-                      {notifGranted ? 'அறிவிப்புகள் அனுமதிக்கப்பட்டது' : 'Web Push Notification'}
-                    </h5>
-                    <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                       {notifGranted
-                        ? 'தினமும் குறித்த நேரத்தில் நற்செய்தி நினைவூட்டல் வரும்.'
-                        : 'Allow browser notifications for your daily spiritual reminder.'}
+                        ? (isTa ? 'அறிவிப்புகள் தயார்' : 'Notifications Active')
+                        : (isTa ? 'தினசரி நினைவூட்டல் அனுமதி' : 'Daily Reminder Permission')}
+                    </h5>
+                    <p className="onboarding-notif-body">
+                      {notifGranted
+                        ? (isTa
+                            ? 'ஆண்ட்ராய்டு சாதனத்தில் ஆஃப்லைனிலும் நினைவூட்டல் இயங்கும்.'
+                            : 'Offline local notifications scheduled on device.')
+                        : (isTa
+                            ? 'செயலி மூடப்பட்டிருந்தாலும் தினசரி வேதாகம நினைவூட்டலைப் பெற அனுமதியை வழங்கவும்.'
+                            : 'Allow notifications so the app can remind you to read the Bible every day.')}
                     </p>
                   </div>
                 </div>
@@ -409,15 +611,17 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                     type="button"
                     onClick={handleEnableNotifications}
                     disabled={isRequestingNotif}
-                    className="onboarding-btn onboarding-btn-primary"
-                    style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', whiteSpace: 'nowrap', flex: 'none' }}
+                    className="onboarding-notif-btn"
                   >
-                    {isRequestingNotif ? 'அனுமதிக்கிறது...' : 'அனுமதி · Enable'}
+                    <Bell size={16} />
+                    {isRequestingNotif
+                      ? (isTa ? 'அனுமதிக்கிறது...' : 'Requesting...')
+                      : (isTa ? 'அறிவிப்புகளை அனுமதி' : 'Allow Notifications')}
                   </button>
                 ) : (
-                  <span style={{ color: '#16a34a', fontWeight: 700, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    <CheckCircle2 size={16} /> தயார்
-                  </span>
+                  <div style={{ color: '#16a34a', fontWeight: 700, fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <CheckCircle2 size={16} /> {isTa ? 'அனுமதி வழங்கப்பட்டது' : 'Permission Granted'}
+                  </div>
                 )}
               </div>
             </div>
@@ -428,67 +632,66 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                 className="onboarding-btn onboarding-btn-secondary"
                 onClick={handlePrev}
               >
-                <ChevronLeft size={18} /> பின்னால் · Back
+                <ChevronLeft size={18} /> {isTa ? 'பின்னால்' : 'Back'}
               </button>
               <button
                 type="button"
                 className="onboarding-btn onboarding-btn-primary"
                 onClick={handleNext}
               >
-                அடுத்தது · Continue <ChevronRight size={18} />
+                {isTa ? 'அடுத்தது' : 'Continue'} <ChevronRight size={18} />
               </button>
             </div>
           </>
         )}
 
-        {/* STEP 4: Strict Spiritual Commitment Rule */}
+        {/* STEP 4: Reading Commitment (Requirement 14 & 15) */}
         {step === 4 && (
           <>
             <div className="onboarding-header">
               <div className="onboarding-step-indicator">
-                <Sparkles size={13} /> படி 4 / 5 · Step 4 of 5
+                <Sparkles size={13} /> {isTa ? 'படி 4 / 5' : 'Step 4 of 5'}
               </div>
-              <h2 className="onboarding-title">வாசிப்பு அர்ப்பணிப்பு & விதிமுறை</h2>
+              <h2 className="onboarding-title">
+                {isTa ? 'வாசிப்பு அர்ப்பணிப்பு' : 'Reading Commitment'}
+              </h2>
               <p className="onboarding-subtitle">
-                A sacred accountability covenant to honor your daily time with God.
+                {isTa
+                  ? 'தேவ வார்த்தையை தினமும் வாசிக்க எளிய உறுதிமொழி.'
+                  : 'A simple habit builder for daily devotion.'}
               </p>
             </div>
 
             <div className="onboarding-body">
-              <div className="onboarding-commitment-box">
-                <div className="onboarding-rule-row">
-                  <div className="onboarding-rule-icon">
-                    <Clock size={16} />
+              {/* 3 Concise Feature Cards (Requirement 14) */}
+              <div className="onboarding-feature-list">
+                <div className="onboarding-feature-card">
+                  <div className="onboarding-feature-icon" style={{ background: '#eff6ff', color: '#2563eb' }}>
+                    <Clock size={18} />
                   </div>
-                  <div className="onboarding-rule-text">
-                    <h5>வாசிப்பு நேரக் கணக்கீடு (Active Session Timer)</h5>
-                    <p>
-                      நீங்கள் வாசிக்கத் தொடங்கியவுடன் திரையின் கீழே உங்கள் {goalMinutes} நிமிட இலக்குக்கான நேரக் கணக்கீடு தொடங்கும்.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="onboarding-rule-row">
-                  <div className="onboarding-rule-icon">
-                    <ShieldCheck size={16} />
-                  </div>
-                  <div className="onboarding-rule-text">
-                    <h5>முழு இலக்கை நிறைவு செய்தல் (Honor Today's Target)</h5>
-                    <p>
-                      இன்றைய இலக்கு முடியும் வரை தொடர்ச்சியாக வாசிக்க வேண்டும். இடையில் வெளியேற முயன்றால் பொறுப்புணர்வை நினைவூட்டும் செய்தி தோன்றும்.
-                    </p>
+                  <div className="onboarding-feature-text">
+                    <h5>{isTa ? '⏱ நேரக் கணக்கீடு' : '⏱ Active Session Timer'}</h5>
+                    <p>{isTa ? 'உங்கள் வாசிப்பு நேரத்தை நிகழ்நேரத்தில் கண்காணிக்கலாம்.' : 'Track your reading session.'}</p>
                   </div>
                 </div>
 
-                <div className="onboarding-rule-row">
-                  <div className="onboarding-rule-icon">
-                    <Flame size={16} />
+                <div className="onboarding-feature-card">
+                  <div className="onboarding-feature-icon" style={{ background: '#f0fdf4', color: '#16a34a' }}>
+                    <CheckCircle2 size={18} />
                   </div>
-                  <div className="onboarding-rule-text">
-                    <h5>தொடர் வெற்றி & ஆசீர்வாதம் (Streaks & Rewards)</h5>
-                    <p>
-                      தினசரி இலக்கு முடிந்தவுடன் உங்கள் தொடர் நாள் (Streak) வெற்றிகரமாகப் பதிவு செய்யப்படும்.
-                    </p>
+                  <div className="onboarding-feature-text">
+                    <h5>{isTa ? '✓ தினசரி இலக்கு' : '✓ Daily Goal'}</h5>
+                    <p>{isTa ? `இன்றைய ${effectiveGoal} நிமிட வாசிப்பு இலக்கை நிறைவு செய்யவும்.` : `Complete today's ${effectiveGoal}-minute target.`}</p>
+                  </div>
+                </div>
+
+                <div className="onboarding-feature-card">
+                  <div className="onboarding-feature-icon" style={{ background: '#faf5ff', color: '#9333ea' }}>
+                    <Flame size={18} />
+                  </div>
+                  <div className="onboarding-feature-text">
+                    <h5>{isTa ? '🔥 தொடர் பழக்கம்' : '🔥 Streaks'}</h5>
+                    <p>{isTa ? 'தினமும் வாசித்து தொடர் நாட்களை (Streaks) கட்டமைக்கவும்.' : 'Build a consistent reading habit.'}</p>
                   </div>
                 </div>
               </div>
@@ -499,12 +702,12 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.65rem',
-                  padding: '0.75rem 1rem',
+                  padding: '0.75rem',
                   background: 'rgba(37, 99, 235, 0.05)',
                   border: '1px solid rgba(37, 99, 235, 0.2)',
                   borderRadius: '10px',
                   cursor: 'pointer',
-                  fontSize: '0.85rem',
+                  fontSize: '0.8125rem',
                   fontWeight: 600,
                   color: 'var(--text-primary)'
                 }}
@@ -515,7 +718,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                   onChange={(e) => setCovenantAccepted(e.target.checked)}
                   style={{ width: '18px', height: '18px', accentColor: '#2563eb' }}
                 />
-                <span>இறை வார்த்தைக்கு தினமும் நேரம் ஒதுக்குவேன் என உறுதியளிக்கிறேன்</span>
+                <span>
+                  {isTa
+                    ? 'இறை வார்த்தைக்கு தினமும் நேரம் ஒதுக்குவேன் என உறுதியளிக்கிறேன்.'
+                    : 'I commit to reading God\'s word daily.'}
+                </span>
               </label>
             </div>
 
@@ -525,7 +732,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                 className="onboarding-btn onboarding-btn-secondary"
                 onClick={handlePrev}
               >
-                <ChevronLeft size={18} /> பின்னால் · Back
+                <ChevronLeft size={18} /> {isTa ? 'பின்னால்' : 'Back'}
               </button>
               <button
                 type="button"
@@ -534,7 +741,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                 onClick={handleNext}
                 style={{ opacity: covenantAccepted ? 1 : 0.5 }}
               >
-                அடுத்தது · Continue <ChevronRight size={18} />
+                {isTa ? 'அடுத்தது' : 'Continue'} <ChevronRight size={18} />
               </button>
             </div>
           </>
@@ -545,11 +752,15 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
           <>
             <div className="onboarding-header">
               <div className="onboarding-step-indicator">
-                <Sparkles size={13} /> படி 5 / 5 · Step 5 of 5
+                <Sparkles size={13} /> {isTa ? 'படி 5 / 5' : 'Step 5 of 5'}
               </div>
-              <h2 className="onboarding-title">எப்படி தொடங்க விரும்புகிறீர்கள்?</h2>
+              <h2 className="onboarding-title">
+                {isTa ? 'எப்படி தொடங்க விரும்புகிறீர்கள்?' : 'Get Started'}
+              </h2>
               <p className="onboarding-subtitle">
-                Choose to start immediately as a guest or sign in to sync with cloud.
+                {isTa
+                  ? 'விருந்தினராக உடனடியாகத் தொடங்கலாம் அல்லது கணக்குடன் இணையலாம்.'
+                  : 'Start reading as guest or sign in to sync with cloud.'}
               </p>
             </div>
 
@@ -566,8 +777,13 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                       <User size={20} />
                     </div>
                     <div className="onboarding-option-text">
-                      <h4>விருந்தினராக தொடங்கு (Guest Mode)</h4>
-                      <p>பதிவு செய்யாமல் இந்த சாதனத்தில் உடனடியாக வாசிக்கத் தொடங்குங்கள்.</p>
+                      <div className="onboarding-option-title-row">
+                        <h4>{isTa ? 'விருந்தினராக தொடங்கு' : 'Start as Guest'}</h4>
+                        <span className="onboarding-option-badge" style={{ background: '#e2e8f0', color: '#475569' }}>
+                          {isTa ? 'உடனடி' : 'Instant'}
+                        </span>
+                      </div>
+                      <p>{isTa ? 'பதிவு செய்யாமல் உடனடியாக வாசிக்கலாம்' : 'Start reading immediately without account'}</p>
                     </div>
                   </div>
                   <ChevronRight size={20} color="var(--text-muted)" />
@@ -584,13 +800,15 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                       <LogIn size={20} />
                     </div>
                     <div className="onboarding-option-text">
-                      <h4>
-                        உள்நுழை / கணக்கு உருவாக்கு (Cloud Sync)
+                      <div className="onboarding-option-title-row">
+                        <h4 style={{ color: '#2563eb' }}>
+                          {isTa ? 'உள்நுழை / கணக்கு தொடங்கு' : 'Sign In / Register'}
+                        </h4>
                         <span className="onboarding-option-badge" style={{ background: '#dbeafe', color: '#1d4ed8' }}>
-                          Free Sync
+                          {isTa ? 'கிளவுட் ஒத்திசைவு' : 'Cloud Sync'}
                         </span>
-                      </h4>
-                      <p>மொபைல் மற்றும் கணினியில் புக்மார்க்குகள் & ஸ்ட்ரீக் சேமிக்க உள்நுழையவும்.</p>
+                      </div>
+                      <p>{isTa ? 'புக்மார்க், சிறப்பம்சங்கள் மற்றும் சாதன ஒத்திசைவு' : 'Sync bookmarks, streaks across devices'}</p>
                     </div>
                   </div>
                   <ChevronRight size={20} color="#2563eb" />
@@ -604,9 +822,15 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                 className="onboarding-btn onboarding-btn-secondary"
                 onClick={handlePrev}
               >
-                <ChevronLeft size={18} /> பின்னால் · Back
+                <ChevronLeft size={18} /> {isTa ? 'பின்னால்' : 'Back'}
               </button>
-              <div />
+              <button
+                type="button"
+                className="onboarding-btn onboarding-btn-primary"
+                onClick={() => finishOnboarding('guest')}
+              >
+                {isTa ? 'வாசிக்கத் தொடங்கு' : 'Start Reading'} <ChevronRight size={18} />
+              </button>
             </div>
           </>
         )}

@@ -9,6 +9,8 @@ export const defaultPreferences: ReadingPreferences = {
   maxWidth: 'standard',
   theme: 'light',
   language: 'ta',
+  appLanguage: 'ta',
+  bibleLanguage: 'ta',
   fontFamilyTa: 'noto',
   fontFamilyEn: 'lora',
   verseOptionsStyle: 'dropdown',
