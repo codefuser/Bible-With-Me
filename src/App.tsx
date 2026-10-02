@@ -32,7 +32,8 @@ import { initNotificationScheduler } from './services/notificationService';
 import { OnboardingWizard } from './components/onboarding/OnboardingWizard';
 import { ReadingGoalTracker } from './components/bible/ReadingGoalTracker';
 import { OfflineBanner } from './components/common/OfflineBanner';
-import { ThemeOption } from './types/bible';
+import { UpdateModal } from './components/common/UpdateModal';
+import { ThemeOption, AppLanguage, BibleLanguage } from './types/bible';
 import { BookOpen, Clock, ArrowRight } from 'lucide-react';
 
 // ─── App Init Splash (while checking session) ─────────────────────────────────
@@ -233,6 +234,7 @@ const MainLayout: React.FC = () => {
       <FullscreenVerseReader />
       <LanguageSelectorModal />
       <StreakStatsModal />
+      <UpdateModal />
 
       {/* Mobile Back Button Exit Confirmation Modal */}
       <ExitConfirmationModal
@@ -251,7 +253,7 @@ const ONBOARDED_KEY = 'bible_user_onboarded_v1';
 
 const AppGate: React.FC = () => {
   const { isAuthenticated, isSessionLoading, setIsAuthModalOpen } = useAuth();
-  const { updatePreferences } = useReading();
+  const { updatePreferences, setAppLanguage, setBibleLanguage } = useReading();
   const [isOnboarded, setIsOnboarded] = useState<boolean>(
     () => localStorage.getItem(ONBOARDED_KEY) === 'true'
   );
@@ -277,15 +279,21 @@ const AppGate: React.FC = () => {
     theme: ThemeOption;
     reminderTime: string;
     notificationsEnabled: boolean;
+    appLanguage: AppLanguage;
+    bibleLanguage: BibleLanguage;
     action: 'guest' | 'auth';
   }) => {
     localStorage.setItem(ONBOARDED_KEY, 'true');
     setIsOnboarded(true);
+    if (data.appLanguage) setAppLanguage(data.appLanguage);
+    if (data.bibleLanguage) setBibleLanguage(data.bibleLanguage);
     updatePreferences({
       dailyGoalMinutes: data.goalMinutes,
       theme: data.theme,
       reminderTime: data.reminderTime,
       notificationsEnabled: data.notificationsEnabled,
+      appLanguage: data.appLanguage,
+      bibleLanguage: data.bibleLanguage,
       onboardingCompleted: true
     });
     if (data.action === 'guest') {

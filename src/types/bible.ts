@@ -61,6 +61,9 @@ export type TamilFontOption = 'noto' | 'mukta' | 'catamaran' | 'arima' | 'hind' 
 export type EnglishFontOption = 'lora' | 'inter' | 'merriweather' | 'outfit' | 'playfair' | 'roboto' | 'georgia' | 'cinzel' | 'opensans' | 'montserrat' | 'poppins' | 'baskerville';
 export type VerseOptionsStyleOption = 'dropdown' | 'buttons';
 
+export type AppLanguage = 'ta' | 'en';
+export type BibleLanguage = 'ta' | 'en' | 'parallel';
+
 export interface ReadingPreferences {
   fontSize: FontSizeOption;
   lineHeight: LineHeightOption;
@@ -69,7 +72,9 @@ export interface ReadingPreferences {
   customLineHeightVal?: number;
   customMaxWidthPx?: number;
   theme: ThemeOption;
-  language: Language;
+  language: Language; // legacy alias of bibleLanguage
+  appLanguage?: AppLanguage;
+  bibleLanguage?: BibleLanguage;
   fontFamilyTa?: TamilFontOption;
   fontFamilyEn?: EnglishFontOption;
   verseOptionsStyle?: VerseOptionsStyleOption;

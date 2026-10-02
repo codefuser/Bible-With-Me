@@ -85,7 +85,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterAsGuest }) => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '1.5rem 1rem'
+        padding: 'calc(1.5rem + env(safe-area-inset-top, 0px)) max(1rem, env(safe-area-inset-right, 0px)) calc(1.5rem + env(safe-area-inset-bottom, 0px)) max(1rem, env(safe-area-inset-left, 0px))'
       }}
     >
       {/* Centered Minimal Container */}

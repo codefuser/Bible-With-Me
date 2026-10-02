@@ -220,9 +220,9 @@ export const VerseReader: React.FC = () => {
 
   const getVersePaddingRight = (isBookmarked: boolean, isDropdown: boolean) => {
     if (isDropdown) {
-      return isBookmarked ? '2.4rem' : '1.75rem';
+      return isBookmarked ? '3.6rem' : '2.1rem';
     }
-    return isBookmarked ? '1.35rem' : '0.2rem';
+    return isBookmarked ? '1.85rem' : '0.25rem';
   };
 
   const bookName = language === 'en' ? currentBook.name_en : currentBook.name_ta;
