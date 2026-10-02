@@ -4,9 +4,15 @@
 .reader-wrapper {
   width: 100%;
   margin: 0 auto;
-  padding-bottom: 2.5rem;
+  padding-bottom: 7.5rem;
   transition: max-width var(--transition-normal);
   max-width: var(--custom-max-width, var(--width-standard));
+}
+
+@media (max-width: 768px) {
+  .reader-wrapper {
+    padding-bottom: max(7.5rem, calc(6.5rem + env(safe-area-inset-bottom)));
+  }
 }
 
 .reader-wrapper[data-width="compact"] {
@@ -903,6 +909,25 @@
   from {
     opacity: 0;
     transform: scale(0.95) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.verse-dropdown-menu.open-upward {
+  top: auto;
+  bottom: calc(100% + 0.25rem);
+  box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.18), 0 -8px 10px -6px rgba(0, 0, 0, 0.12);
+  animation: dropdownFadeInUpward 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: bottom right;
+}
+
+@keyframes dropdownFadeInUpward {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(4px);
   }
   to {
     opacity: 1;

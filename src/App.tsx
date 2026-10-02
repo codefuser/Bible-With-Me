@@ -31,6 +31,7 @@ import { initAdminRealtimeSync } from './services/adminService';
 import { initNotificationScheduler } from './services/notificationService';
 import { OnboardingWizard } from './components/onboarding/OnboardingWizard';
 import { ReadingGoalTracker } from './components/bible/ReadingGoalTracker';
+import { OfflineBanner } from './components/common/OfflineBanner';
 import { ThemeOption } from './types/bible';
 import { BookOpen, Clock, ArrowRight } from 'lucide-react';
 
@@ -176,6 +177,7 @@ const MainLayout: React.FC = () => {
       <KeyboardShortcuts />
       <Header />
       <AnnouncementBanner />
+      <OfflineBanner language={language} />
 
       <div className="app-body-layout">
         {/* Permanent Desktop Side Navigation Sidebar */}

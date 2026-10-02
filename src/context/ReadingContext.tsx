@@ -192,93 +192,141 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const loadAllCloudData = useCallback(async (uid: string): Promise<void> => {
     console.log('[ReadingContext] Loading all cloud data for user:', uid);
 
-    // 1. Load Bookmarks from cloud directly into state
-    const cloudBookmarks = await loadCloudBookmarksToLocal(uid);
-    setBookmarks(cloudBookmarks);
-    console.log(`[ReadingContext] Set ${cloudBookmarks.length} bookmarks from cloud.`);
+    // If offline, restore immediately from local storage cache
+    if (!navigator.onLine) {
+      console.log('[ReadingContext] Offline mode: restoring all user data from local storage cache');
+      setBookmarks(getStoredBookmarks());
+      setHighlights(getStoredHighlights());
+      setNotes(getStoredNotes());
+      const localHist = getStoredHistory();
+      if (localHist) setHistoryItem(localHist);
+      setHistoryList(getStoredHistoryList());
+      setStreakData(getStoredStreakData());
+      return;
+    }
 
-    // 2. Load Settings from cloud
-    const cloudPrefs = await fetchCloudSettings(uid);
-    if (cloudPrefs) {
-      setPreferencesState((prev) => {
-        const updated = { ...prev, ...cloudPrefs };
-        // Keep localStorage cache in sync
-        savePreferences(updated);
-        return updated;
-      });
-      if (cloudPrefs.language) {
-        setLanguageState(cloudPrefs.language as Language);
+    try {
+      // 1. Load Bookmarks from cloud directly into state
+      const cloudBookmarks = await loadCloudBookmarksToLocal(uid);
+      setBookmarks(cloudBookmarks);
+      console.log(`[ReadingContext] Set ${cloudBookmarks.length} bookmarks from cloud.`);
+
+      // 2. Load Settings from cloud
+      const cloudPrefs = await fetchCloudSettings(uid);
+      if (cloudPrefs) {
+        setPreferencesState((prev) => {
+          const updated = { ...prev, ...cloudPrefs };
+          // Keep localStorage cache in sync
+          savePreferences(updated);
+          return updated;
+        });
+        if (cloudPrefs.language) {
+          setLanguageState(cloudPrefs.language as Language);
+        }
+        console.log('[ReadingContext] Applied cloud settings.');
       }
-      console.log('[ReadingContext] Applied cloud settings.');
-    }
 
-    // 3. Load Highlights from cloud directly into state
-    const cloudHighlights = await fetchCloudHighlights(uid);
-    const newHighlights: Record<string, HighlightColor> = {};
-    for (const hl of cloudHighlights) {
-      const matchedBook = ALL_BIBLE_BOOKS.find(
-        (b) => b.code.toUpperCase() === hl.book.toUpperCase() || String(b.id) === hl.book
-      );
-      const bookId = matchedBook ? matchedBook.id : parseInt(hl.book, 10) || 1;
-      const key = `${bookId}_${hl.chapter}_${hl.verse}`;
-      newHighlights[key] = hl.color as HighlightColor;
-    }
-    setHighlights(newHighlights);
-    console.log(`[ReadingContext] Set ${Object.keys(newHighlights).length} highlights from cloud.`);
-
-    // 4. Load Notes from cloud directly into state
-    const cloudNotes = await fetchCloudNotes(uid);
-    setNotes(cloudNotes);
-    console.log(`[ReadingContext] Set ${cloudNotes.length} notes from cloud.`);
-
-    // 5. Load Reading History from cloud (latest item for "continue reading" banner)
-    const cloudHistory = await fetchCloudHistory(uid);
-    if (cloudHistory) {
-      const matchedBook = ALL_BIBLE_BOOKS.find(
-        (b) => b.code.toUpperCase() === cloudHistory.book.toUpperCase() || String(b.id) === cloudHistory.book
-      );
-      if (matchedBook) {
-        const histItem: ReadingHistoryItem = {
-          book_id: matchedBook.id,
-          chapter: cloudHistory.chapter,
-          verse: cloudHistory.verse,
-          language: 'ta',
-          book_name_en: matchedBook.name_en,
-          book_name_ta: matchedBook.name_ta,
-          updated_at: cloudHistory.last_read_at || new Date().toISOString()
-        };
-        setHistoryItem(histItem);
-        console.log('[ReadingContext] Set reading history from cloud:', matchedBook.name_en, cloudHistory.chapter);
-      }
-    }
-
-    // 6. Load full history list from cloud
-    const allCloudHistory = await fetchAllCloudHistory(uid);
-    const mappedHistoryList: ReadingHistoryItem[] = allCloudHistory
-      .map((ch) => {
+      // 3. Load Highlights from cloud directly into state
+      const cloudHighlights = await fetchCloudHighlights(uid);
+      const newHighlights: Record<string, HighlightColor> = {};
+      for (const hl of cloudHighlights) {
         const matchedBook = ALL_BIBLE_BOOKS.find(
-          (b) => b.code.toUpperCase() === ch.book.toUpperCase() || String(b.id) === ch.book
+          (b) => b.code.toUpperCase() === hl.book.toUpperCase() || String(b.id) === hl.book
         );
-        if (!matchedBook) return null;
-        return {
-          book_id: matchedBook.id,
-          chapter: ch.chapter,
-          verse: ch.verse,
-          language: 'ta' as Language,
-          book_name_en: matchedBook.name_en,
-          book_name_ta: matchedBook.name_ta,
-          updated_at: ch.last_read_at || new Date().toISOString()
-        } as ReadingHistoryItem;
-      })
-      .filter(Boolean) as ReadingHistoryItem[];
-    setHistoryList(mappedHistoryList);
-    console.log(`[ReadingContext] Set ${mappedHistoryList.length} history items from cloud.`);
+        const bookId = matchedBook ? matchedBook.id : parseInt(hl.book, 10) || 1;
+        const key = `${bookId}_${hl.chapter}_${hl.verse}`;
+        newHighlights[key] = hl.color as HighlightColor;
+      }
+      setHighlights(newHighlights);
+      try {
+        localStorage.setItem('bible_app_highlights', JSON.stringify(newHighlights));
+      } catch {
+        // ignore
+      }
+      console.log(`[ReadingContext] Set ${Object.keys(newHighlights).length} highlights from cloud.`);
 
-    // 7. Load cloud streak & habit data
-    const cloudStreak = await fetchCloudStreakData(uid);
-    if (cloudStreak) {
-      setStreakData(cloudStreak);
-      localStorage.setItem('bible_app_streak_data', JSON.stringify(cloudStreak));
+      // 4. Load Notes from cloud directly into state
+      const cloudNotes = await fetchCloudNotes(uid);
+      setNotes(cloudNotes);
+      try {
+        localStorage.setItem('bible_app_user_notes', JSON.stringify(cloudNotes));
+      } catch {
+        // ignore
+      }
+      console.log(`[ReadingContext] Set ${cloudNotes.length} notes from cloud.`);
+
+      // 5. Load Reading History from cloud (latest item for "continue reading" banner)
+      const cloudHistory = await fetchCloudHistory(uid);
+      if (cloudHistory) {
+        const matchedBook = ALL_BIBLE_BOOKS.find(
+          (b) => b.code.toUpperCase() === cloudHistory.book.toUpperCase() || String(b.id) === cloudHistory.book
+        );
+        if (matchedBook) {
+          const histItem: ReadingHistoryItem = {
+            book_id: matchedBook.id,
+            chapter: cloudHistory.chapter,
+            verse: cloudHistory.verse,
+            language: 'ta',
+            book_name_en: matchedBook.name_en,
+            book_name_ta: matchedBook.name_ta,
+            updated_at: cloudHistory.last_read_at || new Date().toISOString()
+          };
+          setHistoryItem(histItem);
+          try {
+            localStorage.setItem('bible_app_reading_history', JSON.stringify(histItem));
+          } catch {
+            // ignore
+          }
+          console.log('[ReadingContext] Set reading history from cloud:', matchedBook.name_en, cloudHistory.chapter);
+        }
+      }
+
+      // 6. Load full history list from cloud
+      const allCloudHistory = await fetchAllCloudHistory(uid);
+      const mappedHistoryList: ReadingHistoryItem[] = allCloudHistory
+        .map((ch) => {
+          const matchedBook = ALL_BIBLE_BOOKS.find(
+            (b) => b.code.toUpperCase() === ch.book.toUpperCase() || String(b.id) === ch.book
+          );
+          if (!matchedBook) return null;
+          return {
+            book_id: matchedBook.id,
+            chapter: ch.chapter,
+            verse: ch.verse,
+            language: 'ta' as Language,
+            book_name_en: matchedBook.name_en,
+            book_name_ta: matchedBook.name_ta,
+            updated_at: ch.last_read_at || new Date().toISOString()
+          } as ReadingHistoryItem;
+        })
+        .filter(Boolean) as ReadingHistoryItem[];
+      setHistoryList(mappedHistoryList);
+      try {
+        localStorage.setItem('bible_app_reading_history_list', JSON.stringify(mappedHistoryList));
+      } catch {
+        // ignore
+      }
+      console.log(`[ReadingContext] Set ${mappedHistoryList.length} history items from cloud.`);
+
+      // 7. Load cloud streak & habit data
+      const cloudStreak = await fetchCloudStreakData(uid);
+      if (cloudStreak) {
+        setStreakData(cloudStreak);
+        try {
+          localStorage.setItem('bible_app_streak_data', JSON.stringify(cloudStreak));
+        } catch {
+          // ignore
+        }
+      }
+    } catch (err) {
+      console.warn('[ReadingContext] Cloud data fetch failed, falling back to local storage cache:', err);
+      setBookmarks(getStoredBookmarks());
+      setHighlights(getStoredHighlights());
+      setNotes(getStoredNotes());
+      const localHist = getStoredHistory();
+      if (localHist) setHistoryItem(localHist);
+      setHistoryList(getStoredHistoryList());
+      setStreakData(getStoredStreakData());
     }
   }, []);
 

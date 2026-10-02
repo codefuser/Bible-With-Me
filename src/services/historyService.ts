@@ -1,5 +1,6 @@
 import { ReadingHistoryItem, Language, BibleBook } from '../types/bible';
 import { upsertCloudHistory } from './userDataService';
+import { addToSyncQueue } from './offlineSyncQueue';
 
 const HISTORY_KEY = 'bible_app_reading_history';
 const HISTORY_LIST_KEY = 'bible_app_reading_history_list';
@@ -80,7 +81,30 @@ export const updateReadingHistory = async (
 
   // Database sync via upsert if user is logged in
   if (userId) {
-    await upsertCloudHistory(userId, book.code, chapter, verse);
+    if (!navigator.onLine) {
+      addToSyncQueue({
+        userId,
+        type: 'HISTORY_UPDATE',
+        payload: { bookCode: book.code, chapter, verse }
+      });
+    } else {
+      try {
+        const ok = await upsertCloudHistory(userId, book.code, chapter, verse);
+        if (!ok) {
+          addToSyncQueue({
+            userId,
+            type: 'HISTORY_UPDATE',
+            payload: { bookCode: book.code, chapter, verse }
+          });
+        }
+      } catch {
+        addToSyncQueue({
+          userId,
+          type: 'HISTORY_UPDATE',
+          payload: { bookCode: book.code, chapter, verse }
+        });
+      }
+    }
   }
 
   return item;

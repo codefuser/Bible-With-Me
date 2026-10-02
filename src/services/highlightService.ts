@@ -1,5 +1,6 @@
 import { ALL_BIBLE_BOOKS } from './bibleService';
 import { upsertCloudHighlight, deleteCloudHighlight } from './userDataService';
+import { addToSyncQueue } from './offlineSyncQueue';
 
 export type HighlightColor = 'yellow' | 'green' | 'blue' | 'pink' | 'orange' | 'purple';
 
@@ -49,10 +50,34 @@ export const saveHighlight = async (
 
   if (userId) {
     const bookCode = ALL_BIBLE_BOOKS.find((b) => b.id === bookId)?.code || String(bookId);
-    if (!color) {
-      await deleteCloudHighlight(userId, bookCode, chapter, verse);
+    if (!navigator.onLine) {
+      addToSyncQueue({
+        userId,
+        type: 'HIGHLIGHT_SET',
+        payload: { bookCode, chapter, verse, color }
+      });
     } else {
-      await upsertCloudHighlight(userId, bookCode, chapter, verse, color);
+      try {
+        let ok = false;
+        if (!color) {
+          ok = await deleteCloudHighlight(userId, bookCode, chapter, verse);
+        } else {
+          ok = await upsertCloudHighlight(userId, bookCode, chapter, verse, color);
+        }
+        if (!ok) {
+          addToSyncQueue({
+            userId,
+            type: 'HIGHLIGHT_SET',
+            payload: { bookCode, chapter, verse, color }
+          });
+        }
+      } catch {
+        addToSyncQueue({
+          userId,
+          type: 'HIGHLIGHT_SET',
+          payload: { bookCode, chapter, verse, color }
+        });
+      }
     }
   }
 

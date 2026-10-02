@@ -127,19 +127,184 @@ const wordPrefixMap = new Map<string, IndexedWord[]>();
 // Dynamic max chapter map: `bookIndex -> maxChapter`
 const bookMaxChapters = new Map<number, number>();
 
-export const getPreindexedBibleWords = () => indexedBibleWords;
+let wordIndexingDone = false;
+
+function buildWordIndex(): void {
+  if (wordIndexingDone || allVersesStore.length === 0) return;
+  const wordCountMap = new Map<string, number>();
+  for (const v of allVersesStore) {
+    const cleanedTa = (v.norm_ta || v.text_ta).replace(/[.,!?:;""''()\[\]\-«»—‘’“”]/g, ' ');
+    const cleanedEn = (v.lower_en || v.text_en).replace(/[^a-zA-Z0-9\s]/g, ' ');
+
+    const taWords = cleanedTa.split(/\s+/);
+    for (const w of taWords) {
+      if (w.length >= 2) {
+        wordCountMap.set(w, (wordCountMap.get(w) || 0) + 1);
+      }
+    }
+
+    const enWords = cleanedEn.split(/\s+/);
+    for (const w of enWords) {
+      if (w.length >= 2) {
+        const titleCase = w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+        wordCountMap.set(titleCase, (wordCountMap.get(titleCase) || 0) + 1);
+      }
+    }
+  }
+
+  indexedBibleWords = Array.from(wordCountMap.entries())
+    .map(([word, count]) => ({ word, lower: word.toLowerCase(), count }))
+    .sort((a, b) => b.count - a.count);
+
+  wordPrefixMap.clear();
+  for (const item of indexedBibleWords) {
+    const firstChar = item.lower[0];
+    if (firstChar) {
+      let bucket = wordPrefixMap.get(firstChar);
+      if (!bucket) {
+        bucket = [];
+        wordPrefixMap.set(firstChar, bucket);
+      }
+      bucket.push(item);
+    }
+  }
+  wordIndexingDone = true;
+  console.log(`[csvBibleService] Indexed ${indexedBibleWords.length} words in background.`);
+}
+
+function scheduleWordIndexing(): void {
+  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+    (window as any).requestIdleCallback(() => buildWordIndex(), { timeout: 3000 });
+  } else {
+    setTimeout(buildWordIndex, 50);
+  }
+}
+
+export const getPreindexedBibleWords = (): IndexedWord[] => {
+  if (!wordIndexingDone) {
+    buildWordIndex();
+  }
+  return indexedBibleWords;
+};
+
 export const getBibleWordsForPrefix = (prefixChar: string): IndexedWord[] => {
+  if (!wordIndexingDone) {
+    buildWordIndex();
+  }
   if (!prefixChar) return indexedBibleWords;
   return wordPrefixMap.get(prefixChar.toLowerCase()) || indexedBibleWords;
 };
+
+// IndexedDB Caching Layer for ultra-fast startup (<100ms)
+const IDB_DB_NAME = 'bible_offline_cache_db';
+const IDB_STORE_NAME = 'datasets';
+const IDB_CACHE_KEY = 'bible_data_v2';
+const IDB_VERSION = 1;
+
+function openCacheDB(): Promise<IDBDatabase | null> {
+  if (typeof window === 'undefined' || !window.indexedDB) {
+    return Promise.resolve(null);
+  }
+  return new Promise((resolve) => {
+    try {
+      const request = indexedDB.open(IDB_DB_NAME, IDB_VERSION);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(IDB_STORE_NAME)) {
+          db.createObjectStore(IDB_STORE_NAME);
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => {
+        console.warn('[csvBibleService] IndexedDB open error:', request.error);
+        resolve(null);
+      };
+    } catch (e) {
+      console.warn('[csvBibleService] IndexedDB initialization failed:', e);
+      resolve(null);
+    }
+  });
+}
+
+async function loadFromIndexedDB(): Promise<boolean> {
+  try {
+    const db = await openCacheDB();
+    if (!db) return false;
+
+    return new Promise((resolve) => {
+      const tx = db.transaction(IDB_STORE_NAME, 'readonly');
+      const store = tx.objectStore(IDB_STORE_NAME);
+      const req = store.get(IDB_CACHE_KEY);
+
+      req.onsuccess = () => {
+        const cached = req.result;
+        if (cached && cached.verses && cached.verses.length === 31102 && cached.maxChapters) {
+          allVersesStore.length = 0;
+          verseStore.clear();
+          bookMaxChapters.clear();
+
+          for (const [bIdx, maxCh] of cached.maxChapters) {
+            bookMaxChapters.set(bIdx, maxCh);
+          }
+
+          for (const v of cached.verses) {
+            allVersesStore.push(v);
+            const bookMeta = getBookMetaById(v.book_id);
+            const bookIndex = bookMeta ? bookMeta.bookIndex : v.book_id - 1;
+            const key = `${bookIndex}_${v.chapter}_${v.verse}`;
+            verseStore.set(key, v);
+          }
+
+          isLoaded = true;
+          console.log(`[csvBibleService] Restored ${allVersesStore.length} verses instantly from IndexedDB cache!`);
+          scheduleWordIndexing();
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      };
+      req.onerror = () => resolve(false);
+    });
+  } catch (err) {
+    console.warn('[csvBibleService] loadFromIndexedDB error:', err);
+    return false;
+  }
+}
+
+async function saveToIndexedDB(verses: BibleVerse[], maxChapters: [number, number][]): Promise<void> {
+  try {
+    const db = await openCacheDB();
+    if (!db) return;
+
+    const tx = db.transaction(IDB_STORE_NAME, 'readwrite');
+    const store = tx.objectStore(IDB_STORE_NAME);
+    store.put(
+      {
+        version: 'v2',
+        verses,
+        maxChapters,
+        savedAt: Date.now()
+      },
+      IDB_CACHE_KEY
+    );
+  } catch (err) {
+    console.warn('[csvBibleService] saveToIndexedDB error:', err);
+  }
+}
 
 export const loadBibleDatasets = (): Promise<void> => {
   if (isLoaded) return Promise.resolve();
   if (loadPromise) return loadPromise;
 
   loadPromise = (async () => {
+    // 1. Try fast load from IndexedDB first
+    const idbSuccess = await loadFromIndexedDB();
+    if (idbSuccess) {
+      return;
+    }
+
     try {
-      // 1. Fetch both CSV files concurrently
+      // 2. Fallback: Fetch CSV files concurrently
       const [enRes, taRes] = await Promise.all([
         fetch('/bible-datasets/english-bible.csv'),
         fetch('/bible-datasets/tamil-bible.csv')
@@ -150,7 +315,7 @@ export const loadBibleDatasets = (): Promise<void> => {
         taRes.text()
       ]);
 
-      // 2. Parse CSVs using PapaParse
+      // 3. Parse CSVs using PapaParse
       const enParsed = Papa.parse<CsvRow>(enCsvText, { header: true, skipEmptyLines: true });
       const taParsed = Papa.parse<CsvRow>(taCsvText, { header: true, skipEmptyLines: true });
 
@@ -180,11 +345,14 @@ export const loadBibleDatasets = (): Promise<void> => {
         const canonicalBookId = bookMeta ? bookMeta.id : bookIndex + 1;
 
         const textEn = enRow.verse ? enRow.verse.trim() : '';
-        const textTa = taRow.verse ? taRow.verse.trim() : '';
+        let textTa = taRow.verse ? taRow.verse.trim() : '';
+        if (textTa.includes('\uFFFD')) {
+          textTa = textTa.replace(/\uFFFD/g, '');
+        }
 
         const verseObj: BibleVerse = {
           id: verseId,
-          book_id: canonicalBookId, // 1-based canonical ID (e.g. Genesis=1, John=43)
+          book_id: canonicalBookId,
           chapter,
           verse: verseNum,
           text_en: textEn,
@@ -198,47 +366,16 @@ export const loadBibleDatasets = (): Promise<void> => {
         allVersesStore.push(verseObj);
       }
 
-      // Pre-index unique words for 0ms lag-free auto-complete suggestions
-      const wordCountMap = new Map<string, number>();
-      for (const v of allVersesStore) {
-        const cleanedTa = (v.norm_ta || v.text_ta).replace(/[.,!?:;""''()\[\]\-«»—‘’“”]/g, ' ');
-        const cleanedEn = (v.lower_en || v.text_en).replace(/[^a-zA-Z0-9\s]/g, ' ');
-
-        const taWords = cleanedTa.split(/\s+/);
-        for (const w of taWords) {
-          if (w.length >= 2) {
-            wordCountMap.set(w, (wordCountMap.get(w) || 0) + 1);
-          }
-        }
-
-        const enWords = cleanedEn.split(/\s+/);
-        for (const w of enWords) {
-          if (w.length >= 2) {
-            const titleCase = w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
-            wordCountMap.set(titleCase, (wordCountMap.get(titleCase) || 0) + 1);
-          }
-        }
-      }
-
-      indexedBibleWords = Array.from(wordCountMap.entries())
-        .map(([word, count]) => ({ word, lower: word.toLowerCase(), count }))
-        .sort((a, b) => b.count - a.count);
-
-      wordPrefixMap.clear();
-      for (const item of indexedBibleWords) {
-        const firstChar = item.lower[0];
-        if (firstChar) {
-          let bucket = wordPrefixMap.get(firstChar);
-          if (!bucket) {
-            bucket = [];
-            wordPrefixMap.set(firstChar, bucket);
-          }
-          bucket.push(item);
-        }
-      }
-
       isLoaded = true;
-      console.log(`Successfully loaded ${allVersesStore.length} verses and ${indexedBibleWords.length} indexed words into prefix buckets!`);
+      console.log(`[csvBibleService] Successfully parsed ${allVersesStore.length} verses from CSVs!`);
+
+      // Persist parsed dataset to IndexedDB for next cold boot
+      saveToIndexedDB(allVersesStore, Array.from(bookMaxChapters.entries())).catch((err) =>
+        console.warn('[csvBibleService] Cache save error:', err)
+      );
+
+      // Lazy background word indexing without blocking the main thread
+      scheduleWordIndexing();
     } catch (err) {
       console.error('Failed loading Bible CSV datasets:', err);
       throw err;

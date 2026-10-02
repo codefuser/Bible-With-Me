@@ -10,11 +10,12 @@
   background: var(--bg-surface, #ffffff);
   border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 9999px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 6px 16px -3px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.45rem 0.85rem 0.45rem 0.55rem;
+  justify-content: center;
+  gap: 0;
+  padding: 0.375rem;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
@@ -23,13 +24,13 @@
 
 .reading-tracker-pill:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 28px -6px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 12px 24px -5px rgba(0, 0, 0, 0.2);
   border-color: #2563eb;
 }
 
 .reading-tracker-pill.completed {
   border-color: #10b981;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(5, 150, 105, 0.04));
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(5, 150, 105, 0.06));
 }
 
 .reading-tracker-ring-box {
@@ -67,8 +68,20 @@
 }
 
 .reading-tracker-text {
-  display: flex;
+  display: none;
   flex-direction: column;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+@media (min-width: 1024px) {
+  .reading-tracker-pill:hover {
+    gap: 0.55rem;
+    padding: 0.375rem 0.75rem 0.375rem 0.45rem;
+  }
+  .reading-tracker-pill:hover .reading-tracker-text {
+    display: flex;
+  }
 }
 
 .reading-tracker-time {

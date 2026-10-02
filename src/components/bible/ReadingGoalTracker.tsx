@@ -139,7 +139,7 @@ export const ReadingGoalTracker: React.FC = () => {
       <div
         className={`reading-tracker-pill ${isGoalMet ? 'completed' : ''}`}
         onClick={() => setIsExpanded((prev) => !prev)}
-        title="இன்றைய வேத வாசிப்பு இலக்கு (Daily Reading Goal)"
+        title={`வேத வாசிப்பு இலக்கு: ${formatMinSec(secondsRead)} / ${formatMinSec(totalGoalSeconds)} (${percent}%) - விவரங்களை பார்க்க தட்டவும்`}
       >
         <div className="reading-tracker-ring-box">
           <svg className="reading-tracker-ring-svg" viewBox="0 0 28 28">
