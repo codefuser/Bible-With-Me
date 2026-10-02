@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Clock,
-  CheckCircle2,
   Sparkles,
   Flame,
   X,
   Award,
-  ChevronUp,
-  Volume2
+  ChevronLeft,
+  Play,
+  Pause,
+  Power
 } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
@@ -15,8 +16,10 @@ import { recordChapterCompletion } from '../../services/streakService';
 import { logCloudReadingSession } from '../../services/userDataService';
 import '../../styles/reading-tracker.css';
 
+type TimerUiState = 'handle' | 'circle' | 'details';
+
 export const ReadingGoalTracker: React.FC = () => {
-  const { preferences, updatePreferences, currentBook, currentChapter } = useReading();
+  const { preferences, updatePreferences, currentBook, currentChapter, language } = useReading();
   const { user } = useAuth();
   const userId = user?.id || null;
 
@@ -33,6 +36,14 @@ export const ReadingGoalTracker: React.FC = () => {
     return `bible_reading_celebrated_${today}`;
   };
 
+  const [isTimingEnabled, setIsTimingEnabled] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('bible_reading_timer_enabled') !== 'false';
+    } catch {
+      return true;
+    }
+  });
+
   const [secondsRead, setSecondsRead] = useState<number>(() => {
     try {
       const saved = localStorage.getItem(getTodayKey());
@@ -42,7 +53,7 @@ export const ReadingGoalTracker: React.FC = () => {
     }
   });
 
-  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [uiState, setUiState] = useState<TimerUiState>('handle');
   const [showCelebration, setShowCelebration] = useState<boolean>(false);
   const [isCelebratedToday, setIsCelebratedToday] = useState<boolean>(() => {
     try {
@@ -55,14 +66,45 @@ export const ReadingGoalTracker: React.FC = () => {
   const secondsReadRef = useRef(secondsRead);
   secondsReadRef.current = secondsRead;
 
-  // Active reading timer
+  const autoCollapseTimerRef = useRef<any>(null);
+
+  const startAutoCollapse = () => {
+    if (autoCollapseTimerRef.current) {
+      clearTimeout(autoCollapseTimerRef.current);
+    }
+    autoCollapseTimerRef.current = setTimeout(() => {
+      setUiState('handle');
+    }, 4000);
+  };
+
+  const clearAutoCollapse = () => {
+    if (autoCollapseTimerRef.current) {
+      clearTimeout(autoCollapseTimerRef.current);
+      autoCollapseTimerRef.current = null;
+    }
+  };
+
+  // Toggle timing enabled / disabled
+  const handleToggleTiming = () => {
+    setIsTimingEnabled((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('bible_reading_timer_enabled', next.toString());
+      } catch (e) {
+        // ignore
+      }
+      return next;
+    });
+  };
+
+  // Active reading timer (only runs when timing is ON and browser tab is visible)
   useEffect(() => {
+    if (!isTimingEnabled) return;
+
     const interval = setInterval(() => {
-      // Only count active reading when browser tab is visible and focused
       if (document.visibilityState === 'visible') {
         setSecondsRead((prev) => {
           const next = prev + 1;
-          // Periodically sync to local storage
           if (next % 5 === 0) {
             try {
               localStorage.setItem(getTodayKey(), next.toString());
@@ -82,6 +124,13 @@ export const ReadingGoalTracker: React.FC = () => {
       } catch (e) {
         // ignore
       }
+    };
+  }, [isTimingEnabled]);
+
+  // Clean up auto-collapse timer on unmount
+  useEffect(() => {
+    return () => {
+      clearAutoCollapse();
     };
   }, []);
 
@@ -124,8 +173,8 @@ export const ReadingGoalTracker: React.FC = () => {
 
   const remainingSeconds = Math.max(0, totalGoalSeconds - secondsRead);
 
-  // SVG Progress Ring calculations
-  const radius = 11;
+  // Circular progress ring dimensions: radius 18 -> circumference ~113.097
+  const radius = 18;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percent / 100) * circumference;
 
@@ -133,80 +182,119 @@ export const ReadingGoalTracker: React.FC = () => {
     updatePreferences({ dailyGoalMinutes: newGoalMin });
   };
 
+  // Close details popover when clicking outside
+  useEffect(() => {
+    if (uiState !== 'details') return;
+
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.reading-tracker-popover') && !target.closest('.reading-tracker-circle')) {
+        setUiState('handle');
+      }
+    };
+
+    const timer = setTimeout(() => {
+      document.addEventListener('click', handleOutsideClick);
+    }, 50);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', handleOutsideClick);
+    };
+  }, [uiState]);
+
   return (
     <>
-      {/* Floating Pill Badge */}
-      <div
-        className={`reading-tracker-pill ${isGoalMet ? 'completed' : ''}`}
-        onClick={() => setIsExpanded((prev) => !prev)}
-        title={`வேத வாசிப்பு இலக்கு: ${formatMinSec(secondsRead)} / ${formatMinSec(totalGoalSeconds)} (${percent}%) - விவரங்களை பார்க்க தட்டவும்`}
-      >
-        <div className="reading-tracker-ring-box">
-          <svg className="reading-tracker-ring-svg" viewBox="0 0 28 28">
+      {/* 1. COLLAPSED STATE: Tiny side handle attached to right screen edge */}
+      {uiState === 'handle' && (
+        <button
+          type="button"
+          className={`reading-tracker-handle ${!isTimingEnabled ? 'disabled' : ''}`}
+          onClick={() => {
+            setUiState('circle');
+            startAutoCollapse();
+          }}
+          title={
+            isTimingEnabled
+              ? `${language === 'en' ? 'Reading Goal' : 'வாசிப்பு இலக்கு'}: ${percent}% (${formatMinSec(secondsRead)} / ${formatMinSec(totalGoalSeconds)})`
+              : `${language === 'en' ? 'Timer Paused (Click to view)' : 'டைமர் நிறுத்தி வைக்கப்பட்டுள்ளது (பார்க்க தட்டவும்)'}`
+          }
+          aria-label="Toggle Reading Goal Indicator"
+        >
+          {isTimingEnabled ? (
+            <ChevronLeft size={15} className="reading-tracker-handle-arrow" />
+          ) : (
+            <Clock size={13} className="reading-tracker-handle-paused" />
+          )}
+        </button>
+      )}
+
+      {/* 2. CIRCULAR PROGRESS INDICATOR (Auto-collapses back to handle) */}
+      {uiState === 'circle' && (
+        <div
+          className={`reading-tracker-circle ${isGoalMet ? 'completed' : ''}`}
+          onClick={() => {
+            clearAutoCollapse();
+            setUiState('details');
+          }}
+          onMouseEnter={clearAutoCollapse}
+          onMouseLeave={startAutoCollapse}
+          title={language === 'en' ? 'Click for goal settings' : 'இலக்கு அமைப்புகளுக்கு தட்டவும்'}
+          role="button"
+          tabIndex={0}
+        >
+          <svg className="reading-tracker-svg" viewBox="0 0 44 44">
             <circle
               className="reading-tracker-ring-bg"
-              cx="14"
-              cy="14"
+              cx="22"
+              cy="22"
               r={radius}
             />
-            <circle
-              className="reading-tracker-ring-val"
-              cx="14"
-              cy="14"
-              r={radius}
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-            />
-          </svg>
-          <div style={{ position: 'absolute' }}>
-            {isGoalMet ? (
-              <CheckCircle2 size={12} color="#10b981" />
-            ) : (
-              <Clock size={11} color="var(--text-muted)" />
+            {isTimingEnabled && (
+              <circle
+                className="reading-tracker-ring-val"
+                cx="22"
+                cy="22"
+                r={radius}
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                transform="rotate(-90 22 22)"
+              />
             )}
+          </svg>
+          <div className="reading-tracker-percent-center">
+            {isTimingEnabled ? `${percent}%` : <Pause size={14} />}
           </div>
         </div>
+      )}
 
-        <div className="reading-tracker-text">
-          <div className="reading-tracker-time">
-            {formatMinSec(secondsRead)} / {formatMinSec(totalGoalSeconds)}
-          </div>
-          <div className="reading-tracker-sub">
-            {isGoalMet ? 'இலக்கு முடிந்தது (100%)' : `${percent}% முடிந்தது`}
-          </div>
-        </div>
-      </div>
-
-      {/* Popover Expanded Card */}
-      {isExpanded && (
-        <div className="reading-tracker-popover">
+      {/* 3. EXPANDED DETAILS CARD POPOVER */}
+      {uiState === 'details' && (
+        <div className="reading-tracker-popover" role="dialog" aria-modal="true">
           <div className="reading-tracker-popover-header">
             <h4 className="reading-tracker-popover-title">
-              <Sparkles size={16} color="#2563eb" /> இன்றைய வாசிப்பு இலக்கு
+              <Sparkles size={16} color="#2563eb" />
+              {language === 'en' ? "Today's Reading Goal" : 'இன்றைய வாசிப்பு இலக்கு'}
             </h4>
             <button
               type="button"
               className="reading-tracker-close-btn"
-              onClick={() => setIsExpanded(false)}
+              onClick={() => {
+                setUiState('handle');
+              }}
+              aria-label="Close"
             >
               <X size={16} />
             </button>
           </div>
 
           <div>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'baseline',
-                marginBottom: '0.35rem'
-              }}
-            >
-              <span style={{ fontSize: '1.15rem', fontWeight: 800 }}>
+            <div className="reading-tracker-stats-row">
+              <span className="reading-tracker-time-text">
                 {formatMinSec(secondsRead)}
               </span>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                இலக்கு: {goalMinutes} நிமி ({percent}%)
+              <span className="reading-tracker-target-text">
+                {language === 'en' ? 'Goal' : 'இலக்கு'}: {goalMinutes} {language === 'en' ? 'min' : 'நிமி'} ({percent}%)
               </span>
             </div>
 
@@ -217,17 +305,53 @@ export const ReadingGoalTracker: React.FC = () => {
               />
             </div>
 
-            <p style={{ margin: '0.45rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              {isGoalMet
-                ? '🎉 இன்றைய இலக்கை வெற்றிகரமாக முடித்துவிட்டீர்கள்!'
-                : `இலக்கை நிறைவு செய்ய இன்னும் ${formatMinSec(remainingSeconds)} தேவை.`}
+            <p className="reading-tracker-status-text">
+              {!isTimingEnabled ? (
+                language === 'en'
+                  ? '⏸ Timer tracking is currently paused.'
+                  : '⏸ வாசிப்பு நேரம் தற்போது நிறுத்தி வைக்கப்பட்டுள்ளது.'
+              ) : isGoalMet ? (
+                language === 'en'
+                  ? '🎉 Congratulations! You have completed today\'s goal!'
+                  : '🎉 இன்றைய இலக்கை வெற்றிகரமாக முடித்துவிட்டீர்கள்!'
+              ) : (
+                language === 'en'
+                  ? `${formatMinSec(remainingSeconds)} remaining to reach goal.`
+                  : `இலக்கை நிறைவு செய்ய இன்னும் ${formatMinSec(remainingSeconds)} தேவை.`
+              )}
             </p>
           </div>
 
-          {/* Quick Goal Change */}
+          {/* Timing ON / OFF Toggle Row */}
+          <div className="reading-tracker-toggle-row">
+            <span className="reading-tracker-toggle-label">
+              <Power size={14} />
+              {language === 'en' ? 'Track Reading Time' : 'வாசிப்பு நேரத்தை பதிவு செய்'}
+            </span>
+            <button
+              type="button"
+              className={`reading-tracker-toggle-btn ${isTimingEnabled ? 'active' : ''}`}
+              onClick={handleToggleTiming}
+              title={isTimingEnabled ? 'Pause tracking' : 'Resume tracking'}
+            >
+              {isTimingEnabled ? (
+                <>
+                  <Pause size={12} />
+                  <span>{language === 'en' ? 'ON' : 'இயக்கம்'}</span>
+                </>
+              ) : (
+                <>
+                  <Play size={12} />
+                  <span>{language === 'en' ? 'OFF' : 'நிறுத்தம்'}</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Quick Goal Selector */}
           <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
-              இலக்கை மாற்றவும் (Change Goal):
+            <div className="reading-tracker-goal-label">
+              {language === 'en' ? 'Change Goal:' : 'இலக்கை மாற்றவும்:'}
             </div>
             <div className="reading-tracker-goal-selector">
               <button
@@ -235,30 +359,30 @@ export const ReadingGoalTracker: React.FC = () => {
                 className={`reading-tracker-goal-btn ${goalMinutes === 5 ? 'active' : ''}`}
                 onClick={() => handleGoalChange(5)}
               >
-                5 நிமி
+                5 {language === 'en' ? 'min' : 'நிமி'}
               </button>
               <button
                 type="button"
                 className={`reading-tracker-goal-btn ${goalMinutes === 15 ? 'active' : ''}`}
                 onClick={() => handleGoalChange(15)}
               >
-                15 நிமி
+                15 {language === 'en' ? 'min' : 'நிமி'}
               </button>
               <button
                 type="button"
                 className={`reading-tracker-goal-btn ${goalMinutes === 30 ? 'active' : ''}`}
                 onClick={() => handleGoalChange(30)}
               >
-                30 நிமி
+                30 {language === 'en' ? 'min' : 'நிமி'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Goal Reached Celebration Modal */}
+      {/* 4. GOAL REACHED CELEBRATION MODAL */}
       {showCelebration && (
-        <div className="celebration-backdrop" role="dialog">
+        <div className="celebration-backdrop" role="dialog" aria-modal="true">
           <div className="celebration-card">
             <div className="celebration-icon-box">
               <Award size={36} />
@@ -266,10 +390,12 @@ export const ReadingGoalTracker: React.FC = () => {
 
             <div>
               <h3 style={{ margin: '0 0 0.35rem 0', fontSize: '1.35rem', fontWeight: 800 }}>
-                🎉 வாழ்த்துகள்! இன்றைய இலக்கு நிறைவு!
+                {language === 'en' ? '🎉 Congratulations! Goal Achieved!' : '🎉 வாழ்த்துகள்! இன்றைய இலக்கு நிறைவு!'}
               </h3>
               <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                இன்றைய <strong>{goalMinutes} நிமிட</strong> வேத வாசிப்பை வெற்றிகரமாக முடித்துவிட்டீர்கள். உங்கள் ஆன்மீகத் தொடர் (Streak) உறுதி செய்யப்பட்டது!
+                {language === 'en'
+                  ? `You have successfully completed today's ${goalMinutes}-minute Scripture reading. Your daily spiritual streak is secured!`
+                  : `இன்றைய ${goalMinutes} நிமிட வேத வாசிப்பை வெற்றிகரமாக முடித்துவிட்டீர்கள். உங்கள் ஆன்மீகத் தொடர் (Streak) உறுதி செய்யப்பட்டது!`}
               </p>
             </div>
 
@@ -295,7 +421,7 @@ export const ReadingGoalTracker: React.FC = () => {
               style={{ width: '100%', marginTop: '0.5rem' }}
               onClick={() => setShowCelebration(false)}
             >
-              தொடர்ந்து வாசிக்கிறேன் · Continue Reading
+              {language === 'en' ? 'Continue Reading' : 'தொடர்ந்து வாசிக்கிறேன் · Continue Reading'}
             </button>
           </div>
         </div>

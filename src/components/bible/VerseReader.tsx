@@ -65,7 +65,7 @@ export const VerseReader: React.FC = () => {
     }
   };
 
-  // Close verse dropdown/actions when clicking outside or scrolling
+  // Close verse dropdown/actions when clicking outside
   useEffect(() => {
     if (clickedVerseNum === null) return;
     const handleOutsideClick = (e: MouseEvent) => {
@@ -83,24 +83,13 @@ export const VerseReader: React.FC = () => {
       }
     };
 
-    const handleScroll = () => {
-      setClickedVerseNum(null);
-      setShowHighlightPicker(false);
-    };
-
     const timer = setTimeout(() => {
       document.addEventListener('click', handleOutsideClick);
     }, 0);
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    const mainContent = document.querySelector('.main-content');
-    mainContent?.addEventListener('scroll', handleScroll, { passive: true });
-
     return () => {
       clearTimeout(timer);
       document.removeEventListener('click', handleOutsideClick);
-      window.removeEventListener('scroll', handleScroll);
-      mainContent?.removeEventListener('scroll', handleScroll);
     };
   }, [clickedVerseNum]);
 
@@ -499,8 +488,11 @@ export const VerseReader: React.FC = () => {
                             setClickedVerseNum(null);
                           } else {
                             const rect = e.currentTarget.getBoundingClientRect();
-                            const spaceBelow = window.innerHeight - rect.bottom;
-                            setDropdownDirection(spaceBelow < 300 && rect.top > 250 ? 'up' : 'down');
+                            const headerSafeBoundary = 64;
+                            const bottomNavSafeBoundary = window.innerHeight - 75;
+                            const spaceBelow = bottomNavSafeBoundary - rect.bottom;
+                            const spaceAbove = rect.top - headerSafeBoundary;
+                            setDropdownDirection(spaceBelow < 280 && spaceAbove > spaceBelow ? 'up' : 'down');
                             setClickedVerseNum(verseObj.verse);
                           }
                           setShowHighlightPicker(false);
@@ -933,8 +925,11 @@ export const VerseReader: React.FC = () => {
                             setClickedVerseNum(null);
                           } else {
                             const rect = e.currentTarget.getBoundingClientRect();
-                            const spaceBelow = window.innerHeight - rect.bottom;
-                            setDropdownDirection(spaceBelow < 300 && rect.top > 250 ? 'up' : 'down');
+                            const headerSafeBoundary = 64;
+                            const bottomNavSafeBoundary = window.innerHeight - 75;
+                            const spaceBelow = bottomNavSafeBoundary - rect.bottom;
+                            const spaceAbove = rect.top - headerSafeBoundary;
+                            setDropdownDirection(spaceBelow < 280 && spaceAbove > spaceBelow ? 'up' : 'down');
                             setClickedVerseNum(verseObj.verse);
                           }
                           setShowHighlightPicker(false);

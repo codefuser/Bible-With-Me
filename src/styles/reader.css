@@ -4,14 +4,14 @@
 .reader-wrapper {
   width: 100%;
   margin: 0 auto;
-  padding-bottom: 7.5rem;
+  padding-bottom: 10.5rem;
   transition: max-width var(--transition-normal);
   max-width: var(--custom-max-width, var(--width-standard));
 }
 
 @media (max-width: 768px) {
   .reader-wrapper {
-    padding-bottom: max(7.5rem, calc(6.5rem + env(safe-area-inset-bottom)));
+    padding-bottom: max(10.5rem, calc(9.5rem + env(safe-area-inset-bottom)));
   }
 }
 
@@ -221,7 +221,7 @@
 }
 
 .verse-item.selected {
-  z-index: 100;
+  z-index: 10;
 }
 
 /* Color Highlight Options for Verses */
@@ -432,7 +432,7 @@
 
 .verse-text {
   flex: 1;
-  color: var(--text-primary);
+  color: var(--text-primary) !important;
   word-break: break-word;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -712,7 +712,7 @@
 }
 
 .verse-parallel-item.selected {
-  z-index: 100;
+  z-index: 10;
 }
 
 .verse-bookmark-badge,
@@ -893,6 +893,8 @@
   top: 2.125rem;
   right: 0;
   min-width: 200px;
+  max-height: min(320px, calc(100vh - 140px));
+  overflow-y: auto;
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: 0.625rem;
@@ -901,7 +903,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
-  z-index: 500;
+  z-index: 30;
   animation: dropdownFadeIn 150ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
