@@ -76,6 +76,8 @@ a {
   min-height: 100vh;
   width: 100%;
   overflow-x: hidden;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .main-content {
@@ -88,6 +90,8 @@ a {
   flex-direction: column;
   align-items: center;
   scroll-behavior: smooth;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 /* Header Styles */

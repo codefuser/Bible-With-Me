@@ -52,6 +52,7 @@ export const VerseReader: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showHighlightPicker, setShowHighlightPicker] = useState<boolean>(false);
   const [isQuickSettingsOpen, setIsQuickSettingsOpen] = useState<boolean>(false);
+  const [dropdownDirection, setDropdownDirection] = useState<'down' | 'up'>('down');
 
   const verseRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const quickChapterBarRef = useRef<HTMLDivElement | null>(null);
@@ -219,9 +220,9 @@ export const VerseReader: React.FC = () => {
 
   const getVersePaddingRight = (isBookmarked: boolean, isDropdown: boolean) => {
     if (isDropdown) {
-      return isBookmarked ? '2.75rem' : '2.25rem';
+      return isBookmarked ? '2.4rem' : '1.75rem';
     }
-    return isBookmarked ? '1.75rem' : '0.5rem';
+    return isBookmarked ? '1.35rem' : '0.2rem';
   };
 
   const bookName = language === 'en' ? currentBook.name_en : currentBook.name_ta;
@@ -483,7 +484,17 @@ export const VerseReader: React.FC = () => {
                         className={`verse-menu-btn ${isSelected ? 'active' : ''}`}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setClickedVerseNum(isSelected ? null : verseObj.verse);
+                          if (isSelected) {
+                            setClickedVerseNum(null);
+                          } else {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const headerSafeBoundary = 64;
+                            const bottomNavSafeBoundary = window.innerHeight - 75;
+                            const spaceBelow = bottomNavSafeBoundary - rect.bottom;
+                            const spaceAbove = rect.top - headerSafeBoundary;
+                            setDropdownDirection(spaceBelow < 280 && spaceAbove > spaceBelow ? 'up' : 'down');
+                            setClickedVerseNum(verseObj.verse);
+                          }
                           setShowHighlightPicker(false);
                         }}
                         title="Options / விருப்பங்கள்"
@@ -496,7 +507,7 @@ export const VerseReader: React.FC = () => {
                     {/* Top Right Dropdown Menu List (Dropdown Mode) */}
                     {isDropdownMode && isSelected && (
                       <div
-                        className="verse-dropdown-menu"
+                        className={`verse-dropdown-menu ${dropdownDirection === 'up' ? 'open-upward' : ''}`}
                         onClick={(e) => e.stopPropagation()}
                         onMouseDown={(e) => e.stopPropagation()}
                         onPointerDown={(e) => e.stopPropagation()}
@@ -910,7 +921,17 @@ export const VerseReader: React.FC = () => {
                         className={`verse-menu-btn ${isSelected ? 'active' : ''}`}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setClickedVerseNum(isSelected ? null : verseObj.verse);
+                          if (isSelected) {
+                            setClickedVerseNum(null);
+                          } else {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const headerSafeBoundary = 64;
+                            const bottomNavSafeBoundary = window.innerHeight - 75;
+                            const spaceBelow = bottomNavSafeBoundary - rect.bottom;
+                            const spaceAbove = rect.top - headerSafeBoundary;
+                            setDropdownDirection(spaceBelow < 280 && spaceAbove > spaceBelow ? 'up' : 'down');
+                            setClickedVerseNum(verseObj.verse);
+                          }
                           setShowHighlightPicker(false);
                         }}
                         title={language === 'en' ? 'Options' : 'விருப்பங்கள்'}
@@ -923,7 +944,7 @@ export const VerseReader: React.FC = () => {
                     {/* Top Right Dropdown Menu List (Dropdown Mode) */}
                     {isDropdownMode && isSelected && (
                       <div
-                        className="verse-dropdown-menu"
+                        className={`verse-dropdown-menu ${dropdownDirection === 'up' ? 'open-upward' : ''}`}
                         onClick={(e) => e.stopPropagation()}
                         onMouseDown={(e) => e.stopPropagation()}
                         onPointerDown={(e) => e.stopPropagation()}

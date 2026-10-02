@@ -1,5 +1,6 @@
 import { VerseNote } from '../types/bible';
 import { upsertCloudNote, deleteCloudNote } from './userDataService';
+import { addToSyncQueue } from './offlineSyncQueue';
 
 const NOTES_KEY = 'bible_app_user_notes';
 
@@ -41,7 +42,30 @@ export const saveNote = async (
     }
 
     if (userId) {
-      await deleteCloudNote(userId, book, chapter, verse);
+      if (!navigator.onLine) {
+        addToSyncQueue({
+          userId,
+          type: 'NOTE_SAVE',
+          payload: { bookCode: book, chapter, verse, content: '' }
+        });
+      } else {
+        try {
+          const ok = await deleteCloudNote(userId, book, chapter, verse);
+          if (!ok) {
+            addToSyncQueue({
+              userId,
+              type: 'NOTE_SAVE',
+              payload: { bookCode: book, chapter, verse, content: '' }
+            });
+          }
+        } catch {
+          addToSyncQueue({
+            userId,
+            type: 'NOTE_SAVE',
+            payload: { bookCode: book, chapter, verse, content: '' }
+          });
+        }
+      }
     }
     return notes;
   }
@@ -70,7 +94,30 @@ export const saveNote = async (
   }
 
   if (userId) {
-    await upsertCloudNote(userId, book, chapter, verse, content);
+    if (!navigator.onLine) {
+      addToSyncQueue({
+        userId,
+        type: 'NOTE_SAVE',
+        payload: { bookCode: book, chapter, verse, content }
+      });
+    } else {
+      try {
+        const ok = await upsertCloudNote(userId, book, chapter, verse, content);
+        if (!ok) {
+          addToSyncQueue({
+            userId,
+            type: 'NOTE_SAVE',
+            payload: { bookCode: book, chapter, verse, content }
+          });
+        }
+      } catch {
+        addToSyncQueue({
+          userId,
+          type: 'NOTE_SAVE',
+          payload: { bookCode: book, chapter, verse, content }
+        });
+      }
+    }
   }
 
   return notes;

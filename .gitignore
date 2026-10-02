@@ -34,3 +34,10 @@ pnpm-debug.log*
 # Reports (excluded per user directive)
 Report/
 Report
+
+# Android & Mobile app builds (Local only - do not push to GitHub)
+android/
+apk/
+*.apk
+capacitor.config.ts
+.gradle/

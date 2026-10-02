@@ -1,5 +1,6 @@
 import { Bookmark, Language, BibleBook, BibleVerse } from '../types/bible';
 import { upsertCloudBookmark, deleteCloudBookmark } from './userDataService';
+import { addToSyncQueue } from './offlineSyncQueue';
 
 const BOOKMARKS_KEY = 'bible_app_bookmarks';
 
@@ -50,9 +51,21 @@ export const toggleBookmark = async (
     saveStoredBookmarks(updated);
 
     if (userId) {
-      const cloudSuccess = await deleteCloudBookmark(userId, book.code, verseObj.chapter, verseObj.verse);
-      if (!cloudSuccess) {
-        console.error(`[Bookmark Sync Failed] Could not remove bookmark from Supabase for ${book.code} ${verseObj.chapter}:${verseObj.verse}`);
+      if (!navigator.onLine) {
+        addToSyncQueue({
+          userId,
+          type: 'BOOKMARK_REMOVE',
+          payload: { bookCode: book.code, chapter: verseObj.chapter, verse: verseObj.verse }
+        });
+      } else {
+        const cloudSuccess = await deleteCloudBookmark(userId, book.code, verseObj.chapter, verseObj.verse);
+        if (!cloudSuccess) {
+          addToSyncQueue({
+            userId,
+            type: 'BOOKMARK_REMOVE',
+            payload: { bookCode: book.code, chapter: verseObj.chapter, verse: verseObj.verse }
+          });
+        }
       }
     }
     return updated;
@@ -75,9 +88,21 @@ export const toggleBookmark = async (
     saveStoredBookmarks(updated);
 
     if (userId) {
-      const cloudSuccess = await upsertCloudBookmark(userId, book.code, verseObj.chapter, verseObj.verse);
-      if (!cloudSuccess) {
-        console.error(`[Bookmark Sync Failed] Could not insert bookmark into Supabase for ${book.code} ${verseObj.chapter}:${verseObj.verse}`);
+      if (!navigator.onLine) {
+        addToSyncQueue({
+          userId,
+          type: 'BOOKMARK_ADD',
+          payload: { bookCode: book.code, chapter: verseObj.chapter, verse: verseObj.verse }
+        });
+      } else {
+        const cloudSuccess = await upsertCloudBookmark(userId, book.code, verseObj.chapter, verseObj.verse);
+        if (!cloudSuccess) {
+          addToSyncQueue({
+            userId,
+            type: 'BOOKMARK_ADD',
+            payload: { bookCode: book.code, chapter: verseObj.chapter, verse: verseObj.verse }
+          });
+        }
       }
     }
     return updated;

@@ -6,6 +6,7 @@ import { syncGuestDataToCloud } from '../services/syncService';
 import { fetchCloudSearchData } from '../services/userDataService';
 import { isSupabaseConfigured } from '../lib/supabase';
 import { isAdminSessionActive } from '../services/adminService';
+import { drainSyncQueue } from '../services/offlineSyncQueue';
 
 // ─── LocalStorage Keys ────────────────────────────────────────────────────────
 
@@ -125,13 +126,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     async (newUser: User, isNewSignup: boolean) => {
       setUser(newUser);
 
+      // Persist safe local session snapshot (NO password/tokens, user metadata only)
+      try {
+        const sessionSnapshot = {
+          id: newUser.id,
+          email: newUser.email,
+          user_metadata: newUser.user_metadata || {},
+          app_metadata: newUser.app_metadata || {},
+          role: newUser.role || 'authenticated',
+          sessionSavedAt: Date.now()
+        };
+        localStorage.setItem('bible_app_local_session', JSON.stringify(sessionSnapshot));
+      } catch (err) {
+        console.warn('[Auth] Failed caching local session snapshot:', err);
+      }
+
       // Fetch profile & search history (non-blocking — UI updates when ready)
       getUserProfile(newUser.id).then((prof) => {
         setProfile(prof);
-        if (prof?.avatar_url) {
+        if (prof) {
           try {
-            localStorage.setItem('bible_app_user_avatar', prof.avatar_url);
-            console.log('[Auth] Restored profile avatar from cloud');
+            localStorage.setItem('bible_app_profile_snapshot', JSON.stringify(prof));
+            if (prof.avatar_url) {
+              localStorage.setItem('bible_app_user_avatar', prof.avatar_url);
+            }
           } catch {
             // ignore
           }
@@ -157,8 +175,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
 
-      // Clear any stale local/guest data before loading cloud data
-      clearLocalUserData();
+      // Clear local user data ONLY if switching user accounts, never when reconnecting same user!
+      const lastActiveUid = localStorage.getItem('bible_app_last_active_uid');
+      if (lastActiveUid && lastActiveUid !== newUser.id) {
+        clearLocalUserData();
+      }
+      localStorage.setItem('bible_app_last_active_uid', newUser.id);
+
+      // Drain any queued offline mutations first before pulling fresh data
+      if (navigator.onLine) {
+        try {
+          await drainSyncQueue(newUser.id);
+        } catch (queueErr) {
+          console.warn('[Auth] Error draining offline sync queue on session establish:', queueErr);
+        }
+      }
 
       if (cloudDataRefreshRef.current) {
         // ReadingContext callback already registered — call it directly
@@ -177,7 +208,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } else {
         // ReadingContext not yet mounted — store user for deferred cloud load.
-        // registerCloudDataRefresh() will trigger the load once ReadingContext registers.
         console.log('[Auth] ReadingContext callback not yet registered. Deferring cloud load until ReadingContext mounts.');
         pendingSessionUserRef.current = { user: newUser, isNewSignup };
       }
@@ -187,36 +217,109 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Initialize session and auth state listener on app mount
   useEffect(() => {
-    if (!isSupabaseConfigured) {
-      // No Supabase config — skip session check and go directly to landing page
+    // 1. Immediately inspect local session snapshot
+    const rawLocalSession = localStorage.getItem('bible_app_local_session');
+    const rawProfile = localStorage.getItem('bible_app_profile_snapshot');
+    let hasLocalSession = false;
+
+    if (rawLocalSession) {
+      try {
+        const snap = JSON.parse(rawLocalSession);
+        if (snap && snap.id) {
+          const syntheticUser: User = {
+            id: snap.id,
+            app_metadata: snap.app_metadata || {},
+            user_metadata: snap.user_metadata || {},
+            aud: 'authenticated',
+            created_at: new Date(snap.sessionSavedAt || Date.now()).toISOString(),
+            email: snap.email || '',
+            role: snap.role || 'authenticated'
+          } as User;
+          setUser(syntheticUser);
+          hasLocalSession = true;
+
+          if (rawProfile) {
+            try {
+              const prof = JSON.parse(rawProfile);
+              if (prof) setProfile(prof);
+            } catch {
+              // ignore
+            }
+          }
+          console.log('[Auth] Restored local session snapshot for user:', snap.id);
+        }
+      } catch (e) {
+        console.warn('[Auth] Error parsing local session snapshot:', e);
+      }
+    }
+
+    // 2. If offline, immediately conclude session loading so reader renders offline instantly
+    if (!navigator.onLine) {
+      console.log('[Auth] Device is offline at boot. Completed local session resolution.');
       setIsSessionLoading(false);
       return;
     }
 
-    // Check existing session (page reload / tab re-open)
-    getSession().then(async (session) => {
-      if (session?.user) {
-        // Session restore: load cloud data automatically, no sync banner
-        await handleUserSessionEstablished(session.user, false);
-      }
-      // Session check done — reveal the correct screen
+    if (!isSupabaseConfigured) {
       setIsSessionLoading(false);
-    });
+      return;
+    }
 
-    // Listen to Auth State Changes from Supabase (handles token refresh etc.)
+    // 3. Online: Check existing session with Supabase
+    getSession()
+      .then(async (session) => {
+        if (session?.user) {
+          await handleUserSessionEstablished(session.user, false);
+        } else if (!hasLocalSession) {
+          setUser(null);
+        }
+      })
+      .catch((err) => {
+        console.warn('[Auth] getSession failed (network error):', err);
+      })
+      .finally(() => {
+        setIsSessionLoading(false);
+      });
+
+    // 4. Background Sync Queue: online listener
+    const handleOnlineEvent = () => {
+      console.log('[Auth] Online event detected! Draining offline sync queue...');
+      const targetUid = user?.id || (rawLocalSession ? JSON.parse(rawLocalSession)?.id : null);
+      if (targetUid) {
+        drainSyncQueue(targetUid).then(() => {
+          if (cloudDataRefreshRef.current) {
+            cloudDataRefreshRef.current(targetUid);
+          }
+        });
+      }
+    };
+    window.addEventListener('online', handleOnlineEvent);
+
+    // 5. Listen to Auth State Changes from Supabase
     const subscription = onAuthStateChange(async (event, session) => {
-      // INITIAL_SESSION is handled by getSession() above; skip to avoid double-load
       if (event === 'INITIAL_SESSION') return;
 
       if (session?.user) {
-        if (event === 'SIGNED_IN') {
-          // This fires after login/signup — handled by login()/signup() directly.
-          // We only handle TOKEN_REFRESHED here to keep the user object current.
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           setUser(session.user);
-        } else if (event === 'TOKEN_REFRESHED') {
-          setUser(session.user);
+          try {
+            const sessionSnapshot = {
+              id: session.user.id,
+              email: session.user.email,
+              user_metadata: session.user.user_metadata || {},
+              app_metadata: session.user.app_metadata || {},
+              role: session.user.role || 'authenticated',
+              sessionSavedAt: Date.now()
+            };
+            localStorage.setItem('bible_app_local_session', JSON.stringify(sessionSnapshot));
+          } catch {
+            // ignore
+          }
         }
       } else if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('bible_app_local_session');
+        localStorage.removeItem('bible_app_profile_snapshot');
+        localStorage.removeItem('bible_app_last_active_uid');
         setUser(null);
         setProfile(null);
         setSyncStatus('synced');
@@ -225,6 +328,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => {
+      window.removeEventListener('online', handleOnlineEvent);
       if (subscription && typeof subscription.unsubscribe === 'function') {
         subscription.unsubscribe();
       }
@@ -259,6 +363,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    localStorage.removeItem('bible_app_local_session');
+    localStorage.removeItem('bible_app_profile_snapshot');
+    localStorage.removeItem('bible_app_last_active_uid');
     await signOut();
     setUser(null);
     setProfile(null);
