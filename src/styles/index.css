@@ -104,10 +104,12 @@ a {
   top: 0;
   left: 0;
   right: 0;
-  height: calc(3.5rem + env(safe-area-inset-top, 0px));
-  padding-top: env(safe-area-inset-top, 0px);
+  height: auto;
+  min-height: calc(3.5rem + max(env(safe-area-inset-top, 0px), 0px));
+  padding-top: max(env(safe-area-inset-top, 0px), 0px);
   padding-left: max(1rem, env(safe-area-inset-left, 0px));
   padding-right: max(1rem, env(safe-area-inset-right, 0px));
+  padding-bottom: 0.35rem;
   z-index: 100;
   background-color: var(--bg-surface);
   border-bottom: 1px solid var(--border-color);
@@ -118,6 +120,7 @@ a {
   box-shadow: none;
   transition: background-color var(--transition-normal);
   width: 100%;
+  box-sizing: border-box;
 }
 
 .header-brand {
@@ -1041,9 +1044,26 @@ a {
 
 
 /* Mobile Responsiveness Improvements */
+@media (max-width: 768px) {
+  .header {
+    min-height: calc(3.5rem + max(env(safe-area-inset-top, 0px), 20px));
+    padding-top: calc(max(env(safe-area-inset-top, 0px), 20px) + 0.35rem);
+    padding-bottom: 0.5rem;
+    padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+  }
+  .main-content {
+    padding-top: calc(5.25rem + max(env(safe-area-inset-top, 0px), 20px));
+  }
+}
+
 @media (max-width: 520px) {
   .header {
-    padding: 0.5rem 0.625rem;
+    min-height: calc(3.5rem + max(env(safe-area-inset-top, 0px), 24px));
+    padding-top: calc(max(env(safe-area-inset-top, 0px), 24px) + 0.35rem);
+    padding-bottom: 0.5rem;
+    padding-left: max(0.5rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.5rem, env(safe-area-inset-right, 0px));
     gap: 0.25rem;
   }
   .header-brand-text {
@@ -1069,7 +1089,7 @@ a {
     height: 2.125rem;
   }
   .main-content {
-    padding: 4.25rem 0.625rem 1.75rem;
+    padding: calc(5.25rem + max(env(safe-area-inset-top, 0px), 24px)) 0.625rem 2rem;
   }
   .modal-overlay {
     padding: max(0.5rem, env(safe-area-inset-top, 0px)) max(0.375rem, env(safe-area-inset-right, 0px)) max(0.5rem, env(safe-area-inset-bottom, 0px)) max(0.375rem, env(safe-area-inset-left, 0px));

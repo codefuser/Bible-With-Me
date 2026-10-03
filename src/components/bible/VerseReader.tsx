@@ -243,16 +243,37 @@ export const VerseReader: React.FC = () => {
     }
   };
 
+  const getBaseShareUrl = (): string => {
+    const envUrl = ((import.meta as any).env?.VITE_APP_URL || (import.meta as any).env?.VITE_PUBLIC_URL || '').trim();
+    if (envUrl) {
+      return envUrl.replace(/\/+$/, '');
+    }
+    if (typeof window !== 'undefined') {
+      const origin = window.location.origin;
+      const hostname = window.location.hostname;
+      const isLocal =
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname === '0.0.0.0' ||
+        origin.startsWith('capacitor://');
+      if (!isLocal && origin && origin !== 'null') {
+        return origin.replace(/\/+$/, '');
+      }
+    }
+    return 'https://bible-with-me.web.app';
+  };
+
   const handleShareVerse = async (v: BibleVerse) => {
     const text = language === 'en' ? v.text_en : language === 'ta' ? v.text_ta : `${v.text_ta}\n${v.text_en}`;
     const formattedTitle = `${bookName} ${currentChapter}:${v.verse}`;
-    const shareUrl = `${window.location.origin}${window.location.pathname}#${currentBook.code}/${currentChapter}/${v.verse}`;
+    const baseUrl = getBaseShareUrl();
+    const shareUrl = `${baseUrl}/#${currentBook.code}/${currentChapter}/${v.verse}`;
 
     if (navigator.share) {
       try {
         await navigator.share({
           title: formattedTitle,
-          text: `"${text}" - ${formattedTitle}`,
+          text: `"${text}" — ${formattedTitle}\n${shareUrl}`,
           url: shareUrl
         });
         return;

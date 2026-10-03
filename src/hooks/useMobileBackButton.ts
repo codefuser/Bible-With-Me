@@ -118,8 +118,9 @@ export function useMobileBackButton() {
     isAuthModalOpen ||
     isSyncModalOpen;
 
-  // Initialize history base guard entries on mount for web browsers
+  // Initialize history base guard entries on mount for web browsers (PWA/mobile web)
   useEffect(() => {
+    if (Capacitor.isNativePlatform()) return;
     try {
       if (!window.history.state || !window.history.state.bibleAppGuard) {
         window.history.replaceState({ bibleAppGuard: 'base' }, '');
@@ -285,31 +286,54 @@ export function useMobileBackButton() {
 
   // 3. Web Popstate Listener (Mobile Browser / PWA)
   useEffect(() => {
-    const handlePopState = () => {
+    const handlePopState = (e: PopStateEvent) => {
+      // 1. If running on native platform (Capacitor Android/iOS),
+      // native hardware back button is handled by CapApp backButton listener.
+      if (Capacitor.isNativePlatform()) {
+        return;
+      }
+
       if (ignoreNextPopState.current) {
         ignoreNextPopState.current = false;
         return;
       }
 
-      isHandlingPopState.current = true;
-      const handled = handleBackAction();
+      // 2. Only show exit confirmation modal if the user explicitly navigated back to the base exit guard
+      if (e.state && e.state.bibleAppGuard === 'base') {
+        isHandlingPopState.current = true;
+        const handled = handleBackAction();
 
-      if (!handled) {
-        try {
-          window.history.pushState({ bibleAppGuard: 'home' }, '');
-        } catch {
-          // ignore
+        if (!handled) {
+          try {
+            window.history.pushState({ bibleAppGuard: 'home' }, '');
+          } catch {
+            // ignore
+          }
         }
+
+        setTimeout(() => {
+          isHandlingPopState.current = false;
+        }, 100);
+        return;
       }
 
-      setTimeout(() => {
-        isHandlingPopState.current = false;
-      }, 100);
+      // 3. If any modal was open and user pressed back, close the modal
+      if (isAnyModalOpen) {
+        isHandlingPopState.current = true;
+        handleBackAction();
+        setTimeout(() => {
+          isHandlingPopState.current = false;
+        }, 100);
+        return;
+      }
+
+      // 4. Any other popstate (such as clicking verse links, hash changes, route deep-links):
+      // NEVER trigger exit confirmation modal!
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [handleBackAction]);
+  }, [handleBackAction, isAnyModalOpen]);
 
   const handleConfirmExit = useCallback(() => {
     setIsExitModalOpen(false);
