@@ -59,7 +59,7 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({ language = 'ta' })
     <div
       style={{
         position: 'fixed',
-        top: '3.6rem',
+        top: 'calc(3.85rem + max(env(safe-area-inset-top, 0px), 18px))',
         left: '50%',
         transform: 'translateX(-50%)',
         zIndex: 99,

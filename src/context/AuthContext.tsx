@@ -79,10 +79,42 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // ─── AuthProvider ─────────────────────────────────────────────────────────────
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const raw = localStorage.getItem('bible_app_local_session');
+      if (raw) {
+        const snap = JSON.parse(raw);
+        if (snap && snap.id) {
+          return {
+            id: snap.id,
+            email: snap.email || '',
+            user_metadata: snap.user_metadata || {},
+            app_metadata: snap.app_metadata || {},
+            aud: 'authenticated',
+            role: snap.role || 'authenticated',
+            created_at: new Date(snap.sessionSavedAt || Date.now()).toISOString()
+          } as User;
+        }
+      }
+    } catch {}
+    return null;
+  });
+
+  const [profile, setProfile] = useState<UserProfile | null>(() => {
+    try {
+      const raw = localStorage.getItem('bible_app_profile_snapshot');
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return null;
+  });
+
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('synced');
-  const [isSessionLoading, setIsSessionLoading] = useState<boolean>(true);
+  // If local session exists or device is offline, start with isSessionLoading: false for instant boot (<50ms)
+  const [isSessionLoading, setIsSessionLoading] = useState<boolean>(() => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return false;
+    const hasLocalSession = !!localStorage.getItem('bible_app_local_session');
+    return !hasLocalSession;
+  });
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState<boolean>(false);
 
@@ -265,13 +297,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    // 3. Online: Check existing session with Supabase
-    getSession()
+    // 3. Online: Check existing session with Supabase with a fast 2-second timeout
+    const sessionTimeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000));
+    Promise.race([getSession(), sessionTimeout])
       .then(async (session) => {
         if (session?.user) {
           await handleUserSessionEstablished(session.user, false);
-        } else if (!hasLocalSession) {
-          setUser(null);
+        } else if (!hasLocalSession && session === null) {
+          // Only clear user if getSession definitively resolved with null and device had no local session
         }
       })
       .catch((err) => {

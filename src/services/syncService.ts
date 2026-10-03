@@ -111,6 +111,12 @@ export const loadCloudBookmarksToLocal = async (userId: string): Promise<Bookmar
   try {
     const cloudBms = await fetchCloudBookmarks(userId);
 
+    // If cloud fetch failed (offline / network error / timeout), preserve local storage cache
+    if (!cloudBms) {
+      console.warn('[Cloud Load] Could not retrieve bookmarks from cloud (network/offline). Retaining local bookmarks.');
+      return getStoredBookmarks();
+    }
+
     // Map cloud bookmarks
     const mappedBookmarks: Bookmark[] = [];
     const books = ALL_BIBLE_BOOKS;
@@ -152,6 +158,13 @@ export const loadCloudBookmarksToLocal = async (userId: string): Promise<Bookmar
       });
     }
 
+    // If cloud had 0 bookmarks but local storage already has bookmarks, retain them so offline edits are not wiped
+    const localBms = getStoredBookmarks();
+    if (mappedBookmarks.length === 0 && localBms.length > 0) {
+      console.log('[Cloud Load] Cloud has 0 bookmarks, retaining local bookmarks.');
+      return localBms;
+    }
+
     // Persist to localStorage so offline reads still work
     saveStoredBookmarks(mappedBookmarks);
     console.log(`[Cloud Load] Loaded ${mappedBookmarks.length} bookmarks from Supabase for user: ${userId}`);
@@ -179,16 +192,20 @@ export const loadCloudDataToLocal = async (userId: string): Promise<void> => {
 
     // 3. Load Cloud Highlights into Local Cache
     const cloudHighlights = await fetchCloudHighlights(userId);
-    for (const hl of cloudHighlights) {
-      const matchedBook = ALL_BIBLE_BOOKS.find((b) => b.code.toUpperCase() === hl.book.toUpperCase() || String(b.id) === hl.book);
-      const bookId = matchedBook ? matchedBook.id : parseInt(hl.book, 10) || 1;
-      await saveHighlight(bookId, hl.chapter, hl.verse, hl.color as HighlightColor);
+    if (cloudHighlights && cloudHighlights.length > 0) {
+      for (const hl of cloudHighlights) {
+        const matchedBook = ALL_BIBLE_BOOKS.find((b) => b.code.toUpperCase() === hl.book.toUpperCase() || String(b.id) === hl.book);
+        const bookId = matchedBook ? matchedBook.id : parseInt(hl.book, 10) || 1;
+        await saveHighlight(bookId, hl.chapter, hl.verse, hl.color as HighlightColor);
+      }
     }
 
     // 4. Load Cloud Notes into Local Storage
     const cloudNotes = await fetchCloudNotes(userId);
-    for (const note of cloudNotes) {
-      await saveNote(note.book, note.chapter, note.verse, note.content);
+    if (cloudNotes && cloudNotes.length > 0) {
+      for (const note of cloudNotes) {
+        await saveNote(note.book, note.chapter, note.verse, note.content);
+      }
     }
 
     // 5. Load Cloud History into Local Storage

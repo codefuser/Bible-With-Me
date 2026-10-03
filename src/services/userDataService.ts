@@ -112,10 +112,10 @@ export interface CloudBookmark {
   created_at?: string;
 }
 
-export const fetchCloudBookmarks = async (userId: string): Promise<CloudBookmark[]> => {
+export const fetchCloudBookmarks = async (userId: string): Promise<CloudBookmark[] | null> => {
   if (!supabase) {
     console.warn('[Supabase] Client not configured. Cannot fetch cloud bookmarks.');
-    return [];
+    return null;
   }
   try {
     const { data, error } = await supabase
@@ -126,12 +126,12 @@ export const fetchCloudBookmarks = async (userId: string): Promise<CloudBookmark
 
     if (error) {
       console.error('[Supabase Error] fetchCloudBookmarks failed:', error.message, error.details, error.hint, error.code);
-      return [];
+      return null;
     }
     return data || [];
   } catch (err) {
     console.error('[Supabase Exception] Error fetching bookmarks:', err);
-    return [];
+    return null;
   }
 };
 
@@ -210,10 +210,10 @@ export interface CloudHighlight {
   updated_at?: string;
 }
 
-export const fetchCloudHighlights = async (userId: string): Promise<CloudHighlight[]> => {
+export const fetchCloudHighlights = async (userId: string): Promise<CloudHighlight[] | null> => {
   if (!supabase) {
     console.warn('[Supabase] Client not configured. Cannot fetch cloud highlights.');
-    return [];
+    return null;
   }
   try {
     const { data, error } = await supabase
@@ -223,12 +223,12 @@ export const fetchCloudHighlights = async (userId: string): Promise<CloudHighlig
 
     if (error) {
       console.error('[Supabase Error] fetchCloudHighlights failed:', error.message, error.details, error.hint, error.code);
-      return [];
+      return null;
     }
     return data || [];
   } catch (err) {
     console.error('[Supabase Exception] fetchCloudHighlights threw:', err);
-    return [];
+    return null;
   }
 };
 
@@ -294,10 +294,10 @@ export const deleteCloudHighlight = async (userId: string, book: string, chapter
 };
 
 // Notes Sync
-export const fetchCloudNotes = async (userId: string): Promise<VerseNote[]> => {
+export const fetchCloudNotes = async (userId: string): Promise<VerseNote[] | null> => {
   if (!supabase) {
     console.warn('[Supabase] Client not configured. Cannot fetch cloud notes.');
-    return [];
+    return null;
   }
   try {
     const { data, error } = await supabase
@@ -307,12 +307,12 @@ export const fetchCloudNotes = async (userId: string): Promise<VerseNote[]> => {
 
     if (error) {
       console.error('[Supabase Error] fetchCloudNotes failed:', error.message, error.details, error.hint, error.code);
-      return [];
+      return null;
     }
     return data || [];
   } catch (err) {
     console.error('[Supabase Exception] fetchCloudNotes threw:', err);
-    return [];
+    return null;
   }
 };
 
@@ -416,10 +416,10 @@ export const fetchCloudHistory = async (userId: string): Promise<CloudHistoryIte
  * Fetches all recent reading history items for a user (up to 50 records).
  * Used to populate the full history list modal.
  */
-export const fetchAllCloudHistory = async (userId: string): Promise<CloudHistoryItem[]> => {
+export const fetchAllCloudHistory = async (userId: string): Promise<CloudHistoryItem[] | null> => {
   if (!supabase) {
     console.warn('[Supabase] Client not configured. Cannot fetch cloud history list.');
-    return [];
+    return null;
   }
   try {
     const { data, error } = await supabase
@@ -431,12 +431,12 @@ export const fetchAllCloudHistory = async (userId: string): Promise<CloudHistory
 
     if (error) {
       console.error('[Supabase Error] fetchAllCloudHistory failed:', error.message, error.details, error.hint, error.code);
-      return [];
+      return null;
     }
     return data || [];
   } catch (err) {
     console.error('[Supabase Exception] fetchAllCloudHistory threw:', err);
-    return [];
+    return null;
   }
 };
 
