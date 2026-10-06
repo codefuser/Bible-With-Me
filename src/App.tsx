@@ -26,7 +26,8 @@ import { LanguageSelectorModal } from './components/language/LanguageSelectorMod
 import { FullscreenVerseReader } from './components/bible/FullscreenVerseReader';
 import { StreakStatsModal } from './components/streaks/StreakStatsModal';
 import { useMobileBackButton } from './hooks/useMobileBackButton';
-import { isAdminRoute } from './services/routerService';
+import { isAdminRoute, parseRoute } from './services/routerService';
+import { ALL_BIBLE_BOOKS } from './services/bibleService';
 import { initAdminRealtimeSync } from './services/adminService';
 import { initNotificationScheduler } from './services/notificationService';
 import { OnboardingWizard } from './components/onboarding/OnboardingWizard';
@@ -312,6 +313,11 @@ const AppGate: React.FC = () => {
 
   // Admin route requested via /admin or legacy #admin → allow admin access
   if (typeof window !== 'undefined' && isAdminRoute()) {
+    return <MainLayout />;
+  }
+
+  // Deep-link verse route requested (e.g. /JOHN/3/16 or /GEN/1) → directly show MainLayout so verse is displayed immediately!
+  if (typeof window !== 'undefined' && parseRoute(ALL_BIBLE_BOOKS)) {
     return <MainLayout />;
   }
 

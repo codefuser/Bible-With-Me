@@ -30,6 +30,8 @@ import {
 import { getStoredStreakData, recordChapterCompletion, updateDailyGoal } from '../services/streakService';
 import { trackActivity } from '../services/activityService';
 import { useAuth } from './AuthContext';
+import { App as CapApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 
 interface VerseCardData {
   verse: BibleVerse;
@@ -458,6 +460,51 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return () => {
       window.removeEventListener('popstate', handlePopState);
       window.removeEventListener('app-route-change', handlePopState);
+    };
+  }, [books]);
+
+  // Listen for Capacitor Native Deep Links (cold launch & warm appUrlOpen)
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    const handleDeepLinkUrl = (urlString: string) => {
+      console.log('[DeepLink] Processing Capacitor deep link URL:', urlString);
+      if (urlString && books && books.length > 0) {
+        const routeState = parseRoute(books, urlString);
+        if (routeState) {
+          const matchedBook = books.find((b) => b.code.toUpperCase() === routeState.bookCode.toUpperCase());
+          if (matchedBook) {
+            setCurrentBook(matchedBook);
+            setCurrentChapter(routeState.chapter);
+            if (routeState.verse) {
+              setSelectedVerse(routeState.verse);
+            }
+          }
+        }
+      }
+    };
+
+    // 1. Check if app was cold-launched via deep link
+    CapApp.getLaunchUrl().then((launchData) => {
+      if (launchData && launchData.url) {
+        handleDeepLinkUrl(launchData.url);
+      }
+    });
+
+    // 2. Listen for deep links while app is running/backgrounded
+    let subHandle: any = null;
+    CapApp.addListener('appUrlOpen', (event) => {
+      if (event && event.url) {
+        handleDeepLinkUrl(event.url);
+      }
+    }).then((sub) => {
+      subHandle = sub;
+    });
+
+    return () => {
+      if (subHandle && typeof subHandle.remove === 'function') {
+        subHandle.remove();
+      }
     };
   }, [books]);
 

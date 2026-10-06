@@ -48,6 +48,7 @@ export const VerseReader: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
   const [activeVerseNum, setActiveVerseNum] = useState<number | null>(selectedVerse);
+  const [activePulseVerse, setActivePulseVerse] = useState<number | null>(selectedVerse);
   const [clickedVerseNum, setClickedVerseNum] = useState<number | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showHighlightPicker, setShowHighlightPicker] = useState<boolean>(false);
@@ -140,17 +141,33 @@ export const VerseReader: React.FC = () => {
     };
   }, [currentBook, currentChapter, selectedVerse, userId, recordChapterRead]);
 
-  // Sync route hash and auto-scroll to selected verse
+  // Sync route hash, trigger 5-second pulse, and auto-scroll to selected verse
   useEffect(() => {
     setClickedVerseNum(null);
     setShowHighlightPicker(false);
     if (selectedVerse) {
       setActiveVerseNum(selectedVerse);
+      setActivePulseVerse(selectedVerse);
       updateRoute(currentBook.code, currentChapter, selectedVerse);
-      setTimeout(() => {
-        verseRefs.current[selectedVerse]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 150);
+
+      const scrollTimer = setTimeout(() => {
+        const el = verseRefs.current[selectedVerse];
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 180);
+
+      // Exactly 5 seconds devotional pulse animation
+      const pulseTimer = setTimeout(() => {
+        setActivePulseVerse(null);
+      }, 5000);
+
+      return () => {
+        clearTimeout(scrollTimer);
+        clearTimeout(pulseTimer);
+      };
     } else {
+      setActivePulseVerse(null);
       updateRoute(currentBook.code, currentChapter);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -158,11 +175,15 @@ export const VerseReader: React.FC = () => {
 
   const handleScrubberSelectVerse = (verseNum: number) => {
     setActiveVerseNum(verseNum);
+    setActivePulseVerse(verseNum);
     updateRoute(currentBook.code, currentChapter, verseNum);
     const targetEl = verseRefs.current[verseNum];
     if (targetEl) {
       targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
+    setTimeout(() => {
+      setActivePulseVerse(null);
+    }, 5000);
   };
 
   // IntersectionObserver to auto-highlight active verse in scrubber as user scrolls
@@ -248,26 +269,14 @@ export const VerseReader: React.FC = () => {
     if (envUrl) {
       return envUrl.replace(/\/+$/, '');
     }
-    if (typeof window !== 'undefined') {
-      const origin = window.location.origin;
-      const hostname = window.location.hostname;
-      const isLocal =
-        hostname === 'localhost' ||
-        hostname === '127.0.0.1' ||
-        hostname === '0.0.0.0' ||
-        origin.startsWith('capacitor://');
-      if (!isLocal && origin && origin !== 'null') {
-        return origin.replace(/\/+$/, '');
-      }
-    }
-    return 'https://bible-with-me.web.app';
+    return 'https://bible-with-me.vercel.app';
   };
 
   const handleShareVerse = async (v: BibleVerse) => {
     const text = language === 'en' ? v.text_en : language === 'ta' ? v.text_ta : `${v.text_ta}\n${v.text_en}`;
     const formattedTitle = `${bookName} ${currentChapter}:${v.verse}`;
     const baseUrl = getBaseShareUrl();
-    const shareUrl = `${baseUrl}/#${currentBook.code}/${currentChapter}/${v.verse}`;
+    const shareUrl = `${baseUrl}/${currentBook.code}/${currentChapter}/${v.verse}`;
 
     if (navigator.share) {
       try {
@@ -449,6 +458,7 @@ export const VerseReader: React.FC = () => {
             {verses.map((verseObj) => {
               const isBookmarked = isVerseBookmarked(bookmarks, currentBook.id, currentChapter, verseObj.verse);
               const isSelected = clickedVerseNum === verseObj.verse;
+              const isPulsing = activePulseVerse === verseObj.verse;
               const highlightColor = getVerseHighlightColor(highlights, currentBook.id, currentChapter, verseObj.verse);
               const todayRef = getTodayVerseRef();
               const isTodayDailyVerse =
@@ -464,7 +474,7 @@ export const VerseReader: React.FC = () => {
                   data-verse-num={verseObj.verse}
                   className={`verse-parallel-item ${isSelected ? 'selected' : ''} ${highlightColor ? `highlight-${highlightColor}` : ''} ${
                     isTodayDailyVerse ? 'is-today-daily-verse' : ''
-                  }`}
+                  } ${isPulsing ? 'verse-pulse-active' : ''}`}
                   style={{ '--verse-pad-right': getVersePaddingRight(isBookmarked, isDropdownMode) } as React.CSSProperties}
                   onClick={() => {
                     setClickedVerseNum(isSelected ? null : verseObj.verse);
@@ -869,6 +879,7 @@ export const VerseReader: React.FC = () => {
           {verses.map((verseObj) => {
             const isBookmarked = isVerseBookmarked(bookmarks, currentBook.id, currentChapter, verseObj.verse);
             const isSelected = clickedVerseNum === verseObj.verse;
+            const isPulsing = activePulseVerse === verseObj.verse;
             const highlightColor = getVerseHighlightColor(highlights, currentBook.id, currentChapter, verseObj.verse);
             const highlightClass = highlightColor ? `highlight-${highlightColor}` : '';
 
@@ -886,7 +897,7 @@ export const VerseReader: React.FC = () => {
                 data-verse-num={verseObj.verse}
                 className={`verse-item ${isSelected ? 'selected' : ''} ${highlightClass} ${
                   isTodayDailyVerse ? 'is-today-daily-verse' : ''
-                }`}
+                } ${isPulsing ? 'verse-pulse-active' : ''}`}
                 onClick={() => {
                   setClickedVerseNum(isSelected ? null : verseObj.verse);
                   setShowHighlightPicker(false);

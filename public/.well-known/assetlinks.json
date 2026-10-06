@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.biblewithme.app",
+      "sha256_cert_fingerprints": [
+        "33:41:FB:89:78:32:06:7D:46:AB:6B:FB:92:B4:B8:00:C5:C1:2E:E2:58:31:AA:74:DB:0A:8E:F6:F3:49:22:CA"
+      ]
+    }
+  }
+]

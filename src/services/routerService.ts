@@ -16,20 +16,38 @@ export const isAdminRoute = (): boolean => {
 };
 
 /**
- * Parse path or hash route (e.g. "/JOHN/3/16", "/GEN/1", "/43/3/16", or legacy "#JOHN/3/16")
+ * Parse path or hash route (e.g. "/JOHN/3/16", "/GEN/1", "/43/3/16", or legacy "#JOHN/3/16", or deep link URL)
  */
-export const parseRoute = (books: BibleBook[]): RouteState | null => {
+export const parseRoute = (books: BibleBook[], urlString?: string): RouteState | null => {
   if (typeof window === 'undefined') return null;
 
-  // If in admin route, this is not a reader route
-  if (isAdminRoute()) return null;
+  let raw = '';
+  if (urlString) {
+    try {
+      const normalized = urlString.replace(/^biblewithme:\/\//, 'https://bible-with-me.vercel.app/');
+      const parsed = new URL(normalized);
+      raw = parsed.pathname.replace(/^\/+|\/+$/g, '').trim();
+      if (!raw && parsed.hash) {
+        raw = parsed.hash.replace(/^#\/?/, '').trim();
+      }
+    } catch {
+      raw = urlString
+        .replace(/^(https?:\/\/[^\/]+|biblewithme:\/\/)/, '')
+        .replace(/^#\/?/, '')
+        .replace(/^\/+|\/+$/g, '')
+        .trim();
+    }
+  } else {
+    // If in admin route, this is not a reader route
+    if (isAdminRoute()) return null;
 
-  // 1. Check pathname first (e.g. /GEN/1/1 or /JOHN/3/16)
-  let raw = window.location.pathname.replace(/^\/+|\/+$/g, '').trim();
+    // 1. Check pathname first (e.g. /GEN/1/1 or /JOHN/3/16)
+    raw = window.location.pathname.replace(/^\/+|\/+$/g, '').trim();
 
-  // If pathname is empty or root '/', check legacy hash (e.g. #GEN/1/1)
-  if (!raw && window.location.hash) {
-    raw = window.location.hash.replace(/^#\/?/, '').trim();
+    // If pathname is empty or root '/', check legacy hash (e.g. #GEN/1/1)
+    if (!raw && window.location.hash) {
+      raw = window.location.hash.replace(/^#\/?/, '').trim();
+    }
   }
 
   if (!raw) return null;
