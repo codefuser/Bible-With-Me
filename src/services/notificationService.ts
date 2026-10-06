@@ -259,6 +259,29 @@ export const getVerseForNotification = (indexOffset: number = 0, isTa: boolean =
   };
 };
 
+export const NOTIFICATION_CHANNEL_ID = 'bible_daily_reminders';
+
+/**
+ * Ensures the Android 8.0+ notification channel exists with high importance
+ */
+export const ensureNotificationChannel = async (): Promise<void> => {
+  if (!isNativePlatform()) return;
+  try {
+    await LocalNotifications.createChannel({
+      id: NOTIFICATION_CHANNEL_ID,
+      name: 'Daily Scripture & Devotionals',
+      description: 'Daily Bible verse alerts and reading reminder notifications',
+      importance: 4, // High importance (shows heads-up notification and sound)
+      visibility: 1, // Public on lockscreen
+      vibration: true,
+      lights: true,
+      lightColor: '#2563eb'
+    });
+  } catch (err) {
+    console.warn('[NotificationService] Channel creation or check failed:', err);
+  }
+};
+
 /**
  * Completely cancels and re-schedules active daily alarms
  * Uses native Android AlarmManager via @capacitor/local-notifications
@@ -276,6 +299,8 @@ export const rescheduleAllNotifications = async (
 
   if (isNativePlatform()) {
     try {
+      await ensureNotificationChannel();
+
       await LocalNotifications.cancel({
         notifications: allPossibleIds.map((id) => ({ id }))
       });
@@ -310,20 +335,23 @@ export const rescheduleAllNotifications = async (
         const { verseRef, verseText, bookId, chapter, verse } = getVerseForNotification(offset, isTa);
         offset++;
 
-        const title = `📖 ${verseRef}`;
-        const body = `${verseText}\n${isTa ? 'இன்றைய வேத வாசிப்பு நேரம் · தட்டவும்' : 'Today\'s Scripture reading time · Tap to read'}`;
+        const slotLabel = isTa ? slot.nameTa : slot.nameEn;
+        const title = `🕊️ ${verseRef} · ${slotLabel}`;
+        const body = `"${verseText}"\n✨ ${isTa ? 'தட்டி வாசிக்கவும் · வேதாகமம்' : 'Tap to read & meditate · Holy Bible'}`;
 
         notificationsToSchedule.push({
           id: slot.id,
           title,
           body,
+          channelId: NOTIFICATION_CHANNEL_ID,
           schedule: {
             on: { hour, minute },
+            repeats: true,
+            every: 'day' as const,
             allowWhileIdle: true
           },
-          sound: undefined,
-          smallIcon: 'ic_launcher',
-          largeIcon: 'res://icon',
+          smallIcon: 'ic_stat_bible',
+          iconColor: '#2563eb',
           extra: {
             slotKey: slot.key,
             bookId,
@@ -349,20 +377,22 @@ export const rescheduleAllNotifications = async (
           offset++;
 
           const label = isTa ? customSlot.labelTa : customSlot.labelEn;
-          const title = `📖 ${verseRef} · ${label}`;
-          const body = `${verseText}\n${isTa ? 'உங்கள் வேத தியான நேரம் · தட்டவும்' : 'Your personal Scripture time · Tap to read'}`;
+          const title = `🕊️ ${verseRef} · ${label}`;
+          const body = `"${verseText}"\n✨ ${isTa ? 'தியானிக்க தட்டவும் · வேதாகமம்' : 'Tap to meditate · Holy Bible'}`;
 
           notificationsToSchedule.push({
             id: customSlot.id,
             title,
             body,
+            channelId: NOTIFICATION_CHANNEL_ID,
             schedule: {
               on: { hour, minute },
+              repeats: true,
+              every: 'day' as const,
               allowWhileIdle: true
             },
-            sound: undefined,
-            smallIcon: 'ic_launcher',
-            largeIcon: 'res://icon',
+            smallIcon: 'ic_stat_bible',
+            iconColor: '#2563eb',
             extra: {
               slotKey: 'custom-multiple',
               bookId,
@@ -402,15 +432,17 @@ export const triggerInstantNotification = async (
 
   if (isNativePlatform()) {
     try {
+      await ensureNotificationChannel();
       await LocalNotifications.schedule({
         notifications: [
           {
             id: notifId,
             title,
             body,
+            channelId: NOTIFICATION_CHANNEL_ID,
             schedule: { at: new Date(Date.now() + 500) },
-            smallIcon: 'ic_launcher',
-            largeIcon: 'res://icon',
+            smallIcon: 'ic_stat_bible',
+            iconColor: '#2563eb',
             extra: { bookId, chapter, verse }
           }
         ]
@@ -430,6 +462,24 @@ export const triggerInstantNotification = async (
       // ignore
     }
   }
+};
+
+/**
+ * Send an immediate test notification with a devotional verse to preview the UI
+ */
+export const testNotificationNow = async (appLang: AppLanguage = 'ta'): Promise<boolean> => {
+  const isTa = appLang === 'ta';
+  const { verseRef, verseText, bookId, chapter, verse } = getVerseForNotification(0, isTa);
+  const title = `🕊️ ${verseRef} · ${isTa ? 'இன்றைய தேவ வார்த்தை' : 'Word of the Day'}`;
+  const body = `"${verseText}"\n✨ ${isTa ? 'வாசிக்க தட்டவும் · வேதாகமம்' : 'Tap to read & meditate · Holy Bible'}`;
+
+  const perm = await getNotificationPermission();
+  if (perm !== 'granted') {
+    const granted = await requestNotificationPermission();
+    if (!granted) return false;
+  }
+  await triggerInstantNotification(title, body, bookId, chapter, verse);
+  return true;
 };
 
 /**
@@ -456,20 +506,22 @@ export const checkAppOpenReminder = async (appLang: AppLanguage = 'ta'): Promise
   const isTa = appLang === 'ta';
   const { verseRef, verseText, bookId, chapter, verse } = getVerseForNotification(0, isTa);
 
-  const title = `📖 ${verseRef}`;
-  const body = `${verseText}\n${isTa ? `இன்றைய ${config.goalMinutes} நிமிட வேத வாசிப்பை தொடங்குங்கள்.` : `Start your ${config.goalMinutes}-min Scripture reading today.`}`;
+  const title = `🕊️ ${verseRef} · ${isTa ? 'இன்றைய தேவ வார்த்தை' : 'Word of the Day'}`;
+  const body = `"${verseText}"\n✨ ${isTa ? `இன்றைய ${config.goalMinutes} நிமிட வேத வாசிப்பை தொடங்குங்கள்.` : `Start your ${config.goalMinutes}-min Scripture reading today.`}`;
 
   if (isNativePlatform()) {
     try {
+      await ensureNotificationChannel();
       await LocalNotifications.schedule({
         notifications: [
           {
             id: 201,
             title,
             body,
+            channelId: NOTIFICATION_CHANNEL_ID,
             schedule: { at: new Date(Date.now() + 1500) },
-            smallIcon: 'ic_launcher',
-            largeIcon: 'res://icon',
+            smallIcon: 'ic_stat_bible',
+            iconColor: '#2563eb',
             extra: { bookId, chapter, verse }
           }
         ]
