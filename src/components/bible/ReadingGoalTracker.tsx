@@ -97,28 +97,8 @@ export const ReadingGoalTracker: React.FC = () => {
   const secondsReadRef = useRef(secondsRead);
   secondsReadRef.current = secondsRead;
 
-  // Mobile auto-collapse timer (5 seconds)
-  // "phonela first time open panumpothu persentageoda kamikanum verse vasikum pothu athu automatia 5 secondskulla minimize aahiranum"
-  useEffect(() => {
-    if (isDesktop) return;
-    if (uiState !== 'circle') return;
-
-    const timer = setTimeout(() => {
-      setUiState('handle');
-    }, 5000);
-
-    // Minimize when scrolling/reading verses on phone
-    const handleScroll = () => {
-      setUiState('handle');
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [isDesktop, uiState]);
+  // Mobile view: Timer stays visible permanently as a circle with percentage without auto-minimizing
+  // Desktop view: Desktop pill is used instead.
 
   // Toggle timing enabled / disabled
   const handleToggleTiming = () => {
@@ -358,29 +338,8 @@ export const ReadingGoalTracker: React.FC = () => {
           ─────────────────────────────────────────────────────────── */}
       {!isDesktop && (
         <>
-          {/* 1. Collapsed handle attached to right edge */}
-          {uiState === 'handle' && (
-            <button
-              type="button"
-              className={`reading-tracker-handle ${!isTimingEnabled ? 'disabled' : ''}`}
-              onClick={() => setUiState('circle')}
-              title={
-                isTimingEnabled
-                  ? `${isEnUI ? 'Reading Goal' : 'வாசிப்பு இலக்கு'}: ${percent}% (${formatMinSec(secondsRead)})`
-                  : `${isEnUI ? 'Timer Paused' : 'டைமர் நிறுத்தம்'}`
-              }
-              aria-label="Toggle Reading Goal Indicator"
-            >
-              {isTimingEnabled ? (
-                <ChevronLeft size={15} className="reading-tracker-handle-arrow" />
-              ) : (
-                <Clock size={13} className="reading-tracker-handle-paused" />
-              )}
-            </button>
-          )}
-
-          {/* 2. Circular percentage widget (Auto-collapses in 5s on mobile) */}
-          {uiState === 'circle' && (
+          {/* Circular percentage widget (Always visible at bottom on mobile without minimizing) */}
+          {uiState !== 'details' && (
             <div
               className={`reading-tracker-circle ${isGoalMet ? 'completed' : ''}`}
               onClick={() => setUiState('details')}
@@ -439,7 +398,7 @@ export const ReadingGoalTracker: React.FC = () => {
                 type="button"
                 className="reading-tracker-close-btn"
                 onClick={() => {
-                  setUiState('handle');
+                  setUiState(isDesktop ? 'handle' : 'circle');
                 }}
                 aria-label="Close"
               >

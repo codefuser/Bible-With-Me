@@ -1164,12 +1164,21 @@ a {
   .app-body-layout {
     height: auto !important;
     overflow: visible !important;
+    margin-top: calc(4.15rem + max(env(safe-area-inset-top, 0px), 16px)) !important;
   }
   .main-content {
     height: auto !important;
     overflow-y: visible !important;
     padding: 0.75rem max(0.75rem, env(safe-area-inset-right, 0px)) calc(4.75rem + env(safe-area-inset-bottom, 0px)) max(0.75rem, env(safe-area-inset-left, 0px)) !important;
   }
+}
+
+.preferences-top-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding-left: max(0.75rem, env(safe-area-inset-left, 0px)) !important;
+  padding-right: max(0.75rem, env(safe-area-inset-right, 0px)) !important;
 }
 
 .app-body-layout {

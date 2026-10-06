@@ -11,7 +11,8 @@ import {
   getNotificationPermission,
   NotificationScheduleConfig,
   addCustomReminderTime,
-  removeCustomReminderTime
+  removeCustomReminderTime,
+  testNotificationNow
 } from '../../services/notificationService';
 
 interface FontItem<T> {
@@ -445,6 +446,17 @@ export const PreferencesModal: React.FC = () => {
     saveNotificationSchedule(updated, appLanguage);
   };
 
+  const [isTestingNotif, setIsTestingNotif] = useState(false);
+
+  const handleTestNotification = async () => {
+    setIsTestingNotif(true);
+    try {
+      await testNotificationNow(appLanguage);
+    } finally {
+      setTimeout(() => setIsTestingNotif(false), 2500);
+    }
+  };
+
   if (!isPreferencesOpen) return null;
 
   const isEn = appLanguage === 'en';
@@ -570,90 +582,154 @@ export const PreferencesModal: React.FC = () => {
         padding: '0.25rem 0 0.5rem'
       }}
     >
-      {/* Top Header Navigation Bar */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '0.875rem',
-          padding: '0.25rem 0.125rem'
-        }}
-      >
-        <button
-          onClick={handleReturnHome}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.4375rem',
-            padding: '0.4375rem 0.875rem',
-            borderRadius: '9999px',
-            backgroundColor: 'var(--accent-soft)',
-            color: 'var(--accent-color)',
-            border: '1px solid var(--accent-color)',
-            fontWeight: 600,
-            fontSize: '0.84375rem',
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
-            transition: 'all 180ms ease'
-          }}
-          title={isEn ? 'Return to Bible Reader' : 'வேதாகம வாசிப்பிற்குத் திரும்புக'}
-        >
-          <ArrowLeft size={16} />
-          <span>{isEn ? 'Home' : 'முகப்பு'}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={resetPreferences}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.375rem',
-            padding: '0.4375rem 0.875rem',
-            borderRadius: '9999px',
-            backgroundColor: 'var(--bg-secondary)',
-            color: 'var(--text-secondary)',
-            border: '1px solid var(--border-color)',
-            fontWeight: 600,
-            fontSize: '0.84375rem',
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
-            transition: 'all 180ms ease'
-          }}
-          title={isEn ? 'Reset All Preferences to Default' : 'அனைத்து அமைப்புகளையும் இயல்பு நிலைக்கு மீட்டமை'}
-        >
-          <RotateCcw size={15} />
-          <span>{isEn ? 'Reset to Defaults' : 'அமைப்புகளை மீட்டமை'}</span>
-        </button>
-      </div>
-
-      {/* Large Page Hero Header */}
-      <div
-        style={{
-          marginBottom: '1rem',
-          padding: '0 0.125rem'
-        }}
-      >
-        <h1
-          style={{
-            fontSize: '1.25rem',
-            fontWeight: 800,
-            color: 'var(--text-primary)',
-            margin: 0,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            letterSpacing: '-0.01em'
-          }}
-        >
-          <Sliders size={20} style={{ color: 'var(--accent-color)' }} />
-          <span>{isEn ? 'Reading Preferences' : 'வாசிப்பு விருப்பத்தேர்வுகள்'}</span>
-        </h1>
-      </div>
-
       {/* Main Settings Grouped Cards Container */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.25rem' }}>
+        {/* Group 0: Language & Scripture Preferences */}
+        <div
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '1rem',
+            padding: '1.125rem 1.25rem',
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+            <label style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.375rem', margin: 0 }}>
+              <Globe size={15} style={{ color: 'var(--accent-color)' }} />
+              <span>{isEn ? 'Language Preferences' : 'மொழி விருப்பத்தேர்வுகள்'}</span>
+            </label>
+          </div>
+
+          {/* App Interface Language */}
+          <div style={{ marginBottom: '1rem' }}>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
+              {isEn ? 'App Interface Language (செயலி மொழி)' : 'பயன்பாட்டு இடைமுக மொழி (App Language)'}
+            </span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+              <button
+                type="button"
+                onClick={() => setAppLanguage('ta')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.625rem 0.875rem',
+                  borderRadius: '0.625rem',
+                  border: appLanguage === 'ta' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                  backgroundColor: appLanguage === 'ta' ? 'var(--accent-soft)' : 'var(--bg-secondary)',
+                  color: appLanguage === 'ta' ? 'var(--accent-color)' : 'var(--text-primary)',
+                  fontWeight: appLanguage === 'ta' ? 700 : 500,
+                  fontSize: '0.875rem',
+                  cursor: 'pointer',
+                  transition: 'all 150ms ease'
+                }}
+              >
+                <span>🇮🇳 தமிழ்</span>
+                {appLanguage === 'ta' && <Check size={16} />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setAppLanguage('en')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.625rem 0.875rem',
+                  borderRadius: '0.625rem',
+                  border: appLanguage === 'en' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                  backgroundColor: appLanguage === 'en' ? 'var(--accent-soft)' : 'var(--bg-secondary)',
+                  color: appLanguage === 'en' ? 'var(--accent-color)' : 'var(--text-primary)',
+                  fontWeight: appLanguage === 'en' ? 700 : 500,
+                  fontSize: '0.875rem',
+                  cursor: 'pointer',
+                  transition: 'all 150ms ease'
+                }}
+              >
+                <span>🇬🇧 English</span>
+                {appLanguage === 'en' && <Check size={16} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Bible Scripture Language Mode */}
+          <div>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
+              {isEn ? 'Bible Scripture Mode (வேதாகம பதிப்பு)' : 'வேதாகம வாசிப்பு பதிப்பு'}
+            </span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.375rem' }}>
+              <button
+                type="button"
+                onClick={() => setBibleLanguage('ta')}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0.5rem 0.25rem',
+                  borderRadius: '0.625rem',
+                  border: bibleLanguage === 'ta' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                  backgroundColor: bibleLanguage === 'ta' ? 'var(--accent-soft)' : 'var(--bg-secondary)',
+                  color: bibleLanguage === 'ta' ? 'var(--accent-color)' : 'var(--text-primary)',
+                  fontWeight: bibleLanguage === 'ta' ? 700 : 500,
+                  fontSize: '0.8125rem',
+                  cursor: 'pointer',
+                  textAlign: 'center'
+                }}
+              >
+                <span>தமிழ்</span>
+                <span style={{ fontSize: '0.6875rem', opacity: 0.75 }}>BSI Tamil</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setBibleLanguage('en')}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0.5rem 0.25rem',
+                  borderRadius: '0.625rem',
+                  border: bibleLanguage === 'en' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                  backgroundColor: bibleLanguage === 'en' ? 'var(--accent-soft)' : 'var(--bg-secondary)',
+                  color: bibleLanguage === 'en' ? 'var(--accent-color)' : 'var(--text-primary)',
+                  fontWeight: bibleLanguage === 'en' ? 700 : 500,
+                  fontSize: '0.8125rem',
+                  cursor: 'pointer',
+                  textAlign: 'center'
+                }}
+              >
+                <span>English</span>
+                <span style={{ fontSize: '0.6875rem', opacity: 0.75 }}>KJV Bible</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setBibleLanguage('parallel')}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0.5rem 0.25rem',
+                  borderRadius: '0.625rem',
+                  border: bibleLanguage === 'parallel' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                  backgroundColor: bibleLanguage === 'parallel' ? 'var(--accent-soft)' : 'var(--bg-secondary)',
+                  color: bibleLanguage === 'parallel' ? 'var(--accent-color)' : 'var(--text-primary)',
+                  fontWeight: bibleLanguage === 'parallel' ? 700 : 500,
+                  fontSize: '0.8125rem',
+                  cursor: 'pointer',
+                  textAlign: 'center'
+                }}
+              >
+                <span>தமிழ் + EN</span>
+                <span style={{ fontSize: '0.6875rem', opacity: 0.75 }}>Parallel</span>
+              </button>
+            </div>
+          </div>
+        </div>
         {/* Group 1: Appearance & Theme (Instant Zero-Lag Switcher + Color Presets + Custom Color Picker) */}
         <div
           style={{
@@ -1459,6 +1535,37 @@ export const PreferencesModal: React.FC = () => {
                   3h
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* Test Notification Button */}
+          {notifConfig.enabled && (
+            <div style={{ marginTop: '0.85rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={handleTestNotification}
+                disabled={isTestingNotif}
+                style={{
+                  padding: '0.45rem 0.85rem',
+                  borderRadius: '0.5rem',
+                  border: '1px solid var(--accent-color)',
+                  backgroundColor: 'var(--accent-soft)',
+                  color: 'var(--accent-color)',
+                  fontSize: '0.8125rem',
+                  fontWeight: 700,
+                  cursor: isTestingNotif ? 'default' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem'
+                }}
+              >
+                <Sparkles size={14} />
+                <span>
+                  {isTestingNotif
+                    ? (isEn ? 'Notification Sent!' : 'அனுப்பப்பட்டது!')
+                    : (isEn ? 'Test Notification' : 'மாதிரி நினைவூட்டல் அனுப்பு')}
+                </span>
+              </button>
             </div>
           )}
         </div>

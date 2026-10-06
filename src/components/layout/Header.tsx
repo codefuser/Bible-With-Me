@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, BookOpen, Search, Bookmark, Globe, Flame } from 'lucide-react';
+import { Menu, BookOpen, Search, Bookmark, Globe, Flame, ArrowLeft, Sliders, RotateCcw } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 
 export const Header: React.FC = () => {
@@ -15,7 +15,10 @@ export const Header: React.FC = () => {
     setIsLanguageModalOpen,
     bookmarks,
     streakData,
-    setIsStreakModalOpen
+    setIsStreakModalOpen,
+    isPreferencesOpen,
+    setIsPreferencesOpen,
+    resetPreferences
   } = useReading();
 
   const isEnUI = (appLanguage || 'ta') === 'en';
@@ -32,6 +35,57 @@ export const Header: React.FC = () => {
     if (language === 'en') return 'EN';
     return 'தமிழ் + EN';
   };
+
+  if (isPreferencesOpen) {
+    return (
+      <header className="header preferences-top-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button
+            className="btn-pill"
+            onClick={() => setIsPreferencesOpen(false)}
+            title={isEnUI ? 'Return to Bible Reader' : 'வேதாகம வாசிப்பிற்குத் திரும்புக'}
+            style={{
+              gap: '0.375rem',
+              backgroundColor: 'var(--accent-soft)',
+              color: 'var(--accent-color)',
+              borderColor: 'var(--accent-color)',
+              fontWeight: 700
+            }}
+          >
+            <ArrowLeft size={16} />
+            <span>{isEnUI ? 'Home' : 'முகப்பு'}</span>
+          </button>
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            fontWeight: 800,
+            fontSize: '0.9375rem',
+            color: 'var(--text-primary)'
+          }}
+        >
+          <Sliders size={17} color="var(--accent-color)" />
+          <span>{isEnUI ? 'Reading Preferences' : 'வாசிப்பு அமைப்புகள்'}</span>
+        </div>
+
+        <div className="header-actions">
+          <button
+            type="button"
+            className="btn-pill"
+            onClick={resetPreferences}
+            title={isEnUI ? 'Reset All Preferences to Default' : 'அனைத்து அமைப்புகளையும் இயல்பு நிலைக்கு மீட்டமை'}
+            style={{ gap: '0.35rem' }}
+          >
+            <RotateCcw size={14} />
+            <span>{isEnUI ? 'Reset' : 'மீட்டமை'}</span>
+          </button>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="header">

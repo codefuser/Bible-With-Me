@@ -30,6 +30,8 @@ import {
 import { getStoredStreakData, recordChapterCompletion, updateDailyGoal } from '../services/streakService';
 import { trackActivity } from '../services/activityService';
 import { useAuth } from './AuthContext';
+import { App as CapApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 
 interface VerseCardData {
   verse: BibleVerse;
@@ -42,6 +44,8 @@ interface ReadingContextType {
   currentBook: BibleBook;
   currentChapter: number;
   selectedVerse: number | null;
+  targetPulseVerse: number | null;
+  setTargetPulseVerse: (verse: number | null) => void;
   language: Language;
   appLanguage: AppLanguage;
   bibleLanguage: BibleLanguage;
@@ -82,7 +86,7 @@ interface ReadingContextType {
   isStreakModalOpen: boolean;
   setIsStreakModalOpen: (open: boolean) => void;
   handleUpdateDailyGoal: (newGoal: number) => void;
-  setBookAndChapter: (book: BibleBook, chapter: number, verse?: number) => void;
+  setBookAndChapter: (book: BibleBook, chapter: number, verse?: number, shouldPulse?: boolean) => void;
   setChapter: (chapter: number) => void;
   setLanguage: (lang: Language) => void;
   setAppLanguage: (lang: AppLanguage) => void;
@@ -119,6 +123,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [currentBook, setCurrentBook] = useState<BibleBook>(ALL_BIBLE_BOOKS[0]);
   const [currentChapter, setCurrentChapter] = useState<number>(1);
   const [selectedVerse, setSelectedVerse] = useState<number | null>(null);
+  const [targetPulseVerse, setTargetPulseVerse] = useState<number | null>(null);
 
   const [preferences, setPreferencesState] = useState<ReadingPreferences>(getStoredPreferences);
   const [appLanguage, setAppLanguageState] = useState<AppLanguage>(preferences.appLanguage || 'ta');
@@ -413,7 +418,10 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
             if (matchedBook) {
               setCurrentBook(matchedBook);
               setCurrentChapter(routeState.chapter);
-              if (routeState.verse) setSelectedVerse(routeState.verse);
+              if (routeState.verse) {
+                setSelectedVerse(routeState.verse);
+                setTargetPulseVerse(routeState.verse);
+              }
               setIsBibleDataLoading(false);
               return;
             }
@@ -447,7 +455,10 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
           if (matchedBook) {
             setCurrentBook(matchedBook);
             setCurrentChapter(routeState.chapter);
-            if (routeState.verse) setSelectedVerse(routeState.verse);
+            if (routeState.verse) {
+              setSelectedVerse(routeState.verse);
+              setTargetPulseVerse(routeState.verse);
+            }
           }
         }
       }
@@ -458,6 +469,51 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return () => {
       window.removeEventListener('popstate', handlePopState);
       window.removeEventListener('app-route-change', handlePopState);
+    };
+  }, [books]);
+
+  // Listen for Capacitor Native Deep Links (cold launch & warm appUrlOpen)
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    const handleDeepLinkUrl = (urlString: string) => {
+      console.log('[DeepLink] Processing Capacitor deep link URL:', urlString);
+      if (urlString && books && books.length > 0) {
+        const routeState = parseRoute(books, urlString);
+        if (routeState) {
+          const matchedBook = books.find((b) => b.code.toUpperCase() === routeState.bookCode.toUpperCase());
+          if (matchedBook) {
+            setCurrentBook(matchedBook);
+            setCurrentChapter(routeState.chapter);
+            if (routeState.verse) {
+              setSelectedVerse(routeState.verse);
+            }
+          }
+        }
+      }
+    };
+
+    // 1. Check if app was cold-launched via deep link
+    CapApp.getLaunchUrl().then((launchData) => {
+      if (launchData && launchData.url) {
+        handleDeepLinkUrl(launchData.url);
+      }
+    });
+
+    // 2. Listen for deep links while app is running/backgrounded
+    let subHandle: any = null;
+    CapApp.addListener('appUrlOpen', (event) => {
+      if (event && event.url) {
+        handleDeepLinkUrl(event.url);
+      }
+    }).then((sub) => {
+      subHandle = sub;
+    });
+
+    return () => {
+      if (subHandle && typeof subHandle.remove === 'function') {
+        subHandle.remove();
+      }
     };
   }, [books]);
 
@@ -527,10 +583,15 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     [language, userId]
   );
 
-  const setBookAndChapter = (book: BibleBook, chapter: number, verse: number = 1) => {
+  const setBookAndChapter = (book: BibleBook, chapter: number, verse: number = 1, shouldPulse: boolean = false) => {
     setCurrentBook(book);
     setCurrentChapter(chapter);
     setSelectedVerse(verse);
+    if (shouldPulse && verse) {
+      setTargetPulseVerse(verse);
+    } else {
+      setTargetPulseVerse(null);
+    }
     setIsBookSelectorOpen(false);
 
     recordChapterRead(book, chapter, verse);
@@ -538,7 +599,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const setChapter = (chapter: number) => {
     if (chapter >= 1 && chapter <= currentBook.total_chapters) {
-      setBookAndChapter(currentBook, chapter, 1);
+      setBookAndChapter(currentBook, chapter, 1, false);
     }
   };
 
@@ -693,6 +754,8 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         currentBook,
         currentChapter,
         selectedVerse,
+        targetPulseVerse,
+        setTargetPulseVerse,
         language,
         preferences,
         bookmarks,

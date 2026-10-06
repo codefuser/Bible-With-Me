@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Bookmark as BookmarkIcon, Copy, Share2, BookOpen, Highlighter, Check, Trash2, Sparkles, Image as ImageIcon, ChevronLeft, ChevronRight, Expand, MoreVertical, SlidersHorizontal } from 'lucide-react';
+import { Bookmark as BookmarkIcon, Copy, Share2, BookOpen, Highlighter, Check, Trash2, Sparkles, Image as ImageIcon, ChevronLeft, ChevronRight, Expand, SlidersHorizontal } from 'lucide-react';
 import { QuickSettingsModal } from './QuickSettingsModal';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
@@ -21,6 +21,8 @@ export const VerseReader: React.FC = () => {
     currentBook,
     currentChapter,
     selectedVerse,
+    targetPulseVerse,
+    setTargetPulseVerse,
     language,
     preferences,
     bookmarks,
@@ -48,6 +50,7 @@ export const VerseReader: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
   const [activeVerseNum, setActiveVerseNum] = useState<number | null>(selectedVerse);
+  const [activePulseVerse, setActivePulseVerse] = useState<number | null>(targetPulseVerse);
   const [clickedVerseNum, setClickedVerseNum] = useState<number | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showHighlightPicker, setShowHighlightPicker] = useState<boolean>(false);
@@ -140,29 +143,72 @@ export const VerseReader: React.FC = () => {
     };
   }, [currentBook, currentChapter, selectedVerse, userId, recordChapterRead]);
 
-  // Sync route hash and auto-scroll to selected verse
+  // Sync route hash, trigger 5-second pulse, and auto-scroll ONLY when targetPulseVerse is present (e.g. from shared verse link)
   useEffect(() => {
     setClickedVerseNum(null);
     setShowHighlightPicker(false);
-    if (selectedVerse) {
-      setActiveVerseNum(selectedVerse);
-      updateRoute(currentBook.code, currentChapter, selectedVerse);
-      setTimeout(() => {
-        verseRefs.current[selectedVerse]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 150);
+
+    if (targetPulseVerse) {
+      setActiveVerseNum(targetPulseVerse);
+      setActivePulseVerse(targetPulseVerse);
+      updateRoute(currentBook.code, currentChapter, targetPulseVerse);
+
+      const scrollTimer = setTimeout(() => {
+        const el = verseRefs.current[targetPulseVerse];
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 180);
+
+      // Exactly 5 seconds devotional pulse animation
+      const pulseTimer = setTimeout(() => {
+        setActivePulseVerse(null);
+        setTargetPulseVerse(null);
+      }, 5000);
+
+      return () => {
+        clearTimeout(scrollTimer);
+        clearTimeout(pulseTimer);
+      };
     } else {
-      updateRoute(currentBook.code, currentChapter);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setActivePulseVerse(null);
+      if (selectedVerse && selectedVerse > 1) {
+        setActiveVerseNum(selectedVerse);
+        updateRoute(currentBook.code, currentChapter, selectedVerse);
+      } else {
+        updateRoute(currentBook.code, currentChapter);
+      }
     }
-  }, [currentBook.id, currentBook.code, currentChapter, selectedVerse, loading]);
+  }, [currentBook.id, currentBook.code, currentChapter, targetPulseVerse, selectedVerse, loading]);
+
+  const handleVerseClick = (e: React.MouseEvent<HTMLElement>, verseNum: number) => {
+    if (clickedVerseNum === verseNum) {
+      setClickedVerseNum(null);
+      setShowHighlightPicker(false);
+      return;
+    }
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const headerSafeBoundary = 64;
+    const bottomNavSafeBoundary = window.innerHeight - 75;
+    const spaceBelow = bottomNavSafeBoundary - rect.bottom;
+    const spaceAbove = rect.top - headerSafeBoundary;
+    setDropdownDirection(spaceBelow < 280 && spaceAbove > spaceBelow ? 'up' : 'down');
+    setClickedVerseNum(verseNum);
+    setShowHighlightPicker(false);
+  };
 
   const handleScrubberSelectVerse = (verseNum: number) => {
     setActiveVerseNum(verseNum);
+    setActivePulseVerse(verseNum);
     updateRoute(currentBook.code, currentChapter, verseNum);
     const targetEl = verseRefs.current[verseNum];
     if (targetEl) {
       targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
+    setTimeout(() => {
+      setActivePulseVerse(null);
+    }, 5000);
   };
 
   // IntersectionObserver to auto-highlight active verse in scrubber as user scrolls
@@ -218,10 +264,7 @@ export const VerseReader: React.FC = () => {
   const isDropdownMode = optionsStyle === 'dropdown';
   const isButtonsMode = optionsStyle === 'buttons';
 
-  const getVersePaddingRight = (isBookmarked: boolean, isDropdown: boolean) => {
-    if (isDropdown) {
-      return isBookmarked ? '3.6rem' : '2.1rem';
-    }
+  const getVersePaddingRight = (isBookmarked: boolean, _isDropdown?: boolean) => {
     return isBookmarked ? '1.85rem' : '0.25rem';
   };
 
@@ -248,26 +291,14 @@ export const VerseReader: React.FC = () => {
     if (envUrl) {
       return envUrl.replace(/\/+$/, '');
     }
-    if (typeof window !== 'undefined') {
-      const origin = window.location.origin;
-      const hostname = window.location.hostname;
-      const isLocal =
-        hostname === 'localhost' ||
-        hostname === '127.0.0.1' ||
-        hostname === '0.0.0.0' ||
-        origin.startsWith('capacitor://');
-      if (!isLocal && origin && origin !== 'null') {
-        return origin.replace(/\/+$/, '');
-      }
-    }
-    return 'https://bible-with-me.web.app';
+    return 'https://bible-with-me.vercel.app';
   };
 
   const handleShareVerse = async (v: BibleVerse) => {
     const text = language === 'en' ? v.text_en : language === 'ta' ? v.text_ta : `${v.text_ta}\n${v.text_en}`;
     const formattedTitle = `${bookName} ${currentChapter}:${v.verse}`;
     const baseUrl = getBaseShareUrl();
-    const shareUrl = `${baseUrl}/#${currentBook.code}/${currentChapter}/${v.verse}`;
+    const shareUrl = `${baseUrl}/${currentBook.code}/${currentChapter}/${v.verse}`;
 
     if (navigator.share) {
       try {
@@ -449,6 +480,7 @@ export const VerseReader: React.FC = () => {
             {verses.map((verseObj) => {
               const isBookmarked = isVerseBookmarked(bookmarks, currentBook.id, currentChapter, verseObj.verse);
               const isSelected = clickedVerseNum === verseObj.verse;
+              const isPulsing = activePulseVerse === verseObj.verse;
               const highlightColor = getVerseHighlightColor(highlights, currentBook.id, currentChapter, verseObj.verse);
               const todayRef = getTodayVerseRef();
               const isTodayDailyVerse =
@@ -464,12 +496,9 @@ export const VerseReader: React.FC = () => {
                   data-verse-num={verseObj.verse}
                   className={`verse-parallel-item ${isSelected ? 'selected' : ''} ${highlightColor ? `highlight-${highlightColor}` : ''} ${
                     isTodayDailyVerse ? 'is-today-daily-verse' : ''
-                  }`}
+                  } ${isPulsing ? 'verse-pulse-active' : ''}`}
                   style={{ '--verse-pad-right': getVersePaddingRight(isBookmarked, isDropdownMode) } as React.CSSProperties}
-                  onClick={() => {
-                    setClickedVerseNum(isSelected ? null : verseObj.verse);
-                    setShowHighlightPicker(false);
-                  }}
+                  onClick={(e) => handleVerseClick(e, verseObj.verse)}
                 >
                   {/* Today's Daily Verse Badge */}
                   {isTodayDailyVerse && (
@@ -497,32 +526,6 @@ export const VerseReader: React.FC = () => {
                       >
                         <BookmarkIcon size={14} fill="currentColor" style={{ color: 'var(--bookmark-active)' }} />
                       </span>
-                    )}
-
-                    {/* Render 3-Dots Dropdown Trigger when Dropdown Mode is active */}
-                    {isDropdownMode && (
-                      <button
-                        className={`verse-menu-btn ${isSelected ? 'active' : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (isSelected) {
-                            setClickedVerseNum(null);
-                          } else {
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            const headerSafeBoundary = 64;
-                            const bottomNavSafeBoundary = window.innerHeight - 75;
-                            const spaceBelow = bottomNavSafeBoundary - rect.bottom;
-                            const spaceAbove = rect.top - headerSafeBoundary;
-                            setDropdownDirection(spaceBelow < 280 && spaceAbove > spaceBelow ? 'up' : 'down');
-                            setClickedVerseNum(verseObj.verse);
-                          }
-                          setShowHighlightPicker(false);
-                        }}
-                        title="Options / விருப்பங்கள்"
-                        aria-label="Verse Options"
-                      >
-                        <MoreVertical size={18} />
-                      </button>
                     )}
 
                     {/* Top Right Dropdown Menu List (Dropdown Mode) */}
@@ -869,6 +872,7 @@ export const VerseReader: React.FC = () => {
           {verses.map((verseObj) => {
             const isBookmarked = isVerseBookmarked(bookmarks, currentBook.id, currentChapter, verseObj.verse);
             const isSelected = clickedVerseNum === verseObj.verse;
+            const isPulsing = activePulseVerse === verseObj.verse;
             const highlightColor = getVerseHighlightColor(highlights, currentBook.id, currentChapter, verseObj.verse);
             const highlightClass = highlightColor ? `highlight-${highlightColor}` : '';
 
@@ -886,11 +890,8 @@ export const VerseReader: React.FC = () => {
                 data-verse-num={verseObj.verse}
                 className={`verse-item ${isSelected ? 'selected' : ''} ${highlightClass} ${
                   isTodayDailyVerse ? 'is-today-daily-verse' : ''
-                }`}
-                onClick={() => {
-                  setClickedVerseNum(isSelected ? null : verseObj.verse);
-                  setShowHighlightPicker(false);
-                }}
+                } ${isPulsing ? 'verse-pulse-active' : ''}`}
+                onClick={(e) => handleVerseClick(e, verseObj.verse)}
               >
                 {/* Special Devotional Badge for Today's Revival Word */}
                 {isTodayDailyVerse && (
@@ -934,32 +935,6 @@ export const VerseReader: React.FC = () => {
                       >
                         <BookmarkIcon size={14} fill="currentColor" style={{ color: 'var(--bookmark-active)' }} />
                       </span>
-                    )}
-
-                    {/* Render 3-Dots Dropdown Trigger when Dropdown Mode is active */}
-                    {isDropdownMode && (
-                      <button
-                        className={`verse-menu-btn ${isSelected ? 'active' : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (isSelected) {
-                            setClickedVerseNum(null);
-                          } else {
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            const headerSafeBoundary = 64;
-                            const bottomNavSafeBoundary = window.innerHeight - 75;
-                            const spaceBelow = bottomNavSafeBoundary - rect.bottom;
-                            const spaceAbove = rect.top - headerSafeBoundary;
-                            setDropdownDirection(spaceBelow < 280 && spaceAbove > spaceBelow ? 'up' : 'down');
-                            setClickedVerseNum(verseObj.verse);
-                          }
-                          setShowHighlightPicker(false);
-                        }}
-                        title={language === 'en' ? 'Options' : 'விருப்பங்கள்'}
-                        aria-label="Verse Options"
-                      >
-                        <MoreVertical size={18} />
-                      </button>
                     )}
 
                     {/* Top Right Dropdown Menu List (Dropdown Mode) */}
