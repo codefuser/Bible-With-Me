@@ -686,7 +686,7 @@ export const SearchModal: React.FC = () => {
         onKeyDown={handleKeyDown}
       >
         {/* Header Search Input with FULL-WIDTH Suggestions Popover Dropdown */}
-        <div ref={searchBoxRef} className="modal-header" style={{ padding: '0.75rem 0.75rem', position: 'relative', zIndex: 150 }}>
+        <div ref={searchBoxRef} className="modal-header" style={{ position: 'relative', zIndex: 150 }}>
           <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '0.5rem' }}>
             <div
               style={{

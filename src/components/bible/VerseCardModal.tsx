@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   X, Download, Share2, Image as ImageIcon, Check,
-  Palette, Type, Layout, Wand2, Star, Sparkles, RefreshCw
+  Palette, Type, Layout, Wand2, Star, Sparkles, RefreshCw,
+  Copy, Upload, Trash2, Dices, ImagePlus
 } from 'lucide-react';
 import { useReading } from '../../context/ReadingContext';
 
@@ -251,10 +252,10 @@ const THEME_CATEGORIES_TA = [
 ];
 
 const RATIOS: Ratio[] = [
-  { id: 'square',    label: '1:1',  labelTa: '1:1 சதுரம்',   icon: '⬛', w: 1080, h: 1080 },
-  { id: 'story',     label: '9:16', labelTa: '9:16 ஸ்டோரி', icon: '📱', w: 1080, h: 1920 },
-  { id: 'landscape', label: '16:9', labelTa: '16:9 திரையகம்',icon: '🖥',  w: 1920, h: 1080 },
-  { id: 'portrait',  label: '4:5',  labelTa: '4:5 படம்',     icon: '🖼',  w: 1080, h: 1350 },
+  { id: 'square',    label: '1:1 Post',   labelTa: '1:1 சதுரம்',   icon: '⬛', w: 1080, h: 1080 },
+  { id: 'story',     label: '9:16 Story',  labelTa: '9:16 ஸ்டோரி', icon: '📱', w: 1080, h: 1920 },
+  { id: 'portrait',  label: '4:5 Feed',   labelTa: '4:5 படம்',     icon: '🖼',  w: 1080, h: 1350 },
+  { id: 'landscape', label: '16:9 Banner', labelTa: '16:9 திரை',   icon: '🖥',  w: 1920, h: 1080 },
 ];
 
 const FRAMES_TA = [
@@ -293,7 +294,7 @@ const REF_PREFIXES_TA = [
 ];
 
 // ════════════════════════════════════════════════════════════════
-// 8 EXCLUSIVE TAMIL FONT FAMILIES
+// 13 EXCLUSIVE TAMIL & UNIVERSAL SCRIPTURE FONTS
 // ════════════════════════════════════════════════════════════════
 
 const TAMIL_FONTS = [
@@ -305,6 +306,12 @@ const TAMIL_FONTS = [
   { id: 'baloo',      labelTa: 'தடிமன் பாலு', subTa: 'Baloo Rounded', font: `'Baloo Thambi 2', 'Noto Sans Tamil', sans-serif` },
   { id: 'hind',       labelTa: 'மதுரை நடை', subTa: 'Hind Madurai', font: `'Hind Madurai', 'Noto Sans Tamil', sans-serif` },
   { id: 'arima',      labelTa: 'அரிமா கவிதை', subTa: 'Arima Script', font: `'Arima', 'Noto Sans Tamil', cursive` },
+  // Universal / English styles
+  { id: 'cinzel',     labelTa: 'Cinzel Roman', subTa: 'Royal Majesty', font: `'Cinzel', 'Noto Serif Tamil', Georgia, serif` },
+  { id: 'playfair',   labelTa: 'Playfair Display', subTa: 'Luxury Serif', font: `'Playfair Display', Georgia, serif` },
+  { id: 'lora',       labelTa: 'Lora Devotional', subTa: 'Sacred Serif', font: `'Lora', 'Noto Serif Tamil', serif` },
+  { id: 'poppins',    labelTa: 'Poppins Bold', subTa: 'Clean Sans', font: `'Poppins', 'Noto Sans Tamil', sans-serif` },
+  { id: 'caveat',     labelTa: 'Caveat Script', subTa: 'Handwritten', font: `'Caveat', 'Kavivanar', cursive` },
 ];
 
 const CUSTOM_PRESETS_TA = [
@@ -394,25 +401,47 @@ interface DrawOptions {
   taglineFontSz: number; taglineColor: string;
   // Options & FX
   showTagline: boolean; showQuote: boolean;
-  showTextBg: boolean; showVignette: boolean;
+  showTextBg: boolean; showGlassCard: boolean; showVignette: boolean;
   showTextShadow: boolean; showGrain: boolean;
   dividerStyle: string; emblemStyle: string;
   paddingMult: number; language: string;
+  // Custom Wallpaper Image & Opacity
+  customBgImg?: HTMLImageElement | null;
+  bgOverlayOpacity?: number;
 }
 
-function drawCard(canvas: HTMLCanvasElement, opts: DrawOptions) {
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-  const W = canvas.width, H = canvas.height;
+function drawCardOnContext(ctx: CanvasRenderingContext2D, W: number, H: number, opts: DrawOptions) {
   const PAD = W * (0.08 * opts.paddingMult);
   const TW = W - PAD * 2;
 
-  // Background
-  if (opts.useCustom) {
+  // Background Rendering: Custom Wallpaper OR Custom Gradient OR Preset Theme
+  if (opts.customBgImg) {
+    const img = opts.customBgImg;
+    const imgAspect = img.width / img.height;
+    const canvasAspect = W / H;
+    let sx = 0, sy = 0, sw = img.width, sh = img.height;
+    if (imgAspect > canvasAspect) {
+      sw = img.height * canvasAspect;
+      sx = (img.width - sw) / 2;
+    } else {
+      sh = img.width / canvasAspect;
+      sy = (img.height - sh) / 2;
+    }
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+
+    // Dark dim overlay for contrast and readability
+    ctx.save();
+    ctx.fillStyle = '#000000';
+    ctx.globalAlpha = opts.bgOverlayOpacity ?? 0.45;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  } else if (opts.useCustom) {
     const g = ctx.createLinearGradient(0, 0, W, H);
     g.addColorStop(0, opts.customColors.from); g.addColorStop(1, opts.customColors.to);
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  } else { opts.theme.render(ctx, W, H); }
+  } else {
+    opts.theme.render(ctx, W, H);
+  }
 
   // Grain Effect
   if (opts.showGrain) {
@@ -432,7 +461,7 @@ function drawCard(canvas: HTMLCanvasElement, opts: DrawOptions) {
     ctx.fillStyle = vig; ctx.fillRect(0, 0, W, H); ctx.restore();
   }
 
-  const activeAccent = opts.useCustom ? opts.customColors.accent : opts.theme.accentColor;
+  const activeAccent = opts.useCustom ? opts.customColors.accent : (opts.customBgImg ? '#f59e0b' : opts.theme.accentColor);
   if (opts.frame !== 'none') drawFrame(ctx, W, H, opts.frame, activeAccent);
 
   const getFontStack = (famId: string) => {
@@ -452,8 +481,8 @@ function drawCard(canvas: HTMLCanvasElement, opts: DrawOptions) {
   const xBase   = opts.textAlign === 'center' ? W/2 : opts.textAlign === 'left' ? PAD : W-PAD;
 
   // Colors
-  const verseTextColor = opts.verseColor || (opts.useCustom ? opts.customColors.text : opts.theme.textColor);
-  const refTextColor   = opts.refColor   || (opts.useCustom ? opts.customColors.accent : opts.theme.refColor);
+  const verseTextColor = opts.verseColor || (opts.customBgImg ? '#ffffff' : (opts.useCustom ? opts.customColors.text : opts.theme.textColor));
+  const refTextColor   = opts.refColor   || (opts.customBgImg ? '#fbbf24' : (opts.useCustom ? opts.customColors.accent : opts.theme.refColor));
   const taglineColor   = opts.taglineColor || verseTextColor;
 
   // Emblem at Top
@@ -480,11 +509,29 @@ function drawCard(canvas: HTMLCanvasElement, opts: DrawOptions) {
   const totalH = lines.length * lineH;
   const startY = centerY - totalH / 2;
 
-  // Text Background Box
-  if (opts.showTextBg) {
+  // Frosted Glass Card Container (Glassmorphism)
+  if (opts.showGlassCard) {
+    ctx.save();
+    const bgPadV = verseFS * 1.0, bgPadH = verseFS * 1.1;
+    const bx = opts.textAlign === 'center' ? W/2 - TW/2 - bgPadH : opts.textAlign === 'left' ? PAD - bgPadH : W - PAD - TW - bgPadH;
+    const bw = TW + bgPadH * 2;
+    const bh = totalH + refFS * 3.8 + bgPadV * 2;
+    const rad = Math.max(16, W * 0.024);
+
+    ctx.fillStyle = (opts.theme.dark || opts.customBgImg) ? 'rgba(15, 23, 42, 0.65)' : 'rgba(255, 255, 255, 0.72)';
+    ctx.beginPath();
+    ctx.roundRect(bx, startY - bgPadV, bw, bh, rad);
+    ctx.fill();
+
+    ctx.strokeStyle = (opts.theme.dark || opts.customBgImg) ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.08)';
+    ctx.lineWidth = Math.max(1.5, W * 0.002);
+    ctx.stroke();
+    ctx.restore();
+  } else if (opts.showTextBg) {
+    // Text Background Box
     ctx.save();
     const bgPadV = verseFS * 0.6, bgPadH = verseFS * 0.85;
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillStyle = 'rgba(0,0,0,0.38)';
     ctx.beginPath();
     const bx = opts.textAlign === 'center' ? W/2 - TW/2 - bgPadH : opts.textAlign === 'left' ? PAD - bgPadH : W - PAD - TW - bgPadH;
     ctx.roundRect(bx, startY - bgPadV, TW + bgPadH*2, totalH + refFS*3.5 + bgPadV*2, Math.max(10, W*0.015));
@@ -494,7 +541,7 @@ function drawCard(canvas: HTMLCanvasElement, opts: DrawOptions) {
   // Text Drop Shadow / Glow
   ctx.save();
   if (opts.showTextShadow) {
-    ctx.shadowColor = opts.theme.dark ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.7)';
+    ctx.shadowColor = (opts.theme.dark || opts.customBgImg) ? 'rgba(0,0,0,0.9)' : 'rgba(255,255,255,0.7)';
     ctx.shadowBlur = Math.max(8, W*0.012); ctx.shadowOffsetY = Math.max(2, W*0.003);
   }
 
@@ -536,9 +583,15 @@ function drawCard(canvas: HTMLCanvasElement, opts: DrawOptions) {
   // Tagline Watermark
   if (opts.showTagline && opts.taglineText) {
     ctx.font = `${tagFS}px 'Noto Sans Tamil', Inter, sans-serif`;
-    ctx.fillStyle = taglineColor; ctx.globalAlpha = 0.5; ctx.textAlign = 'center';
+    ctx.fillStyle = taglineColor; ctx.globalAlpha = 0.55; ctx.textAlign = 'center';
     ctx.fillText(opts.taglineText, W/2, H - PAD*0.5);
   }
+}
+
+function drawCard(canvas: HTMLCanvasElement, opts: DrawOptions) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  drawCardOnContext(ctx, canvas.width, canvas.height, opts);
 }
 
 function startYOffset(H: number, TW: number) { return H * 0.48 - TW * 0.2; }
@@ -639,6 +692,7 @@ export const VerseCardModal: React.FC = () => {
   const [showTagline, setShowTagline] = useState(true);
   const [showQuote, setShowQuote] = useState(true);
   const [showTextBg, setShowTextBg] = useState(false);
+  const [showGlassCard, setShowGlassCard] = useState(false);
   const [showVignette, setShowVignette] = useState(false);
   const [showTextShadow, setShowTextShadow] = useState(true);
   const [showGrain, setShowGrain] = useState(false);
@@ -647,47 +701,114 @@ export const VerseCardModal: React.FC = () => {
   const [paddingMult, setPaddingMult] = useState(1.0);
   const [useCustom, setUseCustom] = useState(false);
   const [cc, setCc] = useState({ from: '#6366f1', to: '#8b5cf6', text: '#ffffff', accent: '#fbbf24' });
+
+  // Custom Wallpaper Photo
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [bgImage, setBgImage] = useState<HTMLImageElement | null>(null);
+  const [bgOverlayOpacity, setBgOverlayOpacity] = useState(0.45);
+
+  // Custom Watermark
+  const [customWatermark, setCustomWatermark] = useState('');
+
+  // Action states
   const [isDownloading, setIsDownloading] = useState(false);
   const [didDownload, setDidDownload] = useState(false);
+  const [didCopy, setDidCopy] = useState(false);
 
   const theme = THEMES[themeIdx];
   const ratio = RATIOS[ratioIdx];
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        setBgImage(img);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveBgImage = () => {
+    setBgImage(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleSurpriseMe = () => {
+    const randomTheme = Math.floor(Math.random() * (THEMES.length - 1));
+    setThemeIdx(randomTheme);
+    setUseCustom(false);
+    setBgImage(null);
+
+    const randomFont = TAMIL_FONTS[Math.floor(Math.random() * TAMIL_FONTS.length)].id;
+    setVerseFontFam(randomFont);
+    setRefFontFam(randomFont);
+
+    const randomFrames = ['none', 'thin-border', 'double-border', 'corner-marks', 'glow-border'];
+    setFrame(randomFrames[Math.floor(Math.random() * randomFrames.length)]);
+
+    const randomDividers = ['line', 'cross', 'diamond', 'dots', 'star'];
+    setDividerStyle(randomDividers[Math.floor(Math.random() * randomDividers.length)]);
+
+    setShowVignette(Math.random() > 0.5);
+    setShowGlassCard(Math.random() > 0.6);
+  };
+
+  const activeTagline = showTagline
+    ? (customWatermark.trim() || taglineText)
+    : '';
+
   const drawOpts = useCallback((): DrawOptions => ({
-    verseText, refText, taglineText,
+    verseText, refText, taglineText: activeTagline,
     theme, useCustom, customColors: cc, frame,
     textAlign: align, lineHeightMult: lineH,
     verseFontSz, verseFontFam, verseColor, verseWeight, verseStyle, verseOpacity,
     refFontSz, refFontFam, refColor, refWeight, refPrefixId, refOpacity,
     taglineFontSz, taglineColor,
-    showTagline, showQuote, showTextBg, showVignette, showTextShadow, showGrain,
-    dividerStyle, emblemStyle, paddingMult, language
-  }), [verseText, refText, taglineText, theme, useCustom, cc, frame, align, lineH, verseFontSz, verseFontFam, verseColor, verseWeight, verseStyle, verseOpacity, refFontSz, refFontFam, refColor, refWeight, refPrefixId, refOpacity, taglineFontSz, taglineColor, showTagline, showQuote, showTextBg, showVignette, showTextShadow, showGrain, dividerStyle, emblemStyle, paddingMult, language]);
+    showTagline: !!activeTagline, showQuote, showTextBg, showGlassCard, showVignette, showTextShadow, showGrain,
+    dividerStyle, emblemStyle, paddingMult, language,
+    customBgImg: bgImage,
+    bgOverlayOpacity
+  }), [verseText, refText, activeTagline, theme, useCustom, cc, frame, align, lineH, verseFontSz, verseFontFam, verseColor, verseWeight, verseStyle, verseOpacity, refFontSz, refFontFam, refColor, refWeight, refPrefixId, refOpacity, taglineFontSz, taglineColor, showQuote, showTextBg, showGlassCard, showVignette, showTextShadow, showGrain, dividerStyle, emblemStyle, paddingMult, language, bgImage, bgOverlayOpacity]);
+
+  // Ultra-lightweight & silky smooth 60fps direct preview render (zero memory churn)
+  const animFrameRef = useRef<number | null>(null);
 
   const redraw = useCallback(() => {
-    const pv = previewRef.current; if (!pv || !verseCardData) return;
-    const isDesktop = window.innerWidth >= 768;
-    const maxW = isDesktop ? 380 : Math.min(window.innerWidth - 48, 280);
-    const maxH = isDesktop ? 440 : Math.min(window.innerHeight * 0.28, 220);
-    const scale = Math.min(maxW / ratio.w, maxH / ratio.h);
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    animFrameRef.current = requestAnimationFrame(() => {
+      const pv = previewRef.current; if (!pv || !verseCardData) return;
+      const isDesktop = window.innerWidth >= 768;
+      const maxW = isDesktop ? 390 : Math.min(window.innerWidth - 40, 290);
+      const maxH = isDesktop ? 450 : Math.min(window.innerHeight * 0.28, 220);
+      const scale = Math.min(maxW / ratio.w, maxH / ratio.h);
 
-    pv.width = Math.round(ratio.w * scale);
-    pv.height = Math.round(ratio.h * scale);
-    pv.style.width = `${pv.width}px`; pv.style.height = `${pv.height}px`;
-    const off = document.createElement('canvas');
-    off.width = ratio.w; off.height = ratio.h;
-    drawCard(off, drawOpts());
-    const ctx = pv.getContext('2d')!;
-    ctx.clearRect(0, 0, pv.width, pv.height);
-    ctx.drawImage(off, 0, 0, pv.width, pv.height);
+      pv.width = Math.round(ratio.w * scale);
+      pv.height = Math.round(ratio.h * scale);
+      pv.style.width = `${pv.width}px`; pv.style.height = `${pv.height}px`;
+
+      const ctx = pv.getContext('2d');
+      if (!ctx) return;
+      ctx.clearRect(0, 0, pv.width, pv.height);
+      ctx.save();
+      ctx.scale(scale, scale);
+      drawCardOnContext(ctx, ratio.w, ratio.h, drawOpts());
+      ctx.restore();
+    });
   }, [verseCardData, ratio, drawOpts]);
 
   useEffect(() => {
     if (isVerseCardOpen && verseCardData) redraw();
     const handleResize = () => { if (isVerseCardOpen) redraw(); };
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [isVerseCardOpen, verseCardData, themeIdx, ratioIdx, frame, align, lineH, verseFontSz, verseFontFam, verseColor, verseWeight, verseStyle, verseOpacity, refFontSz, refFontFam, refColor, refWeight, refPrefixId, refOpacity, taglineFontSz, taglineColor, showTagline, showQuote, showTextBg, showVignette, showTextShadow, showGrain, dividerStyle, emblemStyle, paddingMult, cc, useCustom, redraw]);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
+  }, [isVerseCardOpen, verseCardData, themeIdx, ratioIdx, frame, align, lineH, verseFontSz, verseFontFam, verseColor, verseWeight, verseStyle, verseOpacity, refFontSz, refFontFam, refColor, refWeight, refPrefixId, refOpacity, taglineFontSz, taglineColor, showTagline, showQuote, showTextBg, showGlassCard, showVignette, showTextShadow, showGrain, dividerStyle, emblemStyle, paddingMult, cc, useCustom, bgImage, bgOverlayOpacity, customWatermark, redraw]);
 
   // Lock background body scroll when modal is active
   useEffect(() => {
@@ -716,6 +837,38 @@ export const VerseCardModal: React.FC = () => {
       setIsDownloading(false); setDidDownload(true);
       setTimeout(() => setDidDownload(false), 2200);
     }, 60);
+  };
+
+  const handleCopyImage = async () => {
+    setIsDownloading(true);
+    setTimeout(async () => {
+      try {
+        const c = buildFull();
+        c.toBlob(async (blob) => {
+          if (!blob) { setIsDownloading(false); return; }
+          const cb = navigator.clipboard as any;
+          if (cb && typeof (window as any).ClipboardItem !== 'undefined') {
+            try {
+              const item = new (window as any).ClipboardItem({ 'image/png': blob });
+              await cb.write([item]);
+              setDidCopy(true);
+              setTimeout(() => setDidCopy(false), 2200);
+            } catch {
+              await navigator.clipboard.writeText(`"${verseText}" — ${refText}\nBible With Me`);
+              setDidCopy(true);
+              setTimeout(() => setDidCopy(false), 2200);
+            }
+          } else {
+            await navigator.clipboard.writeText(`"${verseText}" — ${refText}\nBible With Me`);
+            setDidCopy(true);
+            setTimeout(() => setDidCopy(false), 2200);
+          }
+          setIsDownloading(false);
+        }, 'image/png', 1.0);
+      } catch {
+        setIsDownloading(false);
+      }
+    }, 50);
   };
 
   const handleShare = async () => {
@@ -749,6 +902,70 @@ export const VerseCardModal: React.FC = () => {
 
   const ThemePanel = (
     <div>
+      {/* Upload Wallpaper / Photo */}
+      <div style={{
+        padding: '0.75rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)',
+        background: 'var(--bg-secondary)', marginBottom: '0.875rem', display: 'flex',
+        flexDirection: 'column', gap: '0.5rem'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <ImagePlus size={16} color="var(--accent-color)" />
+            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+              {isTa ? 'சொந்த வால்பேப்பர் / புகைப்படம்' : 'Custom Photo Wallpaper'}
+            </span>
+          </div>
+          {bgImage && (
+            <button onClick={handleRemoveBgImage} style={{
+              background: 'none', border: 'none', color: '#ef4444', fontSize: '0.72rem',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem', fontWeight: 600
+            }}>
+              <Trash2 size={12} /> {isTa ? 'நீக்கு' : 'Remove'}
+            </button>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            style={{ display: 'none' }}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            style={{
+              flex: 1, padding: '0.45rem 0.75rem', borderRadius: '0.5rem',
+              border: '1.5px dashed var(--accent-color)', background: 'rgba(59,130,246,0.06)',
+              color: 'var(--accent-color)', fontSize: '0.75rem', fontWeight: 700,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem'
+            }}
+          >
+            <Upload size={14} />
+            <span>{bgImage ? (isTa ? 'புகைப்படத்தை மாற்று' : 'Change Wallpaper') : (isTa ? 'கேலரியில் இருந்து படம் தேர்வு செய்' : 'Choose Photo from Gallery')}</span>
+          </button>
+        </div>
+
+        {bgImage && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{isTa ? 'இருள் அளவு (Dimness)' : 'Overlay Darkness'}</span>
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--accent-color)' }}>{Math.round(bgOverlayOpacity * 100)}%</span>
+            </div>
+            <input
+              type="range"
+              min={10}
+              max={85}
+              step={5}
+              value={Math.round(bgOverlayOpacity * 100)}
+              onChange={(e) => setBgOverlayOpacity(Number(e.target.value) / 100)}
+              style={{ width: '100%', accentColor: 'var(--accent-color)' }}
+            />
+          </div>
+        )}
+      </div>
+
       <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.875rem', overflowX: 'auto', paddingBottom: '2px' }}>
         {THEME_CATEGORIES_TA.map(cat => (
           <button key={cat.id} onClick={() => setCatFilter(cat.id)} style={{
@@ -858,6 +1075,29 @@ export const VerseCardModal: React.FC = () => {
           onChange={e => setPaddingMult(Number(e.target.value)/100)}
           style={{ width: '100%', accentColor: 'var(--accent-color)' }}
         />
+      </div>
+
+      {/* Watermark / Branding input */}
+      <div style={{ padding: '0.75rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+            {isTa ? 'வாட்டர்மார்க் / தாரக மந்திரம்' : 'Watermark / Branding'}
+          </span>
+          <Toggle value={showTagline} onChange={setShowTagline} />
+        </div>
+        {showTagline && (
+          <input
+            type="text"
+            value={customWatermark}
+            placeholder={isTa ? 'Bible My Gift · வேதாகம வரம்' : 'Bible My Gift'}
+            onChange={(e) => setCustomWatermark(e.target.value)}
+            style={{
+              width: '100%', padding: '0.45rem 0.65rem', borderRadius: '0.5rem',
+              border: '1px solid var(--border-color)', background: 'var(--bg-primary)',
+              color: 'var(--text-primary)', fontSize: '0.78rem', boxSizing: 'border-box'
+            }}
+          />
+        )}
       </div>
     </div>
   );
@@ -1087,6 +1327,7 @@ export const VerseCardModal: React.FC = () => {
 
       <SLabel>{isTa ? 'காட்சி விளைவுகள்' : 'Visual Effects'}</SLabel>
       {[
+        { key: 'glasscard', val: showGlassCard,   set: setShowGlassCard,   en: 'Glass Card Backdrop (Glassmorphism)', ta: 'கண்ணாடி அட்டை (Glassmorphism)',  desc: 'Frosted translucent glass card behind scripture' },
         { key: 'shadow',   val: showTextShadow, set: setShowTextShadow, en: 'Text Drop Shadow / Glow', ta: 'உரை நிழல் / ஒளி',         desc: 'Adds elegant depth behind text' },
         { key: 'textbg',   val: showTextBg,     set: setShowTextBg,     en: 'Text Background Box',     ta: 'உரை பின்னணி பெட்டி',     desc: 'Adds a subtle translucent card box' },
         { key: 'vignette', val: showVignette,   set: setShowVignette,   en: 'Vignette (Cinematic Shadow)', ta: 'சினிமா நிழல் (Vignette)',  desc: 'Darkens border edges for focal focus' },
@@ -1182,16 +1423,17 @@ export const VerseCardModal: React.FC = () => {
 
   const DownloadFooter = (
     <div style={{
-      padding: '0.875rem 1.25rem calc(0.875rem + env(safe-area-inset-bottom))',
+      padding: '0.75rem 1.25rem calc(0.75rem + env(safe-area-inset-bottom))',
       borderTop: '1px solid var(--border-color)',
-      display: 'flex', gap: '0.75rem', flexShrink: 0,
+      display: 'flex', gap: '0.625rem', flexShrink: 0,
       background: 'var(--bg-surface)'
     }}>
+      {/* Download HD PNG */}
       <button onClick={handleDownload} disabled={isDownloading} style={{
-        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-        padding: '0.875rem', borderRadius: '0.875rem', border: 'none',
+        flex: 1.2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+        padding: '0.8125rem', borderRadius: '0.875rem', border: 'none',
         background: didDownload ? 'linear-gradient(135deg,#22c55e,#16a34a)' : 'linear-gradient(135deg,#f59e0b,#ef4444)',
-        color: '#fff', fontWeight: 700, fontSize: '0.95rem',
+        color: '#fff', fontWeight: 700, fontSize: '0.92rem',
         cursor: isDownloading ? 'wait' : 'pointer',
         opacity: isDownloading ? 0.8 : 1, transition: 'all 200ms ease',
         boxShadow: '0 4px 18px rgba(239,68,68,0.32)'
@@ -1199,8 +1441,25 @@ export const VerseCardModal: React.FC = () => {
         {didDownload ? <Check size={18}/> : <Download size={18}/>}
         <span>{didDownload ? (isTa ? 'பதிவிறக்கப்பட்டது!' : 'Downloaded!') : (isTa ? 'PNG பதிவிறக்கு (HD)' : 'Download HD PNG')}</span>
       </button>
-      <button onClick={handleShare} disabled={isDownloading} style={{
-        width: '54px', height: '54px', borderRadius: '0.875rem',
+
+      {/* Copy Image Button */}
+      <button onClick={handleCopyImage} disabled={isDownloading} title={isTa ? 'நேரடியாக நகலெடு' : 'Copy Image to Clipboard'} style={{
+        flex: 0.9, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem',
+        padding: '0.8125rem', borderRadius: '0.875rem',
+        border: '1.5px solid var(--border-color)',
+        background: didCopy ? 'rgba(34, 197, 94, 0.15)' : 'var(--bg-secondary)',
+        color: didCopy ? '#22c55e' : 'var(--text-primary)',
+        fontWeight: 700, fontSize: '0.86rem',
+        cursor: isDownloading ? 'wait' : 'pointer',
+        transition: 'all 150ms ease'
+      }}>
+        {didCopy ? <Check size={17} color="#22c55e"/> : <Copy size={17}/>}
+        <span>{didCopy ? (isTa ? 'நகலெடுக்கப்பட்டது!' : 'Copied!') : (isTa ? 'நகல் (Copy)' : 'Copy Image')}</span>
+      </button>
+
+      {/* Share Button */}
+      <button onClick={handleShare} disabled={isDownloading} title={isTa ? 'பகிர்' : 'Share'} style={{
+        width: '50px', height: '50px', borderRadius: '0.875rem',
         border: '1.5px solid var(--border-color)', background: 'var(--bg-secondary)',
         color: 'var(--text-secondary)', cursor: isDownloading?'wait':'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
@@ -1253,9 +1512,34 @@ export const VerseCardModal: React.FC = () => {
                 <p style={{ margin: 0, fontSize: '0.72rem', color: 'rgba(255,255,255,0.48)' }}>{refText}</p>
               </div>
             </div>
-            <button onClick={closeVerseCard} style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.75)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <X size={18} />
-            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <button
+                onClick={handleSurpriseMe}
+                title={isTa ? 'அதிசய தீம் (Surprise Me)' : 'Surprise Me / Random Theme'}
+                style={{
+                  padding: '0.45rem 0.75rem',
+                  borderRadius: '999px',
+                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                  background: 'rgba(245, 158, 11, 0.15)',
+                  color: '#fbbf24',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  transition: 'all 150ms ease'
+                }}
+              >
+                <Dices size={16} />
+                <span>{isTa ? 'அதிசய பாணி' : 'Surprise Me'}</span>
+              </button>
+
+              <button onClick={closeVerseCard} style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.75)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <X size={18} />
+              </button>
+            </div>
           </div>
 
           {/* Large Canvas Preview */}

@@ -638,7 +638,7 @@ a {
 }
 
 /* Phone-Specific Responsive Full-Height Search UI */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .desktop-segmented-filter-bar {
     display: none !important;
   }
@@ -655,22 +655,27 @@ a {
     display: none !important;
   }
   .search-modal-overlay {
-    padding: 0;
-    align-items: stretch;
+    padding: 0 !important;
+    align-items: flex-start !important;
   }
   .search-modal-content {
-    max-width: 100vw;
-    width: 100vw;
-    height: 100vh;
-    height: 100dvh;
-    max-height: 100vh;
-    border-radius: 0;
-    border: none;
-    padding-top: env(safe-area-inset-top, 0px);
-    box-sizing: border-box;
+    max-width: 100vw !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    border: none !important;
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+    box-sizing: border-box !important;
   }
   .search-modal-content .modal-header {
-    padding-top: max(0.75rem, env(safe-area-inset-top, 0px)) !important;
+    /* Compact top safe-area so search bar is elevated higher to top */
+    padding-top: max(0.35rem, env(safe-area-inset-top, 0.35rem)) !important;
+    padding-bottom: 0.35rem !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
   }
   .search-filter-section-container {
     padding: 0.625rem 0.875rem !important;
