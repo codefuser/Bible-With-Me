@@ -3,7 +3,7 @@ import { StudioProject } from './types';
 export class StudioHistoryManager {
   private undoStack: StudioProject[] = [];
   private redoStack: StudioProject[] = [];
-  private maxDepth = 30;
+  private maxDepth = 40;
 
   constructor(initialProject: StudioProject) {
     this.undoStack = [JSON.parse(JSON.stringify(initialProject))];
@@ -12,11 +12,16 @@ export class StudioHistoryManager {
 
   push(project: StudioProject) {
     const clone = JSON.parse(JSON.stringify(project));
+    // Avoid pushing duplicate state if unchanged
+    const last = this.undoStack[this.undoStack.length - 1];
+    if (last && JSON.stringify(last) === JSON.stringify(clone)) {
+      return;
+    }
     this.undoStack.push(clone);
     if (this.undoStack.length > this.maxDepth) {
       this.undoStack.shift();
     }
-    this.redoStack = []; // Clear redo on new action
+    this.redoStack = []; // Clear redo stack on new action
   }
 
   canUndo(): boolean {
@@ -40,5 +45,10 @@ export class StudioHistoryManager {
     const next = this.redoStack.pop()!;
     this.undoStack.push(next);
     return JSON.parse(JSON.stringify(next));
+  }
+
+  reset(initialProject: StudioProject) {
+    this.undoStack = [JSON.parse(JSON.stringify(initialProject))];
+    this.redoStack = [];
   }
 }

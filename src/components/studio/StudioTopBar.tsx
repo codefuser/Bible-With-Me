@@ -75,6 +75,9 @@ export const StudioTopBar: React.FC<StudioTopBarProps> = ({
     onExport(exportFormat, exportScale);
   };
 
+  // Convert zoom to whole percentage: if zoom is 1.0 or 1.1, convert to 100, 110
+  const displayZoom = Math.round(zoom <= 3 ? zoom * 100 : zoom);
+
   const estSizeMb = (
     (canvasWidth * exportScale * canvasHeight * exportScale * 4) /
     (1024 * 1024 * (exportFormat === 'jpeg' ? 6 : 3))
@@ -84,57 +87,76 @@ export const StudioTopBar: React.FC<StudioTopBarProps> = ({
     <header
       className="studio-topbar"
       style={{
-        height: '56px',
+        height: '54px',
         backgroundColor: '#0c101c',
         borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 1rem',
+        padding: '0 0.75rem',
         color: '#f8fafc',
         zIndex: 100,
         flexShrink: 0,
-        userSelect: 'none'
+        userSelect: 'none',
+        gap: '0.4rem',
+        overflow: 'visible'
       }}
     >
       {/* ── Left: Studio Branding & Active Verse Reference ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
           <div
             style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
+              width: '28px',
+              height: '28px',
+              borderRadius: '7px',
               background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 2px 10px rgba(245, 158, 11, 0.35)'
+              boxShadow: '0 2px 8px rgba(245, 158, 11, 0.35)',
+              flexShrink: 0
             }}
           >
-            <Sparkles size={16} color="#ffffff" />
+            <Sparkles size={14} color="#ffffff" />
           </div>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 800, letterSpacing: '-0.01em', color: '#ffffff' }}>
-              Bible Verse Creative Studio
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <h1
+              style={{
+                margin: 0,
+                fontSize: '0.82rem',
+                fontWeight: 800,
+                letterSpacing: '-0.01em',
+                color: '#ffffff',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <span className="studio-brand-full">Verse Studio</span>
+              <span className="studio-brand-short">Studio</span>
             </h1>
-            <p style={{ margin: 0, fontSize: '0.6875rem', color: '#94a3b8' }}>
-              {isSaving ? 'Saving changes...' : 'Saved · Live Canvas'}
-            </p>
+            <span className="studio-topbar-subtitle" style={{ fontSize: '0.6rem', color: '#94a3b8', whiteSpace: 'nowrap' }}>
+              {isSaving ? 'Saving...' : 'Live Canvas'}
+            </span>
           </div>
         </div>
 
         {refText && (
           <div
+            className="studio-topbar-ref"
             style={{
-              padding: '0.25rem 0.625rem',
+              padding: '0.2rem 0.5rem',
               borderRadius: '999px',
               backgroundColor: 'rgba(245, 158, 11, 0.15)',
               border: '1px solid rgba(245, 158, 11, 0.35)',
               color: '#fbbf24',
-              fontSize: '0.75rem',
-              fontWeight: 700
+              fontSize: '0.7rem',
+              fontWeight: 700,
+              whiteSpace: 'nowrap',
+              maxWidth: '110px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
             }}
+            title={refText}
           >
             {refText}
           </div>
@@ -142,96 +164,125 @@ export const StudioTopBar: React.FC<StudioTopBarProps> = ({
       </div>
 
       {/* ── Center: Undo / Redo & Zoom Controls ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
         {/* Undo / Redo */}
-        <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#131826', borderRadius: '6px', padding: '2px' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            backgroundColor: '#131826',
+            borderRadius: '6px',
+            padding: '2px',
+            border: '1px solid rgba(255, 255, 255, 0.08)'
+          }}
+        >
           <button
             onClick={onUndo}
             disabled={!canUndo}
             title="Undo (Ctrl+Z)"
             style={{
-              width: '30px',
-              height: '30px',
+              width: '28px',
+              height: '28px',
               borderRadius: '4px',
               border: 'none',
-              backgroundColor: 'transparent',
-              color: canUndo ? '#e2e8f0' : '#475569',
+              backgroundColor: canUndo ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+              color: canUndo ? '#f8fafc' : '#475569',
               cursor: canUndo ? 'pointer' : 'not-allowed',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              transition: 'all 120ms ease'
             }}
           >
-            <Undo2 size={15} />
+            <Undo2 size={14} />
           </button>
           <button
             onClick={onRedo}
             disabled={!canRedo}
             title="Redo (Ctrl+Y)"
             style={{
-              width: '30px',
-              height: '30px',
-              borderRadius: '4px',
-              border: 'none',
-              backgroundColor: 'transparent',
-              color: canRedo ? '#e2e8f0' : '#475569',
-              cursor: canRedo ? 'pointer' : 'not-allowed',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <Redo2 size={15} />
-          </button>
-        </div>
-
-        {/* Zoom Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#131826', borderRadius: '6px', padding: '2px 4px' }}>
-          <button
-            onClick={onZoomOut}
-            title="Zoom Out"
-            style={{
               width: '28px',
               height: '28px',
               borderRadius: '4px',
               border: 'none',
+              backgroundColor: canRedo ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+              color: canRedo ? '#f8fafc' : '#475569',
+              cursor: canRedo ? 'pointer' : 'not-allowed',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 120ms ease'
+            }}
+          >
+            <Redo2 size={14} />
+          </button>
+        </div>
+
+        {/* Zoom Controls */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            backgroundColor: '#131826',
+            borderRadius: '6px',
+            padding: '2px 4px',
+            border: '1px solid rgba(255, 255, 255, 0.08)'
+          }}
+        >
+          <button
+            onClick={onZoomOut}
+            title="Zoom Out"
+            style={{
+              width: '26px',
+              height: '26px',
+              borderRadius: '4px',
+              border: 'none',
               backgroundColor: 'transparent',
-              color: '#94a3b8',
+              color: '#cbd5e1',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}
           >
-            <ZoomOut size={14} />
+            <ZoomOut size={13} />
           </button>
-          <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '0 6px', color: '#cbd5e1', minWidth: '42px', textAlign: 'center' }}>
-            {zoom}%
+          <span
+            style={{
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              padding: '0 4px',
+              color: '#fbbf24',
+              minWidth: '40px',
+              textAlign: 'center'
+            }}
+          >
+            {displayZoom}%
           </span>
           <button
             onClick={onZoomIn}
             title="Zoom In"
             style={{
-              width: '28px',
-              height: '28px',
+              width: '26px',
+              height: '26px',
               borderRadius: '4px',
               border: 'none',
               backgroundColor: 'transparent',
-              color: '#94a3b8',
+              color: '#cbd5e1',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}
           >
-            <ZoomIn size={14} />
+            <ZoomIn size={13} />
           </button>
           <button
             onClick={onFitZoom}
             title="Fit to Window"
             style={{
-              width: '28px',
-              height: '28px',
+              width: '26px',
+              height: '26px',
               borderRadius: '4px',
               border: 'none',
               backgroundColor: 'transparent',
@@ -243,105 +294,108 @@ export const StudioTopBar: React.FC<StudioTopBarProps> = ({
               marginLeft: '2px'
             }}
           >
-            <Maximize2 size={13} />
+            <Maximize2 size={12} />
           </button>
         </div>
 
-        {/* Safe Area Guide Toggle */}
+        {/* Safe Area Guide Toggle (Desktop/Tablet) */}
         <button
           onClick={onToggleSafeArea}
-          title="Toggle Social Media Safe Margin Guides"
+          title="Toggle Social Media Safe Margins"
+          className="studio-topbar-desktop-only"
           style={{
-            height: '32px',
-            padding: '0 0.625rem',
+            height: '30px',
+            padding: '0 0.5rem',
             borderRadius: '6px',
             border: `1px solid ${showSafeArea ? '#fbbf24' : 'rgba(255,255,255,0.1)'}`,
             backgroundColor: showSafeArea ? 'rgba(245, 158, 11, 0.15)' : '#131826',
             color: showSafeArea ? '#fbbf24' : '#94a3b8',
             cursor: 'pointer',
-            fontSize: '0.75rem',
+            fontSize: '0.72rem',
             fontWeight: 600,
             display: 'flex',
             alignItems: 'center',
-            gap: '0.35rem'
+            gap: '0.3rem'
           }}
         >
-          <ShieldAlert size={14} />
-          <span>Safe Area</span>
+          <ShieldAlert size={13} />
+          <span>Guide</span>
         </button>
 
-        {/* Preview Mode */}
+        {/* Preview Mode (Desktop/Tablet) */}
         <button
           onClick={onTogglePreviewMode}
           title="Toggle Clean Preview Mode"
+          className="studio-topbar-desktop-only"
           style={{
-            height: '32px',
-            padding: '0 0.625rem',
+            height: '30px',
+            padding: '0 0.5rem',
             borderRadius: '6px',
             border: `1px solid ${isPreviewMode ? '#38bdf8' : 'rgba(255,255,255,0.1)'}`,
             backgroundColor: isPreviewMode ? 'rgba(56, 189, 248, 0.15)' : '#131826',
             color: isPreviewMode ? '#38bdf8' : '#94a3b8',
             cursor: 'pointer',
-            fontSize: '0.75rem',
+            fontSize: '0.72rem',
             fontWeight: 600,
             display: 'flex',
             alignItems: 'center',
-            gap: '0.35rem'
+            gap: '0.3rem'
           }}
         >
-          <Eye size={14} />
+          <Eye size={13} />
           <span>Preview</span>
         </button>
       </div>
 
       {/* ── Right: Copy Image, Prominent Export Dropdown, Close Button ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', position: 'relative' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', position: 'relative', flexShrink: 0 }}>
         {/* Copy Image Button */}
         <button
           onClick={handleCopy}
           title="Copy Image Directly to Clipboard"
+          className="studio-topbar-desktop-only"
           style={{
-            height: '36px',
-            padding: '0 0.875rem',
-            borderRadius: '8px',
+            height: '32px',
+            padding: '0 0.65rem',
+            borderRadius: '7px',
             border: '1px solid rgba(255, 255, 255, 0.14)',
             backgroundColor: copiedToast ? 'rgba(34, 197, 94, 0.2)' : '#171d2d',
             color: copiedToast ? '#22c55e' : '#e2e8f0',
             cursor: 'pointer',
-            fontSize: '0.8125rem',
+            fontSize: '0.75rem',
             fontWeight: 600,
             display: 'flex',
             alignItems: 'center',
-            gap: '0.4rem',
+            gap: '0.35rem',
             transition: 'all 150ms ease'
           }}
         >
-          {copiedToast ? <Check size={15} color="#22c55e" /> : <Copy size={15} />}
-          <span>{copiedToast ? 'Copied!' : 'Copy Image'}</span>
+          {copiedToast ? <Check size={14} color="#22c55e" /> : <Copy size={14} />}
+          <span>{copiedToast ? 'Copied!' : 'Copy'}</span>
         </button>
 
         {/* Prominent Export Button */}
         <button
           onClick={() => setShowExportMenu(!showExportMenu)}
           style={{
-            height: '36px',
-            padding: '0 1rem',
-            borderRadius: '8px',
+            height: '32px',
+            padding: '0 0.75rem',
+            borderRadius: '7px',
             border: 'none',
             background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
             color: '#ffffff',
             cursor: 'pointer',
-            fontSize: '0.84375rem',
+            fontSize: '0.78rem',
             fontWeight: 700,
             display: 'flex',
             alignItems: 'center',
-            gap: '0.45rem',
-            boxShadow: '0 4px 14px rgba(239, 68, 68, 0.35)'
+            gap: '0.35rem',
+            boxShadow: '0 3px 10px rgba(239, 68, 68, 0.35)'
           }}
         >
-          <Download size={16} />
-          <span>Export Graphic</span>
-          <ChevronDown size={14} />
+          <Download size={14} />
+          <span>Export</span>
+          <ChevronDown size={13} />
         </button>
 
         {/* Export Flyout Settings Popover */}
@@ -349,96 +403,90 @@ export const StudioTopBar: React.FC<StudioTopBarProps> = ({
           <div
             style={{
               position: 'absolute',
-              top: '46px',
-              right: '48px',
-              width: '280px',
+              top: '42px',
+              right: '36px',
+              width: '270px',
               backgroundColor: '#111726',
               border: '1px solid rgba(255, 255, 255, 0.15)',
               borderRadius: '12px',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.8)',
-              padding: '1rem',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.85)',
+              padding: '0.85rem',
               zIndex: 300,
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.875rem'
+              gap: '0.75rem'
             }}
           >
-            <div>
-              <p style={{ margin: '0 0 0.4rem', fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>
-                File Format
-              </p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.35rem' }}>
-                {(['png', 'jpeg', 'webp'] as const).map((fmt) => (
-                  <button
-                    key={fmt}
-                    onClick={() => setExportFormat(fmt)}
-                    style={{
-                      padding: '0.4rem',
-                      borderRadius: '6px',
-                      border: `1.5px solid ${exportFormat === fmt ? '#f59e0b' : 'rgba(255,255,255,0.1)'}`,
-                      backgroundColor: exportFormat === fmt ? 'rgba(245,158,11,0.18)' : '#1a2236',
-                      color: exportFormat === fmt ? '#fbbf24' : '#cbd5e1',
-                      fontWeight: 700,
-                      fontSize: '0.75rem',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {fmt.toUpperCase()}
-                  </button>
-                ))}
-              </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#f8fafc' }}>
+                Export Format
+              </span>
+              <button
+                onClick={() => setShowExportMenu(false)}
+                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+              >
+                <X size={15} />
+              </button>
             </div>
 
-            <div>
-              <p style={{ margin: '0 0 0.4rem', fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>
-                Resolution Scale
-              </p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.35rem' }}>
-                {([1, 2, 3] as const).map((sc) => (
-                  <button
-                    key={sc}
-                    onClick={() => setExportScale(sc)}
-                    style={{
-                      padding: '0.4rem',
-                      borderRadius: '6px',
-                      border: `1.5px solid ${exportScale === sc ? '#f59e0b' : 'rgba(255,255,255,0.1)'}`,
-                      backgroundColor: exportScale === sc ? 'rgba(245,158,11,0.18)' : '#1a2236',
-                      color: exportScale === sc ? '#fbbf24' : '#cbd5e1',
-                      fontWeight: 700,
-                      fontSize: '0.75rem',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {sc === 1 ? '1x Normal' : sc === 2 ? '2x HD 2K' : '3x 4K Ultra'}
-                  </button>
-                ))}
-              </div>
+            {/* Format Selection (PNG / JPEG / WEBP) */}
+            <div style={{ display: 'flex', gap: '0.4rem' }}>
+              {(['png', 'jpeg', 'webp'] as ExportFormat[]).map((fmt) => (
+                <button
+                  key={fmt}
+                  onClick={() => setExportFormat(fmt)}
+                  style={{
+                    flex: 1,
+                    padding: '0.4rem',
+                    borderRadius: '6px',
+                    border: `1px solid ${exportFormat === fmt ? '#f59e0b' : 'rgba(255,255,255,0.1)'}`,
+                    backgroundColor: exportFormat === fmt ? 'rgba(245, 158, 11, 0.2)' : '#1a2234',
+                    color: exportFormat === fmt ? '#fbbf24' : '#cbd5e1',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {fmt}
+                </button>
+              ))}
             </div>
 
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '0.625rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#94a3b8' }}>
-              <span>Output: {canvasWidth * exportScale} × {canvasHeight * exportScale}px</span>
-              <span>~{estSizeMb} MB</span>
+            {/* Resolution Multiplier */}
+            <div style={{ display: 'flex', gap: '0.4rem' }}>
+              {([1, 2, 3] as ExportScale[]).map((scale) => (
+                <button
+                  key={scale}
+                  onClick={() => setExportScale(scale)}
+                  style={{
+                    flex: 1,
+                    padding: '0.35rem',
+                    borderRadius: '6px',
+                    border: `1px solid ${exportScale === scale ? '#38bdf8' : 'rgba(255,255,255,0.1)'}`,
+                    backgroundColor: exportScale === scale ? 'rgba(56, 189, 248, 0.2)' : '#1a2234',
+                    color: exportScale === scale ? '#38bdf8' : '#cbd5e1',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {scale}x ({canvasWidth * scale}px)
+                </button>
+              ))}
             </div>
 
+            <div style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
+              Estimated size: ~{estSizeMb} MB
+            </div>
+
+            {/* Download Button */}
             <button
               onClick={handleExecuteExport}
-              style={{
-                width: '100%',
-                padding: '0.625rem',
-                borderRadius: '8px',
-                border: 'none',
-                background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
-                color: '#ffffff',
-                fontWeight: 700,
-                fontSize: '0.875rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem'
-              }}
+              className="studio-btn-primary"
+              style={{ padding: '0.55rem' }}
             >
-              <Download size={16} />
+              <Download size={14} />
               <span>Download Image</span>
             </button>
           </div>
@@ -449,19 +497,20 @@ export const StudioTopBar: React.FC<StudioTopBarProps> = ({
           onClick={onClose}
           title="Close Studio (Esc)"
           style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            border: '1px solid rgba(255, 255, 255, 0.14)',
+            width: '32px',
+            height: '32px',
+            borderRadius: '7px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
             backgroundColor: 'rgba(255, 255, 255, 0.05)',
             color: '#94a3b8',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            transition: 'all 120ms ease'
           }}
         >
-          <X size={18} />
+          <X size={16} />
         </button>
       </div>
     </header>

@@ -9,6 +9,7 @@ interface StudioCanvasProps {
   onUpdateLayer: (id: string, updates: Partial<StudioLayer>) => void;
   onPushHistory: () => void;
   zoom: number;
+  onZoomChange?: (newZoom: number) => void;
   showGuides: boolean;
   showSafeArea: boolean;
 }
@@ -28,6 +29,7 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
   onUpdateLayer,
   onPushHistory,
   zoom,
+  onZoomChange,
   showGuides,
   showSafeArea
 }) => {
@@ -46,8 +48,41 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
     layerRot: number;
   } | null>(null);
 
+  // Viewport Container Dimensions for Responsive Auto-fit
+  const [viewportSize, setViewportSize] = useState({ width: 400, height: 400 });
+
   const { width: W, height: H } = project.canvas;
   const selectedLayer = project.layers.find((l) => l.id === selectedLayerId && l.visible && !l.locked);
+
+  // Measure visible viewport size
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const updateSize = () => {
+      if (el.clientWidth > 0 && el.clientHeight > 0) {
+        setViewportSize({
+          width: el.clientWidth,
+          height: el.clientHeight
+        });
+      }
+    };
+
+    updateSize();
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Compute Responsive Display Dimensions
+  const paddingMargin = 32;
+  const availW = Math.max(160, viewportSize.width - paddingMargin);
+  const availH = Math.max(160, viewportSize.height - paddingMargin);
+  const fitScale = Math.min(availW / W, availH / H);
+  const zoomFactor = typeof zoom === 'number' && zoom > 0 ? (zoom <= 3 ? zoom : zoom / 100) : 1;
+  const finalScale = fitScale * zoomFactor;
+  const displayW = Math.max(140, Math.round(W * finalScale));
+  const displayH = Math.max(140, Math.round(H * finalScale));
 
   // Render Canvas
   useEffect(() => {
@@ -87,10 +122,6 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
       const activeLayers = project.layers.filter((l) => l.visible && !l.locked);
       if (activeLayers.length === 0) return null;
 
-      // Classify layers into priority groups:
-      // Group 1: Interactive Content (Text & Symbols)
-      // Group 2: Media & Filled Shapes (Images, solid cards)
-      // Group 3: Hollow Border Frames (decorative frames)
       const group1: StudioLayer[] = [];
       const group2: StudioLayer[] = [];
       const group3: StudioLayer[] = [];
@@ -109,7 +140,7 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
             lineCount += Math.max(1, Math.ceil(line.length / maxChars));
           }
           const actualH = Math.max(lineCount * lineH, fontSize * 1.4);
-          const pad = tl.hasBgBox ? (tl.bgBoxPadding || 12) + 10 : 10;
+          const pad = tl.hasBgBox ? (tl.bgBoxPadding || 12) + 12 : 12;
 
           if (
             x >= tl.x - pad &&
@@ -120,7 +151,7 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
             group1.push(tl);
           }
         } else if (l.type === 'element') {
-          const pad = 10;
+          const pad = 12;
           if (
             x >= l.x - pad &&
             x <= l.x + l.width + pad &&
@@ -149,7 +180,6 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
 
           if (inOuter) {
             if (isHollow) {
-              // Only hit if within the frame border stroke (24px thickness)
               const strokeW = Math.max(24, sl.borderWidth || 2);
               const inInner =
                 x > sl.x + strokeW &&
@@ -166,7 +196,6 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
         }
       }
 
-      // Sort each group descending by zIndex
       group1.sort((a, b) => b.zIndex - a.zIndex);
       group2.sort((a, b) => b.zIndex - a.zIndex);
       group3.sort((a, b) => b.zIndex - a.zIndex);
@@ -174,7 +203,6 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
       const allMatches = [...group1, ...group2, ...group3];
       if (allMatches.length === 0) return null;
 
-      // If user clicks on an already selected layer and there are others underneath, cycle to next layer
       if (currentId && allMatches.length > 1) {
         const curIdx = allMatches.findIndex((m) => m.id === currentId);
         if (curIdx >= 0) {
@@ -183,7 +211,6 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
         }
       }
 
-      // Return highest priority match (Group 1 > Group 2 > Group 3)
       return allMatches[0];
     },
     [project.layers]
@@ -207,7 +234,6 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
         layerRot: hit.rotation || 0
       });
     } else {
-      // Clicked on empty canvas -> select document
       onSelectLayer(null);
     }
   };
@@ -242,7 +268,6 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
         let newX = Math.round(dragStart.layerX + dx);
         let newY = Math.round(dragStart.layerY + dy);
 
-        // Smart Snapping to Canvas Center & Margins
         const activeSnaps: { x?: number; y?: number } = {};
         const centerX = newX + dragStart.layerW / 2;
         const centerY = newY + dragStart.layerH / 2;
@@ -308,20 +333,48 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
     };
   }, [dragAction, dragStart, selectedLayer, getCanvasCoords, W, H, onUpdateLayer, onPushHistory]);
 
-  // Display Scaling
-  const baseScale = 0.50;
-  const zoomFactor = typeof zoom === 'number' && zoom > 0 ? (zoom > 5 ? zoom / 100 : zoom) : 1;
-  const displayW = Math.max(260, Math.round(W * baseScale * zoomFactor));
-  const displayH = Math.max(260, Math.round(H * baseScale * zoomFactor));
+  // Touch Pinch-to-Zoom Gesture for mobile
+  const pinchRef = useRef<{ startDist: number; startZoom: number } | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && onZoomChange) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const currentZoom = typeof zoom === 'number' && zoom > 0 ? (zoom <= 3 ? zoom * 100 : zoom) : 100;
+      pinchRef.current = { startDist: dist, startZoom: currentZoom };
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && pinchRef.current && onZoomChange) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const ratio = dist / pinchRef.current.startDist;
+      const targetZoom = Math.min(200, Math.max(40, Math.round(pinchRef.current.startZoom * ratio)));
+      onZoomChange(targetZoom);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    pinchRef.current = null;
+  };
 
   return (
     <div
       ref={containerRef}
       className="studio-canvas-viewport"
       onClick={() => onSelectLayer(null)}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       style={{
         flex: 1,
         minHeight: 0,
+        width: '100%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -330,8 +383,9 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
         backgroundSize: '24px 24px',
         overflow: 'auto',
         position: 'relative',
-        padding: '2.5rem',
-        userSelect: 'none'
+        padding: '1.25rem',
+        userSelect: 'none',
+        touchAction: 'pan-x pan-y'
       }}
     >
       <div
@@ -340,10 +394,11 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
           width: `${displayW}px`,
           height: `${displayH}px`,
           position: 'relative',
-          boxShadow: '0 30px 80px -10px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.15)',
-          borderRadius: '6px',
+          boxShadow: '0 24px 70px -10px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.15)',
+          borderRadius: '8px',
           overflow: 'visible',
-          backgroundColor: '#0f172a'
+          backgroundColor: '#0f172a',
+          margin: 'auto'
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -357,7 +412,7 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
             height: '100%',
             display: 'block',
             cursor: dragAction === 'move' ? 'grabbing' : 'default',
-            borderRadius: '6px',
+            borderRadius: '8px',
             touchAction: 'none'
           }}
         />
@@ -387,8 +442,8 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
                 top: '-26px',
                 left: '50%',
                 transform: 'translateX(-50%)',
-                width: '16px',
-                height: '16px',
+                width: '18px',
+                height: '18px',
                 backgroundColor: '#38bdf8',
                 borderRadius: '50%',
                 border: '2px solid #ffffff',
@@ -405,10 +460,10 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
               onPointerDown={(e) => handleHandlePointerDown(e, 'resize-nw')}
               style={{
                 position: 'absolute',
-                top: '-7px',
-                left: '-7px',
-                width: '14px',
-                height: '14px',
+                top: '-8px',
+                left: '-8px',
+                width: '16px',
+                height: '16px',
                 backgroundColor: '#ffffff',
                 border: '2.5px solid #0284c7',
                 borderRadius: '3px',
@@ -422,10 +477,10 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
               onPointerDown={(e) => handleHandlePointerDown(e, 'resize-ne')}
               style={{
                 position: 'absolute',
-                top: '-7px',
-                right: '-7px',
-                width: '14px',
-                height: '14px',
+                top: '-8px',
+                right: '-8px',
+                width: '16px',
+                height: '16px',
                 backgroundColor: '#ffffff',
                 border: '2.5px solid #0284c7',
                 borderRadius: '3px',
@@ -439,10 +494,10 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
               onPointerDown={(e) => handleHandlePointerDown(e, 'resize-sw')}
               style={{
                 position: 'absolute',
-                bottom: '-7px',
-                left: '-7px',
-                width: '14px',
-                height: '14px',
+                bottom: '-8px',
+                left: '-8px',
+                width: '16px',
+                height: '16px',
                 backgroundColor: '#ffffff',
                 border: '2.5px solid #0284c7',
                 borderRadius: '3px',
@@ -456,10 +511,10 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
               onPointerDown={(e) => handleHandlePointerDown(e, 'resize-se')}
               style={{
                 position: 'absolute',
-                bottom: '-7px',
-                right: '-7px',
-                width: '14px',
-                height: '14px',
+                bottom: '-8px',
+                right: '-8px',
+                width: '16px',
+                height: '16px',
                 backgroundColor: '#ffffff',
                 border: '2.5px solid #0284c7',
                 borderRadius: '3px',

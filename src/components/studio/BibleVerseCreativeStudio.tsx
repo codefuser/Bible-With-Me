@@ -17,7 +17,7 @@ import { ShapesPanel } from './panels/ShapesPanel';
 import { LayersPanel } from './panels/LayersPanel';
 import { EffectsPanel } from './panels/EffectsPanel';
 import { BrandPanel } from './panels/BrandPanel';
-import { X, Check } from 'lucide-react';
+import { X, Check, ChevronDown } from 'lucide-react';
 import './studio.css';
 
 interface BibleVerseCreativeStudioProps {
@@ -77,11 +77,43 @@ export const BibleVerseCreativeStudio: React.FC<BibleVerseCreativeStudioProps> =
 
   // History Stack Manager
   const historyManagerRef = useRef<StudioHistoryManager>(new StudioHistoryManager(project));
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+
+  // Sync canUndo and canRedo with history manager
+  const syncHistoryState = useCallback(() => {
+    setCanUndo(historyManagerRef.current.canUndo());
+    setCanRedo(historyManagerRef.current.canRedo());
+  }, []);
+
+  // Prevent background Bible page scrolling on mobile
+  useEffect(() => {
+    const origOverflow = document.body.style.overflow;
+    const origTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isScrollable = target?.closest('.studio-drawer-body, .studio-drawer, .studio-left-nav, .studio-properties-body, .studio-canvas-viewport');
+      if (!isScrollable && e.cancelable) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+    return () => {
+      document.body.style.overflow = origOverflow;
+      document.body.style.touchAction = origTouchAction;
+      document.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, []);
 
   // Editor UI State
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
   const [activeNavTab, setActiveNavTab] = useState<StudioNavTabId | null>('templates');
-  const [zoom, setZoom] = useState<number>(1.0);
+  const [zoom, setZoom] = useState<number>(100);
   const [previewMode, setPreviewMode] = useState<boolean>(false);
   const [showSafeArea, setShowSafeArea] = useState<boolean>(false);
   const [snapGuidesEnabled, setSnapGuidesEnabled] = useState<boolean>(true);
@@ -100,8 +132,9 @@ export const BibleVerseCreativeStudio: React.FC<BibleVerseCreativeStudioProps> =
   const pushHistory = useCallback((customProject?: StudioProject) => {
     const target = customProject || project;
     historyManagerRef.current.push(target);
+    syncHistoryState();
     setAutoSaveStatus('unsaved');
-  }, [project]);
+  }, [project, syncHistoryState]);
 
   // Autosave to LocalStorage (debounced)
   useEffect(() => {
@@ -122,41 +155,45 @@ export const BibleVerseCreativeStudio: React.FC<BibleVerseCreativeStudioProps> =
     const prev = historyManagerRef.current.undo();
     if (prev) {
       setProject(prev);
+      syncHistoryState();
       if (selectedLayerId && !prev.layers.some(l => l.id === selectedLayerId)) {
         setSelectedLayerId(null);
       }
+      showToast(isTa ? 'செயல் செயல்தவிர்க்கப்பட்டது' : 'Undo');
     }
-  }, [selectedLayerId]);
+  }, [selectedLayerId, syncHistoryState, showToast, isTa]);
 
   // Redo Handler
   const handleRedo = useCallback(() => {
     const next = historyManagerRef.current.redo();
     if (next) {
       setProject(next);
+      syncHistoryState();
       if (selectedLayerId && !next.layers.some(l => l.id === selectedLayerId)) {
         setSelectedLayerId(null);
       }
+      showToast(isTa ? 'செயல் மீண்டும் செய்யப்பட்டது' : 'Redo');
     }
-  }, [selectedLayerId]);
+  }, [selectedLayerId, syncHistoryState, showToast, isTa]);
 
   // Layer Mutations
   const handleUpdateLayer = useCallback((id: string, updates: Partial<StudioLayer>) => {
     setProject(prev => {
       const nextLayers = prev.layers.map(l => (l.id === id ? ({ ...l, ...updates } as StudioLayer) : l));
       const nextProj = { ...prev, layers: nextLayers, updatedAt: Date.now() };
+      pushHistory(nextProj);
       return nextProj;
     });
-    pushHistory();
   }, [pushHistory]);
 
   const handleAddLayer = useCallback((newLayer: StudioLayer) => {
     setProject(prev => {
       const nextLayers = [...prev.layers, newLayer];
       const nextProj = { ...prev, layers: nextLayers, updatedAt: Date.now() };
+      pushHistory(nextProj);
       return nextProj;
     });
     setSelectedLayerId(newLayer.id);
-    pushHistory();
     showToast(isTa ? 'புதிய லேயர் சேர்க்கப்பட்டது' : 'Layer added to canvas');
   }, [pushHistory, showToast, isTa]);
 
@@ -164,10 +201,10 @@ export const BibleVerseCreativeStudio: React.FC<BibleVerseCreativeStudioProps> =
     setProject(prev => {
       const nextLayers = prev.layers.filter(l => l.id !== id);
       const nextProj = { ...prev, layers: nextLayers, updatedAt: Date.now() };
+      pushHistory(nextProj);
       return nextProj;
     });
     if (selectedLayerId === id) setSelectedLayerId(null);
-    pushHistory();
     showToast(isTa ? 'லேயர் நீக்கப்பட்டது' : 'Layer deleted');
   }, [selectedLayerId, pushHistory, showToast, isTa]);
 
@@ -206,9 +243,10 @@ export const BibleVerseCreativeStudio: React.FC<BibleVerseCreativeStudioProps> =
       layers.sort((a, b) => a.zIndex - b.zIndex);
       layers.forEach((l, i) => { l.zIndex = i + 1; });
 
-      return { ...prev, layers, updatedAt: Date.now() };
+      const nextProj = { ...prev, layers, updatedAt: Date.now() };
+      pushHistory(nextProj);
+      return nextProj;
     });
-    pushHistory();
   }, [pushHistory]);
 
   // Template Switcher
@@ -476,18 +514,31 @@ export const BibleVerseCreativeStudio: React.FC<BibleVerseCreativeStudioProps> =
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedLayerId, project.layers, handleUndo, handleRedo, handleDeleteLayer, handleDuplicateLayer, handleUpdateLayer]);
 
-  // Zoom Controls
-  const handleZoomIn = () => setZoom(prev => Math.min(2.0, Number((prev + 0.1).toFixed(2))));
-  const handleZoomOut = () => setZoom(prev => Math.max(0.3, Number((prev - 0.1).toFixed(2))));
-  const handleZoomFit = () => setZoom(1.0);
+  // Zoom Controls (Percentage based: 50% to 250%)
+  const handleZoomIn = () => setZoom(prev => Math.min(250, Math.round(prev + 25)));
+  const handleZoomOut = () => setZoom(prev => Math.max(50, Math.round(prev - 25)));
+  const handleZoomFit = () => setZoom(100);
+
+  const DRAWER_TITLES: Record<string, string> = {
+    templates: isTa ? 'வார்ப்புருக்கள்' : 'Templates',
+    background: isTa ? 'பின்னணி' : 'Background',
+    photos: isTa ? 'புகைப்படம்' : 'Photos',
+    text: isTa ? 'உரை & வசனம்' : 'Text & Verse',
+    bible: isTa ? 'வேதாகமம்' : 'Bible Scriptures',
+    elements: isTa ? 'சின்னங்கள்' : 'Sacred Elements',
+    shapes: isTa ? 'வடிவங்கள்' : 'Shapes & Frames',
+    layers: isTa ? 'அடுக்குகள்' : 'Layers',
+    effects: isTa ? 'விளைவுகள்' : 'Devotional Effects',
+    brand: isTa ? 'வாட்டர்மார்க்' : 'Brand & Watermark'
+  };
 
   return (
     <div className="bible-creative-studio">
       {/* ── Top Bar ── */}
       <StudioTopBar
         refText={reference}
-        canUndo={historyManagerRef.current.canUndo()}
-        canRedo={historyManagerRef.current.canRedo()}
+        canUndo={canUndo}
+        canRedo={canRedo}
         onUndo={handleUndo}
         onRedo={handleRedo}
         zoom={zoom}
@@ -518,134 +569,173 @@ export const BibleVerseCreativeStudio: React.FC<BibleVerseCreativeStudioProps> =
         {/* Slide-out Tool Drawer */}
         {activeNavTab && (
           <aside className="studio-drawer">
-            {activeNavTab === 'templates' && (
-              <TemplatesPanel
-                onApplyTemplate={handleApplyTemplate}
-                activeTemplateId={project.id}
-              />
-            )}
+            <div className="studio-drawer-header">
+              <span className="studio-drawer-title">
+                {DRAWER_TITLES[activeNavTab] || activeNavTab}
+              </span>
+              <button
+                type="button"
+                className="studio-drawer-close-btn"
+                onClick={() => setActiveNavTab(null)}
+                title={isTa ? 'சுருக்கு' : 'Hide Drawer'}
+              >
+                <ChevronDown size={16} />
+                <span>{isTa ? 'சுருக்கு' : 'Hide'}</span>
+              </button>
+            </div>
 
-            {activeNavTab === 'background' && (
-              <BackgroundPanel
-                background={project.background}
-                onChangeBackground={bg => {
-                  setProject(prev => ({ ...prev, background: bg, updatedAt: Date.now() }));
-                  pushHistory();
-                }}
-              />
-            )}
+            <div className="studio-drawer-body">
+              {activeNavTab === 'templates' && (
+                <TemplatesPanel
+                  onApplyTemplate={handleApplyTemplate}
+                  activeTemplateId={project.id}
+                />
+              )}
 
-            {activeNavTab === 'photos' && (
-              <PhotosPanel
-                project={project}
-                onAddLayer={handleAddLayer}
-                onSetBackgroundWallpaper={src => {
-                  setProject(prev => ({
-                    ...prev,
-                    background: { ...prev.background, type: 'image', imageSrc: src, overlayOpacity: 0.45 },
-                    updatedAt: Date.now()
-                  }));
-                  pushHistory();
-                  showToast(isTa ? 'பின்னணி வால்பேப்பர் மாற்றப்பட்டது' : 'Background wallpaper updated');
-                }}
-                isTa={isTa}
-              />
-            )}
+              {activeNavTab === 'background' && (
+                <BackgroundPanel
+                  background={project.background}
+                  onChangeBackground={bg => {
+                    setProject(prev => {
+                      const nextProj = { ...prev, background: bg, updatedAt: Date.now() };
+                      pushHistory(nextProj);
+                      return nextProj;
+                    });
+                  }}
+                />
+              )}
 
-            {activeNavTab === 'text' && (
-              <TextPanel
-                project={project}
-                onAddLayer={handleAddLayer}
-                onUpdateLayer={handleUpdateLayer}
-                selectedLayerId={selectedLayerId}
-                verseTa={verseTa}
-                verseEn={verseEn}
-                reference={reference}
-                isTa={isTa}
-              />
-            )}
+              {activeNavTab === 'photos' && (
+                <PhotosPanel
+                  project={project}
+                  onAddLayer={handleAddLayer}
+                  onSetBackgroundWallpaper={src => {
+                    setProject(prev => {
+                      const nextProj: StudioProject = {
+                        ...prev,
+                        background: { ...prev.background, type: 'image' as const, imageSrc: src, overlayOpacity: 0.45 },
+                        updatedAt: Date.now()
+                      };
+                      pushHistory(nextProj);
+                      return nextProj;
+                    });
+                    showToast(isTa ? 'பின்னணி வால்பேப்பர் மாற்றப்பட்டது' : 'Background wallpaper updated');
+                  }}
+                  isTa={isTa}
+                />
+              )}
 
-            {activeNavTab === 'bible' && (
-              <BiblePickerPanel
-                project={project}
-                onSelectVerse={handleSelectScripture}
-                onAddLayer={handleAddLayer}
-                isTa={isTa}
-              />
-            )}
+              {activeNavTab === 'text' && (
+                <TextPanel
+                  project={project}
+                  onAddLayer={handleAddLayer}
+                  onUpdateLayer={handleUpdateLayer}
+                  selectedLayerId={selectedLayerId}
+                  verseTa={verseTa}
+                  verseEn={verseEn}
+                  reference={reference}
+                  isTa={isTa}
+                />
+              )}
 
-            {activeNavTab === 'elements' && (
-              <ElementsPanel
-                project={project}
-                onAddLayer={handleAddLayer}
-                isTa={isTa}
-              />
-            )}
+              {activeNavTab === 'bible' && (
+                <BiblePickerPanel
+                  project={project}
+                  onSelectVerse={handleSelectScripture}
+                  onAddLayer={handleAddLayer}
+                  isTa={isTa}
+                />
+              )}
 
-            {activeNavTab === 'shapes' && (
-              <ShapesPanel
-                project={project}
-                onAddLayer={handleAddLayer}
-                isTa={isTa}
-              />
-            )}
+              {activeNavTab === 'elements' && (
+                <ElementsPanel
+                  project={project}
+                  onAddLayer={handleAddLayer}
+                  isTa={isTa}
+                />
+              )}
 
-            {activeNavTab === 'layers' && (
-              <LayersPanel
-                project={project}
-                selectedLayerId={selectedLayerId}
-                onSelectLayer={setSelectedLayerId}
-                onUpdateLayer={handleUpdateLayer}
-                onDeleteLayer={handleDeleteLayer}
-                onDuplicateLayer={handleDuplicateLayer}
-                onMoveLayer={handleMoveLayer}
-                isTa={isTa}
-              />
-            )}
+              {activeNavTab === 'shapes' && (
+                <ShapesPanel
+                  project={project}
+                  onAddLayer={handleAddLayer}
+                  isTa={isTa}
+                />
+              )}
 
-            {activeNavTab === 'effects' && (
-              <EffectsPanel
-                project={project}
-                onUpdateEffects={eff => {
-                  setProject(prev => ({ ...prev, effects: { ...prev.effects, ...eff }, updatedAt: Date.now() }));
-                  pushHistory();
-                }}
-                onUpdateBackground={bg => {
-                  setProject(prev => ({ ...prev, background: { ...prev.background, ...bg }, updatedAt: Date.now() }));
-                  pushHistory();
-                }}
-                onAutoReadability={handleAutoReadability}
-                isTa={isTa}
-              />
-            )}
+              {activeNavTab === 'layers' && (
+                <LayersPanel
+                  project={project}
+                  selectedLayerId={selectedLayerId}
+                  onSelectLayer={setSelectedLayerId}
+                  onUpdateLayer={handleUpdateLayer}
+                  onDeleteLayer={handleDeleteLayer}
+                  onDuplicateLayer={handleDuplicateLayer}
+                  onMoveLayer={handleMoveLayer}
+                  isTa={isTa}
+                />
+              )}
 
-            {activeNavTab === 'brand' && (
-              <BrandPanel
-                project={project}
-                onUpdateWatermark={wm => {
-                  setProject(prev => ({ ...prev, watermark: { ...prev.watermark, ...wm }, updatedAt: Date.now() }));
-                  pushHistory();
-                }}
-                isTa={isTa}
-              />
-            )}
+              {activeNavTab === 'effects' && (
+                <EffectsPanel
+                  project={project}
+                  onUpdateEffects={eff => {
+                    setProject(prev => {
+                      const nextProj = { ...prev, effects: { ...prev.effects, ...eff }, updatedAt: Date.now() };
+                      pushHistory(nextProj);
+                      return nextProj;
+                    });
+                  }}
+                  onUpdateBackground={bg => {
+                    setProject(prev => {
+                      const nextProj = { ...prev, background: { ...prev.background, ...bg }, updatedAt: Date.now() };
+                      pushHistory(nextProj);
+                      return nextProj;
+                    });
+                  }}
+                  onAutoReadability={handleAutoReadability}
+                  isTa={isTa}
+                />
+              )}
+
+              {activeNavTab === 'brand' && (
+                <BrandPanel
+                  project={project}
+                  onUpdateWatermark={(wm: any) => {
+                    setProject(prev => {
+                      const nextProj: StudioProject = { ...prev, watermark: { ...prev.watermark, ...wm }, updatedAt: Date.now() };
+                      pushHistory(nextProj);
+                      return nextProj;
+                    });
+                  }}
+                  isTa={isTa}
+                />
+              )}
+            </div>
           </aside>
         )}
 
         {/* Central Canvas Viewport */}
-        <main className="studio-canvas-area" onClick={() => setSelectedLayerId(null)}>
-          <div className="studio-canvas-viewport">
-            <StudioCanvas
-              project={project}
-              selectedLayerId={previewMode ? null : selectedLayerId}
-              onSelectLayer={setSelectedLayerId}
-              onUpdateLayer={handleUpdateLayer}
-              onPushHistory={pushHistory}
-              zoom={zoom}
-              showGuides={!previewMode && snapGuidesEnabled}
-              showSafeArea={!previewMode && showSafeArea}
-            />
-          </div>
+        <main
+          className="studio-canvas-area"
+          onClick={() => {
+            setSelectedLayerId(null);
+            if (window.innerWidth <= 768) {
+              setActiveNavTab(null);
+            }
+          }}
+        >
+          <StudioCanvas
+            project={project}
+            selectedLayerId={previewMode ? null : selectedLayerId}
+            onSelectLayer={setSelectedLayerId}
+            onUpdateLayer={handleUpdateLayer}
+            onPushHistory={() => pushHistory(project)}
+            zoom={zoom}
+            onZoomChange={setZoom}
+            showGuides={!previewMode && snapGuidesEnabled}
+            showSafeArea={!previewMode && showSafeArea}
+          />
 
           {/* Status Bar */}
           <div className="studio-status-bar">
@@ -666,7 +756,7 @@ export const BibleVerseCreativeStudio: React.FC<BibleVerseCreativeStudioProps> =
             </div>
 
             <div className="flex items-center gap-4">
-              <span>Zoom: {Math.round(zoom * 100)}%</span>
+              <span>Zoom: {Math.round(zoom)}%</span>
               <span className="text-slate-500">Ctrl+Z: Undo | Ctrl+Y: Redo | Ctrl+D: Duplicate</span>
             </div>
           </div>
