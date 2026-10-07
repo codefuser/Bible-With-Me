@@ -28,7 +28,8 @@ export function preloadStudioImage(src: string): Promise<HTMLImageElement> {
 
 function wrapText(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
   const lines: string[] = [];
-  for (const para of text.split('\n')) {
+  const safeMaxW = Math.max(80, maxW || 400);
+  for (const para of (text || '').split('\n')) {
     if (!para.trim()) {
       lines.push('');
       continue;
@@ -36,7 +37,7 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxW: number): st
     let cur = '';
     for (const word of para.split(' ')) {
       const test = cur ? `${cur} ${word}` : word;
-      if (ctx.measureText(test).width > maxW && cur) {
+      if (ctx.measureText(test).width > safeMaxW && cur) {
         lines.push(cur);
         cur = word;
       } else {
@@ -45,7 +46,7 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxW: number): st
     }
     if (cur) lines.push(cur);
   }
-  return lines;
+  return lines.length > 0 ? lines : [text || ''];
 }
 
 export function renderStudioCanvas(
@@ -398,12 +399,17 @@ function renderTextLayer(ctx: CanvasRenderingContext2D, layer: TextLayer) {
   ctx.save();
   const { x, y, width: w } = layer;
 
-  // Font setup
+  // Font setup with safe fallbacks
   const fontStyle = layer.fontStyle || 'normal';
   const fontWeight = layer.fontWeight || 'normal';
   const fontSize = Math.max(12, layer.fontSize || 32);
-  const fontFamily = layer.fontFamily || `'Noto Sans Tamil', sans-serif`;
-  ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
+  const baseFamily = layer.fontFamily || `'Noto Serif Tamil'`;
+  const safeFontFamily = baseFamily.includes(',')
+    ? baseFamily
+    : `${baseFamily}, 'Noto Serif Tamil', 'Noto Sans Tamil', Georgia, serif`;
+
+  ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${safeFontFamily}`;
+  ctx.textBaseline = 'top';
 
   let processedText = layer.text || '';
   if (layer.textTransform === 'uppercase') processedText = processedText.toUpperCase();
@@ -411,7 +417,7 @@ function renderTextLayer(ctx: CanvasRenderingContext2D, layer: TextLayer) {
 
   const lines = wrapText(ctx, processedText, w);
   const lineH = fontSize * (layer.lineHeight || 1.6);
-  const totalTextH = lines.length * lineH;
+  const totalTextH = Math.max(lines.length * lineH, fontSize);
 
   // Background Box / Highlight
   if (layer.hasBgBox && layer.bgBoxColor) {
@@ -444,7 +450,7 @@ function renderTextLayer(ctx: CanvasRenderingContext2D, layer: TextLayer) {
       : x;
 
   lines.forEach((line, i) => {
-    const textY = y + fontSize + i * lineH;
+    const textY = y + i * lineH;
     // Stroke / Outline if enabled
     if (layer.strokeWidth > 0 && layer.strokeColor) {
       ctx.save();

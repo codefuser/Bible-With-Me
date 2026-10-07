@@ -27,14 +27,9 @@ export const BrandPanel: React.FC<BrandPanelProps> = ({
     <div className="studio-panel-content">
       <div className="studio-panel-header">
         <h3 className="studio-panel-title">
-          <Award size={18} className="text-amber-400" />
-          <span>{isTa ? 'முத்திரை & அடையாளம்' : 'Watermark & Branding'}</span>
+          <Award size={16} className="text-amber-400" />
+          <span>{isTa ? 'முத்திரை' : 'Watermark'}</span>
         </h3>
-        <p className="studio-panel-desc">
-          {isTa
-            ? 'கார்டின் கீழ் பகுதியில் பயன்பாட்டின் பெயர் அல்லது சபையின் அடையாளத்தை சேர்க்கவும்'
-            : 'Add church name, ministry attribution, or app watermark badge.'}
-        </p>
       </div>
 
       {/* Enable Toggle */}

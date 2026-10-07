@@ -51,14 +51,9 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
     <div className="studio-panel-content">
       <div className="studio-panel-header">
         <h3 className="studio-panel-title">
-          <Sparkles size={18} className="text-amber-400" />
-          <span>{isTa ? 'ஆன்மீக சின்னங்கள் & அலங்காரங்கள்' : 'Christian Symbols & Icons'}</span>
+          <Sparkles size={16} className="text-amber-400" />
+          <span>{isTa ? 'சின்னங்கள்' : 'Christian Symbols'}</span>
         </h3>
-        <p className="studio-panel-desc">
-          {isTa
-            ? 'சிலுவை, புறா, வேதாகமம் மற்றும் கிருபையின் சின்னங்களை கார்டில் சேர்க்கவும்'
-            : 'Add sacred crosses, holy spirit doves, open scriptures, and faith emblems.'}
-        </p>
       </div>
 
       {/* Category Pills */}

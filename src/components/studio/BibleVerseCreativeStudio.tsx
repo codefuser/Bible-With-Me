@@ -81,7 +81,7 @@ export const BibleVerseCreativeStudio: React.FC<BibleVerseCreativeStudioProps> =
   // Editor UI State
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
   const [activeNavTab, setActiveNavTab] = useState<StudioNavTabId | null>('templates');
-  const [zoom, setZoom] = useState<number>(0.75);
+  const [zoom, setZoom] = useState<number>(1.0);
   const [previewMode, setPreviewMode] = useState<boolean>(false);
   const [showSafeArea, setShowSafeArea] = useState<boolean>(false);
   const [snapGuidesEnabled, setSnapGuidesEnabled] = useState<boolean>(true);
@@ -479,7 +479,7 @@ export const BibleVerseCreativeStudio: React.FC<BibleVerseCreativeStudioProps> =
   // Zoom Controls
   const handleZoomIn = () => setZoom(prev => Math.min(2.0, Number((prev + 0.1).toFixed(2))));
   const handleZoomOut = () => setZoom(prev => Math.max(0.3, Number((prev - 0.1).toFixed(2))));
-  const handleZoomFit = () => setZoom(0.75);
+  const handleZoomFit = () => setZoom(1.0);
 
   return (
     <div className="bible-creative-studio">

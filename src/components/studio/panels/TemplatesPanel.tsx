@@ -28,12 +28,9 @@ export const TemplatesPanel: React.FC<TemplatesPanelProps> = ({ onApplyTemplate,
   return (
     <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div>
-        <h2 style={{ margin: '0 0 0.25rem', fontSize: '0.9375rem', fontWeight: 800, color: '#f8fafc' }}>
-          Design Templates
+        <h2 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 800, color: '#f8fafc' }}>
+          Templates
         </h2>
-        <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>
-          Select a professionally designed Bible layout preset
-        </p>
       </div>
 
       {/* Category Pills */}

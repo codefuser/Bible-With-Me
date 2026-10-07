@@ -42,14 +42,9 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
     <div className="studio-panel-content">
       <div className="studio-panel-header">
         <h3 className="studio-panel-title">
-          <Layers size={18} className="text-amber-400" />
-          <span>{isTa ? 'அடுக்குகள் & லேயர்கள்' : 'Layer Management'}</span>
+          <Layers size={16} className="text-amber-400" />
+          <span>{isTa ? 'அடுக்குகள்' : 'Layers'}</span>
         </h3>
-        <p className="studio-panel-desc">
-          {isTa
-            ? 'லேயர்களை வரிசைப்படுத்தவும், பூட்டவும் மற்றும் தெரிவுநிலையைக் கட்டுப்படுத்தவும்'
-            : 'Order, lock, hide, duplicate, or delete elements on canvas.'}
-        </p>
       </div>
 
       {sortedLayers.length === 0 ? (

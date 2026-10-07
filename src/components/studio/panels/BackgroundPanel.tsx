@@ -54,12 +54,9 @@ export const BackgroundPanel: React.FC<BackgroundPanelProps> = ({
   return (
     <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1.125rem' }}>
       <div>
-        <h2 style={{ margin: '0 0 0.25rem', fontSize: '0.9375rem', fontWeight: 800, color: '#f8fafc' }}>
+        <h2 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 800, color: '#f8fafc' }}>
           Background
         </h2>
-        <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>
-          Customize canvas background wallpaper, gradient or color
-        </p>
       </div>
 
       {/* ── Background Type Tabs ── */}

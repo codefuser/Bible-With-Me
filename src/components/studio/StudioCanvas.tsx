@@ -13,7 +13,13 @@ interface StudioCanvasProps {
   showSafeArea: boolean;
 }
 
-type DragAction = 'move' | 'resize-nw' | 'resize-ne' | 'resize-sw' | 'resize-se' | 'resize-n' | 'resize-s' | 'resize-w' | 'resize-e' | 'rotate';
+type DragAction =
+  | 'move'
+  | 'resize-nw'
+  | 'resize-ne'
+  | 'resize-sw'
+  | 'resize-se'
+  | 'rotate';
 
 export const StudioCanvas: React.FC<StudioCanvasProps> = ({
   project,
@@ -154,30 +160,37 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
         setSnapLines(activeSnaps);
         onUpdateLayer(selectedLayer.id, { x: newX, y: newY });
       } else if (dragAction === 'resize-se') {
-        const newW = Math.max(30, Math.round(dragStart.layerW + dx));
-        const newH = Math.max(20, Math.round(dragStart.layerH + dy));
+        const newW = Math.max(60, Math.round(dragStart.layerW + dx));
+        const newH = Math.max(30, Math.round(dragStart.layerH + dy));
         onUpdateLayer(selectedLayer.id, { width: newW, height: newH });
       } else if (dragAction === 'resize-sw') {
-        const newW = Math.max(30, Math.round(dragStart.layerW - dx));
-        const newH = Math.max(20, Math.round(dragStart.layerH + dy));
-        const newX = dragStart.layerX + (dragStart.layerW - newW);
+        const newW = Math.max(60, Math.round(dragStart.layerW - dx));
+        const newH = Math.max(30, Math.round(dragStart.layerH + dy));
+        const newX = Math.round(dragStart.layerX + dx);
         onUpdateLayer(selectedLayer.id, { x: newX, width: newW, height: newH });
       } else if (dragAction === 'resize-ne') {
-        const newW = Math.max(30, Math.round(dragStart.layerW + dx));
-        const newH = Math.max(20, Math.round(dragStart.layerH - dy));
-        const newY = dragStart.layerY + (dragStart.layerH - newH);
+        const newW = Math.max(60, Math.round(dragStart.layerW + dx));
+        const newH = Math.max(30, Math.round(dragStart.layerH - dy));
+        const newY = Math.round(dragStart.layerY + dy);
         onUpdateLayer(selectedLayer.id, { y: newY, width: newW, height: newH });
       } else if (dragAction === 'resize-nw') {
-        const newW = Math.max(30, Math.round(dragStart.layerW - dx));
-        const newH = Math.max(20, Math.round(dragStart.layerH - dy));
-        const newX = dragStart.layerX + (dragStart.layerW - newW);
-        const newY = dragStart.layerY + (dragStart.layerH - newH);
+        const newW = Math.max(60, Math.round(dragStart.layerW - dx));
+        const newH = Math.max(30, Math.round(dragStart.layerH - dy));
+        const newX = Math.round(dragStart.layerX + dx);
+        const newY = Math.round(dragStart.layerY + dy);
         onUpdateLayer(selectedLayer.id, { x: newX, y: newY, width: newW, height: newH });
       } else if (dragAction === 'rotate') {
-        const originX = dragStart.layerX + dragStart.layerW / 2;
-        const originY = dragStart.layerY + dragStart.layerH / 2;
-        const angle = Math.round((Math.atan2(curY - originY, curX - originX) * 180) / Math.PI + 90);
-        onUpdateLayer(selectedLayer.id, { rotation: (angle + 360) % 360 });
+        const centerX = dragStart.layerX + dragStart.layerW / 2;
+        const centerY = dragStart.layerY + dragStart.layerH / 2;
+        const rad = Math.atan2(curY - centerY, curX - centerX);
+        let deg = Math.round((rad * 180) / Math.PI) + 90;
+        if (deg < 0) deg += 360;
+        // Snap to 0, 90, 180, 270 if close
+        if (Math.abs(deg - 0) < 5 || Math.abs(deg - 360) < 5) deg = 0;
+        if (Math.abs(deg - 90) < 5) deg = 90;
+        if (Math.abs(deg - 180) < 5) deg = 180;
+        if (Math.abs(deg - 270) < 5) deg = 270;
+        onUpdateLayer(selectedLayer.id, { rotation: deg });
       }
     };
 
@@ -196,10 +209,11 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
     };
   }, [dragAction, dragStart, selectedLayer, getCanvasCoords, W, H, onUpdateLayer, onPushHistory]);
 
-  // Display size scaled by current zoom level
-  const baseScale = 0.44;
-  const displayW = Math.round(W * baseScale * (zoom / 100));
-  const displayH = Math.round(H * baseScale * (zoom / 100));
+  // Proper Prominent Display Scaling (Handles zoom as factor 0.75 or percentage 75)
+  const baseScale = 0.50; // generous footprint for creative preview
+  const zoomFactor = typeof zoom === 'number' && zoom > 0 ? (zoom > 5 ? zoom / 100 : zoom) : 1;
+  const displayW = Math.max(260, Math.round(W * baseScale * zoomFactor));
+  const displayH = Math.max(260, Math.round(H * baseScale * zoomFactor));
 
   return (
     <div
@@ -213,11 +227,11 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#070a12',
-        backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px)',
+        backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px)',
         backgroundSize: '24px 24px',
         overflow: 'auto',
         position: 'relative',
-        padding: '2rem',
+        padding: '2.5rem',
         userSelect: 'none'
       }}
     >
@@ -227,9 +241,10 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
           width: `${displayW}px`,
           height: `${displayH}px`,
           position: 'relative',
-          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.12)',
-          borderRadius: '4px',
-          overflow: 'visible'
+          boxShadow: '0 30px 80px -10px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.15)',
+          borderRadius: '6px',
+          overflow: 'visible',
+          backgroundColor: '#0f172a'
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -243,7 +258,7 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
             height: '100%',
             display: 'block',
             cursor: dragAction === 'move' ? 'grabbing' : 'default',
-            borderRadius: '4px'
+            borderRadius: '6px'
           }}
         />
 
@@ -260,7 +275,7 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
               transform: `rotate(${selectedLayer.rotation || 0}deg)`,
               transformOrigin: 'center center',
               border: '2px solid #38bdf8',
-              boxShadow: '0 0 0 1px rgba(0,0,0,0.5)',
+              boxShadow: '0 0 0 1px rgba(0,0,0,0.6)',
               pointerEvents: 'none'
             }}
           >
@@ -272,14 +287,14 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
                 top: '-26px',
                 left: '50%',
                 transform: 'translateX(-50%)',
-                width: '14px',
-                height: '14px',
+                width: '16px',
+                height: '16px',
                 backgroundColor: '#38bdf8',
                 borderRadius: '50%',
                 border: '2px solid #ffffff',
                 cursor: 'grab',
                 pointerEvents: 'auto',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.4)'
+                boxShadow: '0 2px 6px rgba(0,0,0,0.5)'
               }}
               title="Rotate"
             />
@@ -289,60 +304,64 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
               onMouseDown={(e) => handleHandleMouseDown(e, 'resize-nw')}
               style={{
                 position: 'absolute',
-                top: '-6px',
-                left: '-6px',
-                width: '12px',
-                height: '12px',
+                top: '-7px',
+                left: '-7px',
+                width: '14px',
+                height: '14px',
                 backgroundColor: '#ffffff',
-                border: '2px solid #0284c7',
-                borderRadius: '2px',
+                border: '2.5px solid #0284c7',
+                borderRadius: '3px',
                 cursor: 'nwse-resize',
-                pointerEvents: 'auto'
+                pointerEvents: 'auto',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.4)'
               }}
             />
             <div
               onMouseDown={(e) => handleHandleMouseDown(e, 'resize-ne')}
               style={{
                 position: 'absolute',
-                top: '-6px',
-                right: '-6px',
-                width: '12px',
-                height: '12px',
+                top: '-7px',
+                right: '-7px',
+                width: '14px',
+                height: '14px',
                 backgroundColor: '#ffffff',
-                border: '2px solid #0284c7',
-                borderRadius: '2px',
+                border: '2.5px solid #0284c7',
+                borderRadius: '3px',
                 cursor: 'nesw-resize',
-                pointerEvents: 'auto'
+                pointerEvents: 'auto',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.4)'
               }}
             />
             <div
               onMouseDown={(e) => handleHandleMouseDown(e, 'resize-sw')}
               style={{
                 position: 'absolute',
-                bottom: '-6px',
-                left: '-6px',
-                width: '12px',
-                height: '12px',
+                bottom: '-7px',
+                left: '-7px',
+                width: '14px',
+                height: '14px',
                 backgroundColor: '#ffffff',
-                border: '2px solid #0284c7',
-                borderRadius: '2px',
+                border: '2.5px solid #0284c7',
+                borderRadius: '3px',
                 cursor: 'nesw-resize',
-                pointerEvents: 'auto'
+                pointerEvents: 'auto',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.4)'
               }}
             />
             <div
               onMouseDown={(e) => handleHandleMouseDown(e, 'resize-se')}
               style={{
                 position: 'absolute',
-                bottom: '-6px',
-                right: '-6px',
-                width: '12px',
-                height: '12px',
+                bottom: '-7px',
+                right: '-7px',
+                width: '14px',
+                height: '14px',
                 backgroundColor: '#ffffff',
-                border: '2px solid #0284c7',
-                borderRadius: '2px',
+                border: '2.5px solid #0284c7',
+                borderRadius: '3px',
                 cursor: 'nwse-resize',
-                pointerEvents: 'auto'
+                pointerEvents: 'auto',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.4)'
               }}
             />
           </div>

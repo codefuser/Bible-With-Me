@@ -147,14 +147,9 @@ export const ShapesPanel: React.FC<ShapesPanelProps> = ({
     <div className="studio-panel-content">
       <div className="studio-panel-header">
         <h3 className="studio-panel-title">
-          <Square size={18} className="text-amber-400" />
-          <span>{isTa ? 'வடிவங்கள் & பலகைகள்' : 'Shapes & Backplates'}</span>
+          <Square size={16} className="text-amber-400" />
+          <span>{isTa ? 'வடிவங்கள்' : 'Shapes & Plates'}</span>
         </h3>
-        <p className="studio-panel-desc">
-          {isTa
-            ? 'உரையின் கீழ் வைக்க கண்ணாடி பலகைகள், கோடுகள் மற்றும் வடிவங்களை சேர்க்கவும்'
-            : 'Add frosted glass cards, divider accents, and framing shapes.'}
-        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-2">

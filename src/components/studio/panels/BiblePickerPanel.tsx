@@ -1,236 +1,198 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Search, Check, ChevronRight, Sparkles, Plus, RefreshCw } from 'lucide-react';
+import { BookOpen, Sparkles, Check, ChevronDown, Search } from 'lucide-react';
 import { fetchBibleBooks, fetchChapterVerses } from '../../../services/bibleService';
 import { BibleBook, BibleVerse } from '../../../types/bible';
-import { StudioProject, TextLayer } from '../types';
+import { StudioProject } from '../types';
 
 interface BiblePickerPanelProps {
   project: StudioProject;
   onSelectVerse: (verseTa: string, verseEn: string, reference: string) => void;
-  onAddLayer: (layer: TextLayer) => void;
+  onAddLayer?: any;
   isTa?: boolean;
 }
+
+const POPULAR_VERSES = [
+  { ref: 'Psalms 23:1', refTa: 'சங்கீதம் 23:1', bookId: 19, ch: 23, v: 1 },
+  { ref: 'John 3:16', refTa: 'யோவான் 3:16', bookId: 43, ch: 3, v: 16 },
+  { ref: 'Philippians 4:13', refTa: 'பிலிப்பியர் 4:13', bookId: 50, ch: 4, v: 13 },
+  { ref: 'Isaiah 40:31', refTa: 'ஏசாயா 40:31', bookId: 23, ch: 40, v: 31 },
+  { ref: 'Jeremiah 29:11', refTa: 'எரேமியா 29:11', bookId: 24, ch: 29, v: 11 },
+  { ref: 'Proverbs 3:5', refTa: 'நீதிமொழிகள் 3:5', bookId: 20, ch: 3, v: 5 }
+];
 
 export const BiblePickerPanel: React.FC<BiblePickerPanelProps> = ({
   project,
   onSelectVerse,
-  onAddLayer,
   isTa
 }) => {
   const [books, setBooks] = useState<BibleBook[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [search, setSearch] = useState<string>('');
-  const [selectedBook, setSelectedBook] = useState<BibleBook | null>(null);
-  const [selectedChapter, setSelectedChapter] = useState<number>(1);
+  const [selectedBookId, setSelectedBookId] = useState<number>(19); // Psalms
+  const [selectedChapter, setSelectedChapter] = useState<number>(23);
   const [verses, setVerses] = useState<BibleVerse[]>([]);
   const [selectedVerseNum, setSelectedVerseNum] = useState<number>(1);
-  const [testamentFilter, setTestamentFilter] = useState<'ALL' | 'OT' | 'NT'>('ALL');
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const loadedBooks = await fetchBibleBooks();
-        if (mounted) {
-          setBooks(loadedBooks);
-          if (loadedBooks.length > 0) {
-            setSelectedBook(loadedBooks[0]);
-          }
-          setLoading(false);
+        const loaded = await fetchBibleBooks();
+        if (mounted && loaded.length > 0) {
+          setBooks(loaded);
         }
-      } catch (err) {
-        console.error('Failed to load Bible books in studio:', err);
-        if (mounted) setLoading(false);
+      } catch (e) {
+        console.error(e);
       }
     })();
     return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
-    if (!selectedBook) return;
     let mounted = true;
     (async () => {
       try {
-        const chVerses = await fetchChapterVerses(selectedBook.id, selectedChapter);
+        setLoading(true);
+        const vList = await fetchChapterVerses(selectedBookId, selectedChapter);
         if (mounted) {
-          setVerses(chVerses);
-          if (chVerses.length > 0) {
+          setVerses(vList);
+          if (vList.length > 0 && selectedVerseNum > vList.length) {
             setSelectedVerseNum(1);
           }
+          setLoading(false);
         }
-      } catch (err) {
-        console.error('Failed to load chapter verses:', err);
+      } catch (e) {
+        console.error(e);
+        if (mounted) setLoading(false);
       }
     })();
     return () => { mounted = false; };
-  }, [selectedBook, selectedChapter]);
+  }, [selectedBookId, selectedChapter]);
 
-  const filteredBooks = books.filter(b => {
-    if (testamentFilter !== 'ALL' && b.testament !== testamentFilter) return false;
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return b.name_en.toLowerCase().includes(q) || b.name_ta.includes(q) || b.code.toLowerCase().includes(q);
-  });
+  const activeBook = books.find(b => b.id === selectedBookId) || books[0];
+  const activeVerse = verses.find(v => v.verse === selectedVerseNum) || verses[0];
 
-  const currentVerse = verses.find(v => v.verse === selectedVerseNum) || verses[0];
+  const handleApply = () => {
+    if (!activeBook || !activeVerse) return;
+    const ref = `${isTa ? activeBook.name_ta : activeBook.name_en} ${selectedChapter}:${activeVerse.verse}`;
+    onSelectVerse(activeVerse.text_ta, activeVerse.text_en, ref);
+  };
 
-  const handleApplyVerse = () => {
-    if (!selectedBook || !currentVerse) return;
-    const ref = `${isTa ? selectedBook.name_ta : selectedBook.name_en} ${selectedChapter}:${currentVerse.verse}`;
-    onSelectVerse(currentVerse.text_ta, currentVerse.text_en, ref);
+  const handleSelectPopular = async (pop: typeof POPULAR_VERSES[0]) => {
+    setSelectedBookId(pop.bookId);
+    setSelectedChapter(pop.ch);
+    setSelectedVerseNum(pop.v);
   };
 
   return (
     <div className="studio-panel-content">
       <div className="studio-panel-header">
         <h3 className="studio-panel-title">
-          <BookOpen size={18} className="text-amber-400" />
-          <span>{isTa ? 'வேதாகம வசனத் தேடல்' : 'Scripture Selector'}</span>
+          <BookOpen size={16} className="text-amber-400" />
+          <span>{isTa ? 'வேதாகம வசனம்' : 'Scripture Picker'}</span>
         </h3>
-        <p className="studio-panel-desc">
-          {isTa
-            ? 'அனைத்து 66 புத்தகங்களிலிருந்தும் வசனங்களை நேரடியாக தேர்ந்தெடுக்கவும்'
-            : 'Select scripture directly from all 66 books of the Bible.'}
-        </p>
       </div>
 
-      {/* Selected Verse Preview & Action */}
-      {currentVerse && selectedBook && (
-        <div className="p-3.5 rounded-xl bg-gradient-to-br from-amber-500/15 to-slate-800/80 border border-amber-500/30 mb-4">
-          <div className="flex items-center justify-between mb-2">
+      {/* Quick Scripture Selection Dropdowns */}
+      <div className="space-y-2">
+        <div>
+          <span className="studio-section-label">{isTa ? 'புத்தகம்' : 'Book'}</span>
+          <select
+            value={selectedBookId}
+            onChange={(e) => {
+              setSelectedBookId(Number(e.target.value));
+              setSelectedChapter(1);
+              setSelectedVerseNum(1);
+            }}
+            className="w-full bg-slate-900 border border-slate-700/80 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+          >
+            {books.map((b) => (
+              <option key={b.id} value={b.id}>
+                {isTa ? b.name_ta : b.name_en} ({b.name_en})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <span className="studio-section-label">{isTa ? 'அதிகாரம்' : 'Chapter'}</span>
+            <select
+              value={selectedChapter}
+              onChange={(e) => {
+                setSelectedChapter(Number(e.target.value));
+                setSelectedVerseNum(1);
+              }}
+              className="w-full bg-slate-900 border border-slate-700/80 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+            >
+              {Array.from({ length: activeBook?.total_chapters || 1 }, (_, i) => i + 1).map((ch) => (
+                <option key={ch} value={ch}>
+                  {ch}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <span className="studio-section-label">{isTa ? 'வசனம்' : 'Verse'}</span>
+            <select
+              value={selectedVerseNum}
+              onChange={(e) => setSelectedVerseNum(Number(e.target.value))}
+              className="w-full bg-slate-900 border border-slate-700/80 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+            >
+              {verses.map((v) => (
+                <option key={v.verse} value={v.verse}>
+                  {v.verse}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Selected Scripture Preview & Insert Button */}
+      {activeVerse && (
+        <div className="p-3 rounded-xl bg-slate-900 border border-amber-500/30">
+          <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs font-bold text-amber-300">
-              {isTa ? selectedBook.name_ta : selectedBook.name_en} {selectedChapter}:{currentVerse.verse}
+              {isTa ? activeBook?.name_ta : activeBook?.name_en} {selectedChapter}:{activeVerse.verse}
             </span>
-            <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/20 text-amber-200">
-              {selectedBook.testament === 'OT' ? (isTa ? 'பழைய ஏற்பாடு' : 'Old Testament') : (isTa ? 'புதிய ஏற்பாடு' : 'New Testament')}
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-200">
+              Selected
             </span>
           </div>
 
-          <div className="text-xs text-slate-200 font-serif leading-relaxed line-clamp-3 mb-1.5">
-            {currentVerse.text_ta}
-          </div>
-          <div className="text-[11px] text-slate-400 italic line-clamp-2 mb-3">
-            {currentVerse.text_en}
-          </div>
+          <p className="text-xs text-slate-200 leading-relaxed font-serif line-clamp-3 mb-1">
+            {activeVerse.text_ta}
+          </p>
+          <p className="text-[11px] text-slate-400 italic line-clamp-2 mb-3">
+            {activeVerse.text_en}
+          </p>
 
           <button
-            onClick={handleApplyVerse}
-            className="w-full py-2 px-3 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-amber-900/30 transition-all active:scale-95"
+            onClick={handleApply}
+            className="w-full py-2 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-amber-950/40 transition-all active:scale-95"
           >
             <Sparkles size={14} />
-            <span>{isTa ? 'இந்த வசனத்தை கார்டில் மாற்று' : 'Apply to Verse Card'}</span>
+            <span>{isTa ? 'வடிவமைப்பில் சேர்க்க' : 'Apply to Canvas'}</span>
           </button>
         </div>
       )}
 
-      {/* Testament Filter & Search */}
-      <div className="space-y-2 mb-3">
-        <div className="flex gap-1 p-1 bg-slate-900/80 rounded-lg border border-slate-800">
-          {(['ALL', 'OT', 'NT'] as const).map(t => (
+      {/* Popular Scripture Quick Chips */}
+      <div className="studio-section">
+        <span className="studio-section-label">{isTa ? 'பிரபலமான வசனங்கள்' : 'Quick Scripture'}</span>
+        <div className="grid grid-cols-2 gap-1.5">
+          {POPULAR_VERSES.map((pop, i) => (
             <button
-              key={t}
-              onClick={() => setTestamentFilter(t)}
-              className={`flex-1 py-1 text-xs font-semibold rounded-md transition-all ${
-                testamentFilter === t
-                  ? 'bg-amber-500 text-slate-950 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
+              key={i}
+              onClick={() => handleSelectPopular(pop)}
+              className="py-1.5 px-2 rounded-lg bg-slate-800/70 hover:bg-slate-700/80 border border-slate-700/50 text-[11px] text-slate-200 text-center transition-all truncate"
             >
-              {t === 'ALL' ? (isTa ? 'அனைத்தும்' : 'All') : t === 'OT' ? (isTa ? 'ப.ஏ' : 'OT') : (isTa ? 'பு.ஏ' : 'NT')}
+              {isTa ? pop.refTa : pop.ref}
             </button>
           ))}
         </div>
-
-        <div className="relative">
-          <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder={isTa ? 'புத்தகம் தேடுக (எ.கா. யோவான், சங்கீதம்)' : 'Search book...'}
-            className="w-full bg-slate-900/90 border border-slate-700/60 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/70"
-          />
-        </div>
       </div>
-
-      {/* Book Grid */}
-      <div className="studio-section">
-        <span className="studio-section-label">
-          {isTa ? 'வேதாகம புத்தகம்' : 'Select Book'}
-        </span>
-        <div className="grid grid-cols-2 gap-1.5 max-h-44 overflow-y-auto pr-1">
-          {loading ? (
-            <div className="col-span-2 text-center py-4 text-xs text-slate-400">Loading Bible books...</div>
-          ) : (
-            filteredBooks.map(b => (
-              <button
-                key={b.id}
-                onClick={() => {
-                  setSelectedBook(b);
-                  setSelectedChapter(1);
-                }}
-                className={`p-2 rounded-lg text-left text-xs transition-all border ${
-                  selectedBook?.id === b.id
-                    ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 font-semibold'
-                    : 'bg-slate-800/50 border-slate-700/40 text-slate-300 hover:bg-slate-800 hover:border-slate-600'
-                }`}
-              >
-                <div className="truncate">{isTa ? b.name_ta : b.name_en}</div>
-                <div className="text-[10px] text-slate-400 truncate">
-                  {isTa ? b.name_en : b.name_ta} • {b.total_chapters} ch
-                </div>
-              </button>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* Chapter & Verse Selectors */}
-      {selectedBook && (
-        <div className="grid grid-cols-2 gap-3 mt-3">
-          <div>
-            <span className="studio-section-label">
-              {isTa ? 'அதிகாரம்' : 'Chapter'}
-            </span>
-            <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto p-1 bg-slate-900/60 rounded-lg border border-slate-800">
-              {Array.from({ length: selectedBook.total_chapters }, (_, i) => i + 1).map(ch => (
-                <button
-                  key={ch}
-                  onClick={() => setSelectedChapter(ch)}
-                  className={`w-7 h-7 text-xs rounded font-medium transition-all ${
-                    selectedChapter === ch
-                      ? 'bg-amber-500 text-slate-950 font-bold'
-                      : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
-                  }`}
-                >
-                  {ch}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <span className="studio-section-label">
-              {isTa ? 'வசனம்' : 'Verse'}
-            </span>
-            <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto p-1 bg-slate-900/60 rounded-lg border border-slate-800">
-              {verses.map(v => (
-                <button
-                  key={v.verse}
-                  onClick={() => setSelectedVerseNum(v.verse)}
-                  className={`w-7 h-7 text-xs rounded font-medium transition-all ${
-                    selectedVerseNum === v.verse
-                      ? 'bg-amber-500 text-slate-950 font-bold'
-                      : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
-                  }`}
-                >
-                  {v.verse}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
