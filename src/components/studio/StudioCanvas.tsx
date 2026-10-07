@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { StudioProject, StudioLayer } from './types';
+import { StudioProject, StudioLayer, TextLayer, ShapeLayer } from './types';
 import { renderStudioCanvas } from './studioRenderer';
 
 interface StudioCanvasProps {
@@ -65,9 +65,9 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
     });
   }, [project, selectedLayerId, showGuides, showSafeArea, snapLines]);
 
-  // Transform Mouse event into Canvas Coordinates
+  // Transform Mouse/Pointer/Touch event into Canvas Coordinates
   const getCanvasCoords = useCallback(
-    (e: React.MouseEvent | MouseEvent) => {
+    (e: React.PointerEvent | PointerEvent | React.MouseEvent | MouseEvent) => {
       const canvas = canvasRef.current;
       if (!canvas) return { x: 0, y: 0 };
       const rect = canvas.getBoundingClientRect();
@@ -81,18 +81,118 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
     [W, H]
   );
 
+  // Precision Layer Hit-Testing
+  const findLayerAtCoords = useCallback(
+    (x: number, y: number, currentId: string | null): StudioLayer | null => {
+      const activeLayers = project.layers.filter((l) => l.visible && !l.locked);
+      if (activeLayers.length === 0) return null;
+
+      // Classify layers into priority groups:
+      // Group 1: Interactive Content (Text & Symbols)
+      // Group 2: Media & Filled Shapes (Images, solid cards)
+      // Group 3: Hollow Border Frames (decorative frames)
+      const group1: StudioLayer[] = [];
+      const group2: StudioLayer[] = [];
+      const group3: StudioLayer[] = [];
+
+      for (const l of activeLayers) {
+        if (l.type === 'text') {
+          const tl = l as TextLayer;
+          const fontSize = Math.max(12, tl.fontSize || 32);
+          const lineH = fontSize * (tl.lineHeight || 1.6);
+          const text = tl.text || '';
+          const lines = text.split('\n');
+          const avgCharW = fontSize * 0.52;
+          const maxChars = Math.max(1, Math.floor(tl.width / avgCharW));
+          let lineCount = 0;
+          for (const line of lines) {
+            lineCount += Math.max(1, Math.ceil(line.length / maxChars));
+          }
+          const actualH = Math.max(lineCount * lineH, fontSize * 1.4);
+          const pad = tl.hasBgBox ? (tl.bgBoxPadding || 12) + 10 : 10;
+
+          if (
+            x >= tl.x - pad &&
+            x <= tl.x + tl.width + pad &&
+            y >= tl.y - pad &&
+            y <= tl.y + actualH + pad
+          ) {
+            group1.push(tl);
+          }
+        } else if (l.type === 'element') {
+          const pad = 10;
+          if (
+            x >= l.x - pad &&
+            x <= l.x + l.width + pad &&
+            y >= l.y - pad &&
+            y <= l.y + l.height + pad
+          ) {
+            group1.push(l);
+          }
+        } else if (l.type === 'image') {
+          if (
+            x >= l.x &&
+            x <= l.x + l.width &&
+            y >= l.y &&
+            y <= l.y + l.height
+          ) {
+            group2.push(l);
+          }
+        } else if (l.type === 'shape') {
+          const sl = l as ShapeLayer;
+          const isHollow = !sl.fillColor || sl.fillColor === 'transparent';
+          const inOuter =
+            x >= sl.x &&
+            x <= sl.x + sl.width &&
+            y >= sl.y &&
+            y <= sl.y + sl.height;
+
+          if (inOuter) {
+            if (isHollow) {
+              // Only hit if within the frame border stroke (24px thickness)
+              const strokeW = Math.max(24, sl.borderWidth || 2);
+              const inInner =
+                x > sl.x + strokeW &&
+                x < sl.x + sl.width - strokeW &&
+                y > sl.y + strokeW &&
+                y < sl.y + sl.height - strokeW;
+              if (!inInner) {
+                group3.push(sl);
+              }
+            } else {
+              group2.push(sl);
+            }
+          }
+        }
+      }
+
+      // Sort each group descending by zIndex
+      group1.sort((a, b) => b.zIndex - a.zIndex);
+      group2.sort((a, b) => b.zIndex - a.zIndex);
+      group3.sort((a, b) => b.zIndex - a.zIndex);
+
+      const allMatches = [...group1, ...group2, ...group3];
+      if (allMatches.length === 0) return null;
+
+      // If user clicks on an already selected layer and there are others underneath, cycle to next layer
+      if (currentId && allMatches.length > 1) {
+        const curIdx = allMatches.findIndex((m) => m.id === currentId);
+        if (curIdx >= 0) {
+          const nextIdx = (curIdx + 1) % allMatches.length;
+          return allMatches[nextIdx];
+        }
+      }
+
+      // Return highest priority match (Group 1 > Group 2 > Group 3)
+      return allMatches[0];
+    },
+    [project.layers]
+  );
+
   // Pointer down on canvas to select or start drag
-  const handleCanvasMouseDown = (e: React.MouseEvent) => {
+  const handleCanvasPointerDown = (e: React.PointerEvent) => {
     const { x, y } = getCanvasCoords(e);
-
-    // Check if clicked inside any visible & unlocked layer (topmost first)
-    const reversedLayers = [...project.layers]
-      .filter((l) => l.visible && !l.locked)
-      .sort((a, b) => b.zIndex - a.zIndex);
-
-    const hit = reversedLayers.find((l) => {
-      return x >= l.x && x <= l.x + l.width && y >= l.y && y <= l.y + l.height;
-    });
+    const hit = findLayerAtCoords(x, y, selectedLayerId);
 
     if (hit) {
       onSelectLayer(hit.id);
@@ -113,7 +213,7 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
   };
 
   // Start resize / rotate handles
-  const handleHandleMouseDown = (e: React.MouseEvent, action: DragAction) => {
+  const handleHandlePointerDown = (e: React.PointerEvent, action: DragAction) => {
     e.stopPropagation();
     if (!selectedLayer) return;
     const { x, y } = getCanvasCoords(e);
@@ -129,11 +229,11 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
     });
   };
 
-  // Mouse Move Dragging / Resizing
+  // Pointer Move Dragging / Resizing
   useEffect(() => {
     if (!dragAction || !dragStart || !selectedLayer) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const handlePointerMove = (e: PointerEvent) => {
       const { x: curX, y: curY } = getCanvasCoords(e);
       const dx = curX - dragStart.mouseX;
       const dy = curY - dragStart.mouseY;
@@ -185,7 +285,6 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
         const rad = Math.atan2(curY - centerY, curX - centerX);
         let deg = Math.round((rad * 180) / Math.PI) + 90;
         if (deg < 0) deg += 360;
-        // Snap to 0, 90, 180, 270 if close
         if (Math.abs(deg - 0) < 5 || Math.abs(deg - 360) < 5) deg = 0;
         if (Math.abs(deg - 90) < 5) deg = 90;
         if (Math.abs(deg - 180) < 5) deg = 180;
@@ -194,23 +293,23 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
       }
     };
 
-    const handleMouseUp = () => {
+    const handlePointerUp = () => {
       setDragAction(null);
       setDragStart(null);
       setSnapLines({});
       onPushHistory();
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
     };
   }, [dragAction, dragStart, selectedLayer, getCanvasCoords, W, H, onUpdateLayer, onPushHistory]);
 
-  // Proper Prominent Display Scaling (Handles zoom as factor 0.75 or percentage 75)
-  const baseScale = 0.50; // generous footprint for creative preview
+  // Display Scaling
+  const baseScale = 0.50;
   const zoomFactor = typeof zoom === 'number' && zoom > 0 ? (zoom > 5 ? zoom / 100 : zoom) : 1;
   const displayW = Math.max(260, Math.round(W * baseScale * zoomFactor));
   const displayH = Math.max(260, Math.round(H * baseScale * zoomFactor));
@@ -252,13 +351,14 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
           ref={canvasRef}
           width={W}
           height={H}
-          onMouseDown={handleCanvasMouseDown}
+          onPointerDown={handleCanvasPointerDown}
           style={{
             width: '100%',
             height: '100%',
             display: 'block',
             cursor: dragAction === 'move' ? 'grabbing' : 'default',
-            borderRadius: '6px'
+            borderRadius: '6px',
+            touchAction: 'none'
           }}
         />
 
@@ -281,7 +381,7 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
           >
             {/* Top Rotation Handle */}
             <div
-              onMouseDown={(e) => handleHandleMouseDown(e, 'rotate')}
+              onPointerDown={(e) => handleHandlePointerDown(e, 'rotate')}
               style={{
                 position: 'absolute',
                 top: '-26px',
@@ -294,14 +394,15 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
                 border: '2px solid #ffffff',
                 cursor: 'grab',
                 pointerEvents: 'auto',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.5)'
+                boxShadow: '0 2px 6px rgba(0,0,0,0.5)',
+                touchAction: 'none'
               }}
               title="Rotate"
             />
 
             {/* 4 Corner Resize Handles */}
             <div
-              onMouseDown={(e) => handleHandleMouseDown(e, 'resize-nw')}
+              onPointerDown={(e) => handleHandlePointerDown(e, 'resize-nw')}
               style={{
                 position: 'absolute',
                 top: '-7px',
@@ -313,11 +414,12 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
                 borderRadius: '3px',
                 cursor: 'nwse-resize',
                 pointerEvents: 'auto',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.4)'
+                boxShadow: '0 2px 4px rgba(0,0,0,0.4)',
+                touchAction: 'none'
               }}
             />
             <div
-              onMouseDown={(e) => handleHandleMouseDown(e, 'resize-ne')}
+              onPointerDown={(e) => handleHandlePointerDown(e, 'resize-ne')}
               style={{
                 position: 'absolute',
                 top: '-7px',
@@ -329,11 +431,12 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
                 borderRadius: '3px',
                 cursor: 'nesw-resize',
                 pointerEvents: 'auto',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.4)'
+                boxShadow: '0 2px 4px rgba(0,0,0,0.4)',
+                touchAction: 'none'
               }}
             />
             <div
-              onMouseDown={(e) => handleHandleMouseDown(e, 'resize-sw')}
+              onPointerDown={(e) => handleHandlePointerDown(e, 'resize-sw')}
               style={{
                 position: 'absolute',
                 bottom: '-7px',
@@ -345,11 +448,12 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
                 borderRadius: '3px',
                 cursor: 'nesw-resize',
                 pointerEvents: 'auto',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.4)'
+                boxShadow: '0 2px 4px rgba(0,0,0,0.4)',
+                touchAction: 'none'
               }}
             />
             <div
-              onMouseDown={(e) => handleHandleMouseDown(e, 'resize-se')}
+              onPointerDown={(e) => handleHandlePointerDown(e, 'resize-se')}
               style={{
                 position: 'absolute',
                 bottom: '-7px',
@@ -361,7 +465,8 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
                 borderRadius: '3px',
                 cursor: 'nwse-resize',
                 pointerEvents: 'auto',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.4)'
+                boxShadow: '0 2px 4px rgba(0,0,0,0.4)',
+                touchAction: 'none'
               }}
             />
           </div>

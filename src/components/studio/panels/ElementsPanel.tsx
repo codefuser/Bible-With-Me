@@ -57,34 +57,48 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
       </div>
 
       {/* Category Pills */}
-      <div className="flex gap-1.5 overflow-x-auto pb-2 mb-3">
-        {categories.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-              selectedCategory === cat
-                ? 'bg-amber-500 text-slate-950 shadow'
-                : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-700'
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
+      <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '4px' }}>
+        {categories.map(cat => {
+          const isActive = selectedCategory === cat;
+          return (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`studio-chip ${isActive ? 'active' : ''}`}
+            >
+              {cat}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Elements Grid */}
-      <div className="grid grid-cols-2 gap-2.5">
+      {/* Elements 2-Column Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
         {filteredElements.map(elem => (
           <button
             key={elem.id}
             onClick={() => handleAddElement(elem)}
-            className="group flex flex-col items-center justify-center p-3 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-amber-500/50 transition-all text-center relative"
+            className="studio-btn-card"
+            style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0.75rem 0.5rem',
+              textAlign: 'center'
+            }}
           >
-            <div className="w-12 h-12 flex items-center justify-center mb-2 transition-transform group-hover:scale-110">
+            <div
+              style={{
+                width: '44px',
+                height: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '0.4rem'
+              }}
+            >
               <svg
                 viewBox={elem.viewBox}
-                className="w-10 h-10 drop-shadow-md"
+                style={{ width: '36px', height: '36px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }}
                 fill={elem.svgPath.includes('M2 22') || elem.svgPath.includes('M12 22') ? 'none' : elem.defaultColor}
                 stroke={elem.svgPath.includes('M2 22') || elem.svgPath.includes('M12 22') ? elem.defaultColor : 'none'}
                 strokeWidth={elem.svgPath.includes('M2 22') || elem.svgPath.includes('M12 22') ? 2 : 0}
@@ -93,13 +107,21 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
               </svg>
             </div>
 
-            <div className="text-xs font-semibold text-slate-200 group-hover:text-amber-300 truncate w-full">
+            <div
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                color: '#f8fafc',
+                maxWidth: '100%',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}
+            >
               {isTa ? elem.nameTa : elem.name}
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">{elem.category}</div>
-
-            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-amber-500 text-slate-950 p-1 rounded-full">
-              <Plus size={10} />
+            <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '2px' }}>
+              {elem.category}
             </div>
           </button>
         ))}

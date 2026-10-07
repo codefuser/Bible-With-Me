@@ -32,26 +32,26 @@ export const ShapesPanel: React.FC<ShapesPanelProps> = ({
     {
       id: 'rounded',
       name: 'Card Backplate',
-      nameTa: 'அட்டை பின்னணி பலகை',
+      nameTa: 'பின்னணி அட்டை',
       wRatio: 0.84,
-      hRatio: 0.6,
+      hRatio: 0.55,
       radius: 28,
       fill: 'rgba(15, 23, 42, 0.65)',
       border: 'rgba(255, 255, 255, 0.15)',
       borderW: 1.5,
-      icon: <Square size={20} className="rounded-md" />
+      icon: <Square size={18} />
     },
     {
       id: 'rect',
-      name: 'Rectangle Box',
-      nameTa: 'செவ்வகம்',
-      wRatio: 0.8,
-      hRatio: 0.5,
-      radius: 0,
-      fill: 'rgba(0, 0, 0, 0.45)',
+      name: 'Gold Border Box',
+      nameTa: 'தங்க எல்லை',
+      wRatio: 0.86,
+      hRatio: 0.86,
+      radius: 12,
+      fill: 'transparent',
       border: '#fbbf24',
       borderW: 2,
-      icon: <Square size={20} />
+      icon: <Square size={18} />
     },
     {
       id: 'circle',
@@ -63,55 +63,19 @@ export const ShapesPanel: React.FC<ShapesPanelProps> = ({
       fill: 'rgba(251, 191, 36, 0.12)',
       border: 'rgba(251, 191, 36, 0.4)',
       borderW: 1.5,
-      icon: <Circle size={20} />
-    },
-    {
-      id: 'arch',
-      name: 'Cathedral Arch',
-      nameTa: 'ஆலய வளைவு',
-      wRatio: 0.75,
-      hRatio: 0.65,
-      radius: 36,
-      fill: 'rgba(255, 255, 255, 0.08)',
-      border: 'rgba(255, 255, 255, 0.25)',
-      borderW: 1.5,
-      icon: <Square size={20} className="rounded-t-2xl" />
+      icon: <Circle size={18} />
     },
     {
       id: 'line',
-      name: 'Divider Line',
-      nameTa: 'பிரிப்புக் கோடு',
-      wRatio: 0.4,
+      name: 'Accent Divider',
+      nameTa: 'கோடு',
+      wRatio: 0.5,
       hRatio: 0.005,
-      radius: 2,
+      radius: 99,
       fill: '#fbbf24',
       border: 'transparent',
       borderW: 0,
-      icon: <Minus size={20} />
-    },
-    {
-      id: 'star',
-      name: 'Light Star',
-      nameTa: 'நட்சத்திரம்',
-      wRatio: 0.15,
-      hRatio: 0.15,
-      radius: 0,
-      fill: '#fbbf24',
-      border: 'transparent',
-      borderW: 0,
-      icon: <Star size={20} />
-    },
-    {
-      id: 'heart',
-      name: 'Grace Heart',
-      nameTa: 'அன்பின் இதயம்',
-      wRatio: 0.15,
-      hRatio: 0.15,
-      radius: 0,
-      fill: '#f43f5e',
-      border: 'transparent',
-      borderW: 0,
-      icon: <Heart size={20} />
+      icon: <Minus size={18} />
     }
   ];
 
@@ -132,7 +96,7 @@ export const ShapesPanel: React.FC<ShapesPanelProps> = ({
       opacity: 1,
       visible: true,
       locked: false,
-      zIndex: 1, // usually behind text
+      zIndex: 1, // behind text
       fillColor: shape.fill,
       borderColor: shape.border,
       borderWidth: shape.borderW,
@@ -148,27 +112,54 @@ export const ShapesPanel: React.FC<ShapesPanelProps> = ({
       <div className="studio-panel-header">
         <h3 className="studio-panel-title">
           <Square size={16} className="text-amber-400" />
-          <span>{isTa ? 'வடிவங்கள்' : 'Shapes & Plates'}</span>
+          <span>{isTa ? 'வடிவங்கள்' : 'Shapes & Frames'}</span>
         </h3>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        {SHAPE_PRESETS.map(shape => (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+        {SHAPE_PRESETS.map((shape) => (
           <button
             key={shape.id}
             onClick={() => handleAddShape(shape)}
-            className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-amber-500/50 text-left transition-all group"
+            className="studio-btn-card"
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: '0.6rem',
+              padding: '0.65rem 0.5rem'
+            }}
           >
-            <div className="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center text-amber-400 shrink-0 border border-slate-700">
+            <div
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                backgroundColor: '#090d16',
+                border: '1px solid rgba(255,255,255,0.08)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fbbf24',
+                flexShrink: 0
+              }}
+            >
               {shape.icon}
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-semibold text-slate-200 group-hover:text-amber-300 truncate">
+            <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+              <div
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  color: '#f8fafc',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}
+              >
                 {isTa ? shape.nameTa : shape.name}
               </div>
-              <div className="text-[10px] text-slate-400">Click to insert</div>
+              <div style={{ fontSize: '0.62rem', color: '#94a3b8' }}>+ Insert</div>
             </div>
-            <Plus size={14} className="text-slate-500 group-hover:text-amber-400 shrink-0" />
           </button>
         ))}
       </div>

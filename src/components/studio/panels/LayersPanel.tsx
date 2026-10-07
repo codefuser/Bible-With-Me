@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   Layers, Eye, EyeOff, Lock, Unlock, Trash2, Copy,
-  ArrowUp, ArrowDown, Type, Image as ImageIcon, Square, Sparkles, Check
+  ArrowUp, ArrowDown, Type, Image as ImageIcon, Square, Sparkles
 } from 'lucide-react';
 import { StudioProject, StudioLayer } from '../types';
 
@@ -44,6 +44,9 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
         <h3 className="studio-panel-title">
           <Layers size={16} className="text-amber-400" />
           <span>{isTa ? 'அடுக்குகள்' : 'Layers'}</span>
+          <span className="text-[11px] text-slate-400 ml-auto font-normal">
+            ({project.layers.length})
+          </span>
         </h3>
       </div>
 
@@ -59,38 +62,65 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
               <div
                 key={layer.id}
                 onClick={() => onSelectLayer(layer.id)}
-                className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-amber-500/15 border-amber-500/60 shadow-sm'
-                    : 'bg-slate-800/60 border-slate-700/50 hover:bg-slate-800 hover:border-slate-600'
-                }`}
+                className={`studio-layer-card ${isSelected ? 'active' : ''}`}
               >
-                {/* Type Icon */}
-                <div className="w-6 h-6 rounded bg-slate-900/80 flex items-center justify-center shrink-0">
+                {/* Type Icon Badge */}
+                <div
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '7px',
+                    backgroundColor: '#090d16',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}
+                >
                   {getLayerIcon(layer.type)}
                 </div>
 
                 {/* Layer Name / Text snippet */}
-                <div className="flex-1 min-w-0">
-                  <div className={`text-xs font-semibold truncate ${isSelected ? 'text-amber-300' : 'text-slate-200'}`}>
+                <div className="flex-1 min-w-0" style={{ overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      fontSize: '0.76rem',
+                      fontWeight: 600,
+                      color: isSelected ? '#fbbf24' : '#f1f5f9',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
                     {layer.name}
                   </div>
                   {layer.type === 'text' && (
-                    <div className="text-[10px] text-slate-400 truncate">
+                    <div
+                      style={{
+                        fontSize: '0.68rem',
+                        color: '#94a3b8',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        marginTop: '1px'
+                      }}
+                    >
                       {layer.text}
                     </div>
                   )}
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                <div
+                  className="flex items-center gap-1 shrink-0"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {/* Visibility Toggle */}
                   <button
                     onClick={() => onUpdateLayer(layer.id, { visible: !layer.visible })}
                     title={layer.visible ? 'Hide layer' : 'Show layer'}
-                    className={`p-1 rounded hover:bg-slate-700 transition-colors ${
-                      layer.visible ? 'text-slate-300' : 'text-slate-600'
-                    }`}
+                    className={`studio-btn-icon ${layer.visible ? '' : 'text-slate-600'}`}
                   >
                     {layer.visible ? <Eye size={13} /> : <EyeOff size={13} />}
                   </button>
@@ -99,9 +129,7 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
                   <button
                     onClick={() => onUpdateLayer(layer.id, { locked: !layer.locked })}
                     title={layer.locked ? 'Unlock' : 'Lock'}
-                    className={`p-1 rounded hover:bg-slate-700 transition-colors ${
-                      layer.locked ? 'text-amber-400' : 'text-slate-500'
-                    }`}
+                    className={`studio-btn-icon ${layer.locked ? 'active' : ''}`}
                   >
                     {layer.locked ? <Lock size={13} /> : <Unlock size={13} />}
                   </button>
@@ -111,7 +139,7 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
                     onClick={() => onMoveLayer(layer.id, 'up')}
                     disabled={index === 0}
                     title="Bring forward"
-                    className="p-1 rounded hover:bg-slate-700 text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent"
+                    className="studio-btn-icon"
                   >
                     <ArrowUp size={13} />
                   </button>
@@ -121,7 +149,7 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
                     onClick={() => onMoveLayer(layer.id, 'down')}
                     disabled={index === sortedLayers.length - 1}
                     title="Send backward"
-                    className="p-1 rounded hover:bg-slate-700 text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent"
+                    className="studio-btn-icon"
                   >
                     <ArrowDown size={13} />
                   </button>
@@ -130,7 +158,7 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
                   <button
                     onClick={() => onDuplicateLayer(layer.id)}
                     title="Duplicate"
-                    className="p-1 rounded hover:bg-slate-700 text-slate-400 hover:text-amber-400"
+                    className="studio-btn-icon"
                   >
                     <Copy size={13} />
                   </button>
@@ -139,7 +167,8 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
                   <button
                     onClick={() => onDeleteLayer(layer.id)}
                     title="Delete"
-                    className="p-1 rounded hover:bg-rose-900/40 text-slate-400 hover:text-rose-400"
+                    className="studio-btn-icon"
+                    style={{ color: '#fb7185' }}
                   >
                     <Trash2 size={13} />
                   </button>

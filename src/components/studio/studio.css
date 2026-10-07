@@ -13,11 +13,18 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   user-select: none;
   overflow: hidden;
+  box-sizing: border-box;
+}
+
+.bible-creative-studio *,
+.bible-creative-studio *::before,
+.bible-creative-studio *::after {
+  box-sizing: border-box;
 }
 
 /* ── Top Bar ── */
-.studio-top-bar {
-  height: 52px;
+.studio-top-bar, .studio-topbar {
+  height: 54px;
   background-color: #0c101d;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
@@ -39,14 +46,14 @@
 
 /* ── Left Navigation Tool Strip ── */
 .studio-left-nav {
-  width: 64px;
+  width: 72px;
   background-color: #090d16;
-  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 0.5rem 0;
-  gap: 0.2rem;
+  gap: 0.25rem;
   overflow-y: auto;
   overflow-x: hidden;
   flex-shrink: 0;
@@ -54,30 +61,33 @@
 }
 
 .studio-nav-btn {
-  width: 54px;
+  width: 62px;
   height: 52px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.2rem;
+  gap: 0.25rem;
   background: transparent;
-  border: none;
-  border-radius: 8px;
+  border: 1px solid transparent;
+  border-radius: 9px;
   color: #94a3b8;
   cursor: pointer;
   transition: all 140ms ease;
   position: relative;
+  padding: 2px 4px;
 }
 
 .studio-nav-btn:hover {
   background-color: rgba(255, 255, 255, 0.06);
   color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .studio-nav-btn.active {
   background-color: rgba(245, 158, 11, 0.15);
   color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.35);
 }
 
 .studio-nav-btn.active::before {
@@ -98,11 +108,11 @@
 }
 
 .studio-nav-label {
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   text-align: center;
-  max-width: 52px;
+  max-width: 60px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -110,7 +120,7 @@
 
 /* ── Slide-out Compact Panel Drawer ── */
 .studio-drawer {
-  width: 280px;
+  width: 295px;
   background-color: #0d1220;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
@@ -136,16 +146,16 @@
 }
 
 .studio-panel-header {
-  margin-bottom: 0.125rem;
+  margin-bottom: 0.25rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .studio-panel-title {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.875rem;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: #f8fafc;
   margin: 0;
@@ -154,16 +164,17 @@
 .studio-section {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 0.45rem;
 }
 
 .studio-section-label {
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: #94a3b8;
-  margin-bottom: 0.125rem;
+  margin-bottom: 0.15rem;
+  display: block;
 }
 
 /* ── Central Canvas Viewport ── */
@@ -188,7 +199,7 @@
 
 /* ── Right Properties Panel ── */
 .studio-properties-panel {
-  width: 265px;
+  width: 275px;
   background-color: #0d1220;
   border-left: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
@@ -212,6 +223,9 @@
   padding: 0.875rem;
   overflow-y: auto;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
 }
 
 /* ── Bottom Status Bar ── */
@@ -228,13 +242,536 @@
   flex-shrink: 0;
 }
 
-/* ── Responsive Behavior ── */
+/* ════════════════════════════════════════════════════════════════ */
+/* FORM CONTROLS & RESETS (OVERRIDING GLOBAL NAKED RESETS)         */
+/* ════════════════════════════════════════════════════════════════ */
+
+.bible-creative-studio input[type="text"],
+.bible-creative-studio input[type="number"],
+.bible-creative-studio select,
+.bible-creative-studio textarea {
+  width: 100%;
+  background-color: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 0.78rem;
+  color: #f8fafc;
+  outline: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+  font-family: inherit;
+}
+
+.bible-creative-studio input[type="text"]:focus,
+.bible-creative-studio input[type="number"]:focus,
+.bible-creative-studio select:focus,
+.bible-creative-studio textarea:focus {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+}
+
+.bible-creative-studio select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+
+.bible-creative-studio select option {
+  background-color: #0f172a;
+  color: #f8fafc;
+  padding: 6px;
+}
+
+.bible-creative-studio input[type="range"] {
+  width: 100%;
+  height: 6px;
+  background-color: #1e293b;
+  border-radius: 99px;
+  appearance: none;
+  outline: none;
+  cursor: pointer;
+  margin: 6px 0;
+}
+
+.bible-creative-studio input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #f59e0b;
+  border: 2px solid #ffffff;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  transition: transform 120ms ease;
+}
+
+.bible-creative-studio input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.18);
+  background-color: #fbbf24;
+}
+
+.bible-creative-studio input[type="checkbox"] {
+  appearance: auto;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: #f59e0b;
+}
+
+/* ════════════════════════════════════════════════════════════════ */
+/* ESSENTIAL TAILWIND-COMPATIBLE UTILITY STYLES FOR STUDIO         */
+/* ════════════════════════════════════════════════════════════════ */
+
+.bible-creative-studio .hidden { display: none !important; }
+.bible-creative-studio .block { display: block; }
+.bible-creative-studio .flex { display: flex; }
+.bible-creative-studio .inline-flex { display: inline-flex; }
+.bible-creative-studio .grid { display: grid; }
+
+.bible-creative-studio .flex-col { flex-direction: column; }
+.bible-creative-studio .flex-row { flex-direction: row; }
+.bible-creative-studio .flex-wrap { flex-wrap: wrap; }
+.bible-creative-studio .flex-1 { flex: 1 1 0%; }
+.bible-creative-studio .shrink-0 { flex-shrink: 0; }
+.bible-creative-studio .min-w-0 { min-width: 0px; }
+
+.bible-creative-studio .items-center { align-items: center; }
+.bible-creative-studio .items-start { align-items: flex-start; }
+.bible-creative-studio .items-end { align-items: flex-end; }
+
+.bible-creative-studio .justify-center { justify-content: center; }
+.bible-creative-studio .justify-between { justify-content: space-between; }
+.bible-creative-studio .justify-start { justify-content: flex-start; }
+.bible-creative-studio .justify-end { justify-content: flex-end; }
+
+.bible-creative-studio .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.bible-creative-studio .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.bible-creative-studio .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.bible-creative-studio .grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.bible-creative-studio .grid-cols-7 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+
+.bible-creative-studio .gap-1 { gap: 0.25rem; }
+.bible-creative-studio .gap-1\.5 { gap: 0.375rem; }
+.bible-creative-studio .gap-2 { gap: 0.5rem; }
+.bible-creative-studio .gap-2\.5 { gap: 0.625rem; }
+.bible-creative-studio .gap-3 { gap: 0.75rem; }
+.bible-creative-studio .gap-4 { gap: 1rem; }
+
+.bible-creative-studio .space-y-1 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.25rem; }
+.bible-creative-studio .space-y-1\.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.375rem; }
+.bible-creative-studio .space-y-2 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.5rem; }
+.bible-creative-studio .space-y-2\.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.625rem; }
+.bible-creative-studio .space-y-3 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.75rem; }
+
+.bible-creative-studio .w-full { width: 100%; }
+.bible-creative-studio .h-full { height: 100%; }
+.bible-creative-studio .w-4 { width: 1rem; }
+.bible-creative-studio .h-4 { height: 1rem; }
+.bible-creative-studio .w-6 { width: 1.5rem; }
+.bible-creative-studio .h-6 { height: 1.5rem; }
+.bible-creative-studio .w-8 { width: 2rem; }
+.bible-creative-studio .h-8 { height: 2rem; }
+.bible-creative-studio .w-10 { width: 2.5rem; }
+.bible-creative-studio .h-10 { height: 2.5rem; }
+.bible-creative-studio .w-12 { width: 3rem; }
+.bible-creative-studio .h-12 { height: 3rem; }
+
+.bible-creative-studio .p-1 { padding: 0.25rem; }
+.bible-creative-studio .p-1\.5 { padding: 0.375rem; }
+.bible-creative-studio .p-2 { padding: 0.5rem; }
+.bible-creative-studio .p-2\.5 { padding: 0.625rem; }
+.bible-creative-studio .p-3 { padding: 0.75rem; }
+.bible-creative-studio .p-4 { padding: 1rem; }
+.bible-creative-studio .px-1\.5 { padding-left: 0.375rem; padding-right: 0.375rem; }
+.bible-creative-studio .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+.bible-creative-studio .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+.bible-creative-studio .py-0\.5 { padding-top: 0.125rem; padding-bottom: 0.125rem; }
+.bible-creative-studio .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+.bible-creative-studio .py-1\.5 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
+.bible-creative-studio .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.bible-creative-studio .py-2\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
+.bible-creative-studio .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+.bible-creative-studio .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+
+.bible-creative-studio .mb-0 { margin-bottom: 0; }
+.bible-creative-studio .mb-1 { margin-bottom: 0.25rem; }
+.bible-creative-studio .mb-1\.5 { margin-bottom: 0.375rem; }
+.bible-creative-studio .mb-2 { margin-bottom: 0.5rem; }
+.bible-creative-studio .mb-3 { margin-bottom: 0.75rem; }
+.bible-creative-studio .mt-0\.5 { margin-top: 0.125rem; }
+.bible-creative-studio .mt-1 { margin-top: 0.25rem; }
+.bible-creative-studio .mt-2 { margin-top: 0.5rem; }
+
+.bible-creative-studio .rounded { border-radius: 0.25rem; }
+.bible-creative-studio .rounded-md { border-radius: 0.375rem; }
+.bible-creative-studio .rounded-lg { border-radius: 0.5rem; }
+.bible-creative-studio .rounded-xl { border-radius: 0.75rem; }
+.bible-creative-studio .rounded-2xl { border-radius: 1rem; }
+.bible-creative-studio .rounded-full { border-radius: 9999px; }
+
+.bible-creative-studio .border { border: 1px solid rgba(255, 255, 255, 0.1); }
+.bible-creative-studio .border-2 { border-width: 2px; }
+.bible-creative-studio .border-dashed { border-style: dashed; }
+.bible-creative-studio .border-t { border-top: 1px solid rgba(255, 255, 255, 0.1); }
+.bible-creative-studio .border-b { border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+
+/* Backgrounds */
+.bible-creative-studio .bg-slate-700 { background-color: #334155; }
+.bible-creative-studio .bg-slate-800 { background-color: #1e293b; }
+.bible-creative-studio .bg-slate-800\/50, .bible-creative-studio .bg-slate-800\/60 { background-color: rgba(30, 41, 59, 0.6); }
+.bible-creative-studio .bg-slate-800\/70, .bible-creative-studio .bg-slate-800\/80 { background-color: rgba(30, 41, 59, 0.8); }
+.bible-creative-studio .bg-slate-900 { background-color: #0f172a; }
+.bible-creative-studio .bg-slate-900\/80 { background-color: rgba(15, 23, 42, 0.8); }
+.bible-creative-studio .bg-slate-950 { background-color: #020617; }
+.bible-creative-studio .bg-amber-500 { background-color: #f59e0b; }
+.bible-creative-studio .bg-amber-500\/10 { background-color: rgba(245, 158, 11, 0.1); }
+.bible-creative-studio .bg-amber-500\/15 { background-color: rgba(245, 158, 11, 0.15); }
+.bible-creative-studio .bg-amber-500\/20 { background-color: rgba(245, 158, 11, 0.2); }
+.bible-creative-studio .bg-indigo-500\/20 { background-color: rgba(99, 102, 241, 0.2); }
+.bible-creative-studio .bg-emerald-500\/20 { background-color: rgba(16, 185, 129, 0.2); }
+.bible-creative-studio .bg-rose-900\/40 { background-color: rgba(136, 19, 55, 0.4); }
+
+/* Border Colors */
+.bible-creative-studio .border-slate-700, .bible-creative-studio .border-slate-700\/50, .bible-creative-studio .border-slate-700\/60, .bible-creative-studio .border-slate-700\/80 {
+  border-color: rgba(51, 65, 85, 0.8);
+}
+.bible-creative-studio .border-slate-800 { border-color: #1e293b; }
+.bible-creative-studio .border-amber-500 { border-color: #f59e0b; }
+.bible-creative-studio .border-amber-500\/30 { border-color: rgba(245, 158, 11, 0.3); }
+.bible-creative-studio .border-amber-500\/40 { border-color: rgba(245, 158, 11, 0.4); }
+.bible-creative-studio .border-amber-500\/60 { border-color: rgba(245, 158, 11, 0.6); }
+
+/* Typography */
+.bible-creative-studio .text-\[10px\] { font-size: 10px; }
+.bible-creative-studio .text-\[11px\] { font-size: 11px; }
+.bible-creative-studio .text-xs { font-size: 0.75rem; }
+.bible-creative-studio .text-sm { font-size: 0.875rem; }
+.bible-creative-studio .text-base { font-size: 1rem; }
+.bible-creative-studio .text-lg { font-size: 1.125rem; }
+
+.bible-creative-studio .font-bold { font-weight: 700; }
+.bible-creative-studio .font-semibold { font-weight: 600; }
+.bible-creative-studio .font-medium { font-weight: 500; }
+.bible-creative-studio .italic { font-style: italic; }
+.bible-creative-studio .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bible-creative-studio .text-center { text-align: center; }
+.bible-creative-studio .text-left { text-align: left; }
+.bible-creative-studio .text-right { text-align: right; }
+.bible-creative-studio .uppercase { text-transform: uppercase; }
+.bible-creative-studio .capitalize { text-transform: capitalize; }
+.bible-creative-studio .tracking-wider { letter-spacing: 0.05em; }
+
+/* Text Colors */
+.bible-creative-studio .text-white { color: #ffffff; }
+.bible-creative-studio .text-slate-100 { color: #f1f5f9; }
+.bible-creative-studio .text-slate-200 { color: #e2e8f0; }
+.bible-creative-studio .text-slate-300 { color: #cbd5e1; }
+.bible-creative-studio .text-slate-400 { color: #94a3b8; }
+.bible-creative-studio .text-slate-500 { color: #64748b; }
+.bible-creative-studio .text-slate-600 { color: #475569; }
+.bible-creative-studio .text-slate-950 { color: #020617; }
+.bible-creative-studio .text-amber-200 { color: #fde68a; }
+.bible-creative-studio .text-amber-300 { color: #fcd34d; }
+.bible-creative-studio .text-amber-400 { color: #fbbf24; }
+.bible-creative-studio .text-indigo-400 { color: #818cf8; }
+.bible-creative-studio .text-emerald-400 { color: #34d399; }
+.bible-creative-studio .text-rose-400 { color: #fb7185; }
+
+/* Interactive Hover & Transitions */
+.bible-creative-studio .cursor-pointer { cursor: pointer; }
+.bible-creative-studio .transition-all { transition: all 140ms ease; }
+.bible-creative-studio .transition-colors { transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease; }
+
+.bible-creative-studio button:hover {
+  filter: brightness(1.08);
+}
+
+.bible-creative-studio .hover\:bg-slate-700:hover { background-color: #334155; }
+.bible-creative-studio .hover\:bg-slate-800:hover { background-color: #1e293b; }
+.bible-creative-studio .hover\:bg-amber-400:hover { background-color: #fbbf24; }
+.bible-creative-studio .hover\:text-white:hover { color: #ffffff; }
+.bible-creative-studio .hover\:text-amber-300:hover { color: #fcd34d; }
+.bible-creative-studio .hover\:text-amber-400:hover { color: #fbbf24; }
+.bible-creative-studio .hover\:text-rose-400:hover { color: #fb7185; }
+.bible-creative-studio .hover\:border-amber-400:hover { border-color: #fbbf24; }
+.bible-creative-studio .hover\:border-amber-500\/50:hover { border-color: rgba(245, 158, 11, 0.5); }
+
+/* Shadows */
+.bible-creative-studio .shadow { box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3); }
+.bible-creative-studio .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2); }
+.bible-creative-studio .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); }
+.bible-creative-studio .drop-shadow-md { filter: drop-shadow(0 4px 3px rgba(0, 0, 0, 0.25)); }
+
+/* ════════════════════════════════════════════════════════════════ */
+/* DEDICATED PRE-STYLED STUDIO COMPONENTS                          */
+/* ════════════════════════════════════════════════════════════════ */
+
+/* Standard Action Button inside panels */
+.bible-creative-studio button {
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+/* Layer item card */
+.studio-layer-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  background-color: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.studio-layer-card:hover {
+  background-color: #172033;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.studio-layer-card.active {
+  background-color: rgba(245, 158, 11, 0.12);
+  border-color: #f59e0b;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.15);
+}
+
+/* Icon action button in toolbar / layers */
+.studio-btn-icon {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 120ms ease;
+  padding: 0;
+}
+
+.studio-btn-icon:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.studio-btn-icon.active {
+  background-color: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border-color: #f59e0b;
+}
+
+.studio-btn-icon:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Primary Big Action Button */
+.studio-btn-primary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border: none;
+  color: #090d16;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+  transition: all 140ms ease;
+}
+
+.studio-btn-primary:hover {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.45);
+  transform: translateY(-1px);
+}
+
+.studio-btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* Secondary Button */
+.studio-btn-secondary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  background-color: #172033;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  font-weight: 600;
+  font-size: 0.76rem;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.studio-btn-secondary:hover {
+  background-color: #212c44;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* Option Card Button (like Aspect Ratio, Headings, Shapes) */
+.studio-btn-card {
+  display: flex;
+  flex-direction: column;
+  padding: 0.625rem 0.75rem;
+  border-radius: 9px;
+  background-color: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: #e2e8f0;
+  text-align: left;
+  cursor: pointer;
+  transition: all 140ms ease;
+  position: relative;
+}
+
+.studio-btn-card:hover {
+  background-color: #172033;
+  border-color: rgba(245, 158, 11, 0.4);
+  transform: translateY(-1px);
+}
+
+.studio-btn-card.active {
+  background-color: rgba(245, 158, 11, 0.12);
+  border-color: #f59e0b;
+  color: #fbbf24;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.18);
+}
+
+/* Pill / Chip Button */
+.studio-chip {
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background-color: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 140ms ease;
+  text-align: center;
+}
+
+.studio-chip:hover {
+  background-color: #1e293b;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.studio-chip.active {
+  background-color: #f59e0b;
+  border-color: #f59e0b;
+  color: #090d16;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+/* Upload Dropzone Button */
+.studio-upload-card {
+  width: 100%;
+  padding: 1.125rem 0.75rem;
+  border-radius: 12px;
+  border: 2px dashed rgba(245, 158, 11, 0.45);
+  background-color: rgba(245, 158, 11, 0.06);
+  color: #fbbf24;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  transition: all 150ms ease;
+  text-align: center;
+}
+
+.studio-upload-card:hover {
+  border-color: #fbbf24;
+  background-color: rgba(245, 158, 11, 0.12);
+  transform: translateY(-1px);
+}
+
+.studio-upload-card:active {
+  transform: scale(0.98);
+}
+
+/* Slider with live value badge */
+.studio-slider-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.studio-slider-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.studio-slider-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fbbf24;
+  background-color: rgba(245, 158, 11, 0.15);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* Color swatch palette */
+.studio-palette-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
+}
+
+.studio-color-swatch {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 6px;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease;
+}
+
+.studio-color-swatch:hover {
+  transform: scale(1.15);
+  border-color: #ffffff;
+}
+
+.studio-color-swatch.active {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 2px #f59e0b, 0 0 8px rgba(245, 158, 11, 0.5);
+  transform: scale(1.1);
+}
+
+/* ════════════════════════════════════════════════════════════════ */
+/* RESPONSIVE LAYOUT FOR MOBILE / TABLET                           */
+/* ════════════════════════════════════════════════════════════════ */
+
 @media (max-width: 1024px) {
   .studio-properties-panel {
-    width: 240px;
+    width: 250px;
   }
   .studio-drawer {
-    width: 260px;
+    width: 280px;
   }
 }
 
@@ -244,7 +781,7 @@
   }
   .studio-left-nav {
     width: 100%;
-    height: 50px;
+    height: 52px;
     flex-direction: row;
     border-right: none;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -254,8 +791,8 @@
     overflow-y: hidden;
   }
   .studio-nav-btn {
-    width: 50px;
-    height: 44px;
+    width: 52px;
+    height: 46px;
     flex-shrink: 0;
   }
   .studio-nav-btn.active::before {
@@ -263,14 +800,14 @@
   }
   .studio-drawer {
     position: absolute;
-    bottom: 50px;
+    bottom: 52px;
     left: 0;
     right: 0;
     width: 100%;
-    height: 55vh;
+    height: 60vh;
     border-right: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 -12px 32px rgba(0,0,0,0.7);
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 -16px 36px rgba(0, 0, 0, 0.85);
   }
   .studio-properties-panel {
     display: none;

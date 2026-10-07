@@ -180,7 +180,6 @@ export const TextPanel: React.FC<TextPanelProps> = ({
     onAddLayer(newLayer);
   };
 
-  // Quick Font Pairing Applicator
   const handleApplyFontPairing = (fontTa: string, fontEn: string) => {
     project.layers.forEach((l) => {
       if (l.type === 'text') {
@@ -198,7 +197,7 @@ export const TextPanel: React.FC<TextPanelProps> = ({
     { name: 'Classic Devotional', fontTa: `'Noto Serif Tamil', serif`, fontEn: `'Lora', serif` },
     { name: 'Modern Clean', fontTa: `'Noto Sans Tamil', sans-serif`, fontEn: `'Inter', sans-serif` },
     { name: 'Royal Majesty', fontTa: `'Mukta Malar', sans-serif`, fontEn: `'Cinzel', serif` },
-    { name: 'Scripture Calligraphy', fontTa: `'Kavivanar', cursive`, fontEn: `'Playfair Display', serif` }
+    { name: 'Poetic Grace', fontTa: `'Kavivanar', cursive`, fontEn: `'Playfair Display', serif` }
   ];
 
   return (
@@ -206,113 +205,187 @@ export const TextPanel: React.FC<TextPanelProps> = ({
       <div className="studio-panel-header">
         <h3 className="studio-panel-title">
           <Type size={16} className="text-amber-400" />
-          <span>{isTa ? 'உரை & எழுத்துரு' : 'Text Elements'}</span>
+          <span>{isTa ? 'உரை அடுக்குகள்' : 'Text Typography'}</span>
         </h3>
       </div>
 
-      {/* Add Scripture Layers */}
+      {/* Add Scripture Layers Action Cards */}
       <div className="studio-section">
-        <span className="studio-section-label">
-          {isTa ? 'புதிய உரை சேர்க்க' : 'Add Elements'}
-        </span>
-        <div className="space-y-1.5">
+        <label className="studio-section-label">
+          {isTa ? 'புதிய உரை சேர்க்க (Add Text)' : 'Add Text Elements'}
+        </label>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
           <button
             onClick={handleAddTamilVerse}
-            className="w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 hover:border-amber-500/50 transition-all text-left group"
+            className="studio-btn-card"
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.65rem 0.75rem'
+            }}
           >
-            <div className="flex items-center gap-2.5">
-              <span className="w-6 h-6 rounded bg-amber-500/20 text-amber-400 font-bold text-xs flex items-center justify-center">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <span
+                style={{
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: '6px',
+                  backgroundColor: 'rgba(245, 158, 11, 0.2)',
+                  color: '#fbbf24',
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
                 த
               </span>
-              <span className="text-xs font-semibold text-slate-100">
+              <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#f8fafc' }}>
                 {isTa ? 'தமிழ் வசனம்' : 'Tamil Scripture'}
               </span>
             </div>
-            <Plus size={14} className="text-slate-400 group-hover:text-amber-400" />
+            <Plus size={15} color="#fbbf24" />
           </button>
 
           <button
             onClick={handleAddEnglishVerse}
-            className="w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 hover:border-amber-500/50 transition-all text-left group"
+            className="studio-btn-card"
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.65rem 0.75rem'
+            }}
           >
-            <div className="flex items-center gap-2.5">
-              <span className="w-6 h-6 rounded bg-indigo-500/20 text-indigo-400 font-serif italic text-xs flex items-center justify-center">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <span
+                style={{
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: '6px',
+                  backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                  color: '#818cf8',
+                  fontStyle: 'italic',
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
                 En
               </span>
-              <span className="text-xs font-semibold text-slate-100">
+              <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#f8fafc' }}>
                 {isTa ? 'ஆங்கில மொழிபெயர்ப்பு' : 'English Translation'}
               </span>
             </div>
-            <Plus size={14} className="text-slate-400 group-hover:text-indigo-400" />
+            <Plus size={15} color="#818cf8" />
           </button>
 
           <button
             onClick={handleAddReference}
-            className="w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 hover:border-amber-500/50 transition-all text-left group"
+            className="studio-btn-card"
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.65rem 0.75rem'
+            }}
           >
-            <div className="flex items-center gap-2.5">
-              <span className="w-6 h-6 rounded bg-emerald-500/20 text-emerald-400 text-xs flex items-center justify-center">
-                <Bookmark size={12} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <span
+                style={{
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: '6px',
+                  backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                  color: '#34d399',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <Bookmark size={13} />
               </span>
-              <span className="text-xs font-semibold text-slate-100">
+              <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#f8fafc' }}>
                 {isTa ? 'வேத குறிப்பு' : 'Scripture Reference'}
               </span>
             </div>
-            <Plus size={14} className="text-slate-400 group-hover:text-emerald-400" />
+            <Plus size={15} color="#34d399" />
           </button>
         </div>
       </div>
 
-      {/* Headings & Badges */}
+      {/* Devotional Headings & Badges */}
       <div className="studio-section">
-        <span className="studio-section-label">
-          {isTa ? 'தலைப்புகள்' : 'Headings'}
-        </span>
-        <div className="grid grid-cols-2 gap-1.5">
+        <label className="studio-section-label">
+          {isTa ? 'தலைப்புகள் (Headings & Tags)' : 'Devotional Badges'}
+        </label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.45rem' }}>
           <button
             onClick={() => handleAddCustomText(isTa ? 'இன்றைய தேவ செய்தி' : 'Word for Today', `'Cinzel', serif`, 0.036, '700')}
-            className="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-700/70 border border-slate-700/50 text-xs font-semibold text-slate-200 text-center transition-all"
+            className="studio-btn-card"
+            style={{ textAlign: 'center', alignItems: 'center', padding: '0.55rem' }}
           >
-            {isTa ? 'தேவ செய்தி' : 'Daily Word'}
+            <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>
+              {isTa ? 'தேவ செய்தி' : 'Daily Word'}
+            </span>
           </button>
           <button
             onClick={() => handleAddCustomText(isTa ? 'காலை தியானம்' : 'Morning Devotion', `'Playfair Display', serif`, 0.032, '600')}
-            className="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-700/70 border border-slate-700/50 text-xs font-semibold text-slate-200 text-center transition-all"
+            className="studio-btn-card"
+            style={{ textAlign: 'center', alignItems: 'center', padding: '0.55rem' }}
           >
-            {isTa ? 'காலை தியானம்' : 'Morning'}
+            <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>
+              {isTa ? 'காலை தியானம்' : 'Morning'}
+            </span>
           </button>
           <button
             onClick={() => handleAddCustomText(isTa ? 'வாக்குத்தத்தம்' : 'Promise of God', `'Inter', sans-serif`, 0.03, '600')}
-            className="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-700/70 border border-slate-700/50 text-xs font-semibold text-slate-200 text-center transition-all"
+            className="studio-btn-card"
+            style={{ textAlign: 'center', alignItems: 'center', padding: '0.55rem' }}
           >
-            {isTa ? 'வாக்குத்தத்தம்' : 'Promise'}
+            <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>
+              {isTa ? 'வாக்குத்தத்தம்' : 'Promise'}
+            </span>
           </button>
           <button
             onClick={() => handleAddCustomText(isTa ? 'ஆமென்' : 'Amen', `'Cinzel', serif`, 0.03, '700')}
-            className="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-700/70 border border-slate-700/50 text-xs font-semibold text-slate-200 text-center transition-all"
+            className="studio-btn-card"
+            style={{ textAlign: 'center', alignItems: 'center', padding: '0.55rem' }}
           >
-            {isTa ? 'ஆமென்' : 'Amen'}
+            <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>
+              {isTa ? 'ஆமென்' : 'Amen'}
+            </span>
           </button>
         </div>
       </div>
 
       {/* Font Pairing Presets */}
       <div className="studio-section">
-        <span className="studio-section-label">
-          {isTa ? 'எழுத்துரு சேர்க்கை' : 'Font Combinations'}
-        </span>
-        <div className="space-y-1.5">
+        <label className="studio-section-label">
+          {isTa ? 'எழுத்துரு சேர்க்கை (Pairings)' : 'Font Combinations'}
+        </label>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
           {FONT_PAIRS.map((pair, idx) => (
             <button
               key={idx}
               onClick={() => handleApplyFontPairing(pair.fontTa, pair.fontEn)}
-              className="w-full p-2.5 rounded-lg bg-slate-800/50 hover:bg-slate-700/60 border border-slate-700/40 text-left transition-all flex items-center justify-between"
+              className="studio-btn-card"
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.6rem 0.75rem'
+              }}
             >
               <div>
-                <div className="text-xs font-semibold text-slate-200">{pair.name}</div>
-                <div className="text-[10px] text-slate-400">Serif + Sans Harmony</div>
+                <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#f8fafc' }}>{pair.name}</div>
+                <div style={{ fontSize: '0.68rem', color: '#94a3b8' }}>Serif + Sans Harmony</div>
               </div>
-              <Sparkles size={12} className="text-amber-400" />
+              <Sparkles size={14} color="#fbbf24" />
             </button>
           ))}
         </div>

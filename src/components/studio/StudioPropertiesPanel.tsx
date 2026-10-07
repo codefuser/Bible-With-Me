@@ -457,34 +457,35 @@ export const StudioPropertiesPanel: React.FC<StudioPropertiesPanelProps> = ({
 
   // 4. DOCUMENT CONTROLS (WHEN NOTHING SELECTED)
   const renderCanvasControls = () => (
-    <div className="space-y-3">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
       {/* Auto Compose Button */}
       <button
         onClick={onAutoDesign}
-        className="w-full py-2 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-amber-950/30 active:scale-95 transition-all"
+        className="studio-btn-primary"
       >
-        <Wand2 size={13} />
+        <Wand2 size={15} />
         <span>{isTa ? 'தானியங்கி வடிவமைப்பு' : 'Smart Auto Compose'}</span>
       </button>
 
       {/* Canvas Dimensions */}
-      <div>
-        <span className="studio-section-label">{isTa ? 'பட அளவு' : 'Canvas Size'}</span>
-        <div className="grid grid-cols-2 gap-1.5">
+      <div className="studio-section">
+        <label className="studio-section-label">{isTa ? 'பட அளவு (Ratio)' : 'Canvas Size'}</label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.45rem' }}>
           {CANVAS_SIZES.map((ratio: any) => {
             const isSelected = project.canvas.ratioId === ratio.id;
             return (
               <button
                 key={ratio.id}
                 onClick={() => onChangeCanvasRatio(ratio.id)}
-                className={`p-2 rounded-lg border text-left transition-all ${
-                  isSelected
-                    ? 'bg-amber-500/20 border-amber-500 text-amber-300'
-                    : 'bg-slate-800/60 border-slate-700/60 text-slate-300 hover:bg-slate-800'
-                }`}
+                className={`studio-btn-card ${isSelected ? 'active' : ''}`}
+                style={{ padding: '0.55rem 0.65rem' }}
               >
-                <div className="text-xs font-bold">{ratio.id}</div>
-                <div className="text-[10px] text-slate-400">{ratio.name}</div>
+                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: isSelected ? '#fbbf24' : '#f8fafc' }}>
+                  {ratio.id}
+                </div>
+                <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '2px' }}>
+                  {ratio.name}
+                </div>
               </button>
             );
           })}
@@ -492,25 +493,47 @@ export const StudioPropertiesPanel: React.FC<StudioPropertiesPanelProps> = ({
       </div>
 
       {/* Canvas Guides */}
-      <div>
-        <span className="studio-section-label">{isTa ? 'வழிகாட்டிகள்' : 'Guides'}</span>
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800 text-xs">
-            <span>{isTa ? 'பாதுகாப்பு எல்லை' : 'Safe Area'}</span>
+      <div className="studio-section">
+        <label className="studio-section-label">{isTa ? 'வழிகாட்டிகள் (Guides)' : 'Guides & Snapping'}</label>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.55rem 0.75rem',
+              borderRadius: '8px',
+              backgroundColor: '#111827',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              fontSize: '0.76rem',
+              color: '#f8fafc'
+            }}
+          >
+            <span>{isTa ? 'பாதுகாப்பு எல்லை (Safe Area)' : 'Safe Area Guide'}</span>
             <input
               type="checkbox"
               checked={showSafeArea}
               onChange={onToggleSafeArea}
-              className="w-4 h-4 accent-amber-500 cursor-pointer"
             />
           </div>
-          <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800 text-xs">
-            <span>{isTa ? 'தானியங்கி ஒட்டல்' : 'Snapping'}</span>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.55rem 0.75rem',
+              borderRadius: '8px',
+              backgroundColor: '#111827',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              fontSize: '0.76rem',
+              color: '#f8fafc'
+            }}
+          >
+            <span>{isTa ? 'தானியங்கி ஒட்டல் (Snapping)' : 'Magnetic Snapping'}</span>
             <input
               type="checkbox"
               checked={snapGuidesEnabled}
               onChange={onToggleSnapGuides}
-              className="w-4 h-4 accent-amber-500 cursor-pointer"
             />
           </div>
         </div>

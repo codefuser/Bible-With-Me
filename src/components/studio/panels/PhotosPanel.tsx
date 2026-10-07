@@ -10,12 +10,12 @@ interface PhotosPanelProps {
 }
 
 const CURATED_TEXTURES = [
-  { name: 'Heavenly Rays', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80' },
-  { name: 'Misty Mountains', url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80' },
-  { name: 'Sunset Worship', url: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?auto=format&fit=crop&w=1200&q=80' },
-  { name: 'Starry Sky', url: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80' },
-  { name: 'Quiet Waters', url: 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?auto=format&fit=crop&w=1200&q=80' },
-  { name: 'Golden Wheat', url: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80' }
+  { name: 'Heavenly Rays', nameTa: 'பரலோக ஒளி', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80' },
+  { name: 'Misty Mountains', nameTa: 'பனிமலை சிகரம்', url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80' },
+  { name: 'Sunset Worship', nameTa: 'சூரிய அஸ்தமனம்', url: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?auto=format&fit=crop&w=1200&q=80' },
+  { name: 'Starry Sky', nameTa: 'விண்மீன் வானம்', url: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80' },
+  { name: 'Quiet Waters', nameTa: 'அமைதியான நதி', url: 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?auto=format&fit=crop&w=1200&q=80' },
+  { name: 'Golden Wheat', nameTa: 'தங்க வயல்வெளி', url: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80' }
 ];
 
 export const PhotosPanel: React.FC<PhotosPanelProps> = ({
@@ -99,61 +99,106 @@ export const PhotosPanel: React.FC<PhotosPanelProps> = ({
         </h3>
       </div>
 
-      {/* Upload Photo Card */}
+      {/* Upload Photo Dropzone Card */}
       <div>
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
-          className="hidden"
+          style={{ display: 'none' }}
           onChange={handleFileUpload}
         />
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="w-full py-4 px-3 rounded-xl border-2 border-dashed border-amber-500/40 hover:border-amber-400 bg-amber-500/10 hover:bg-amber-500/15 text-amber-300 font-semibold text-xs flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-98"
+          className="studio-upload-card"
         >
-          <Upload size={18} />
-          <span>{isTa ? '+ படத்தை பதிவேற்றவும்' : '+ Upload Photo'}</span>
-          <span className="text-[10px] text-slate-400">JPG, PNG, WEBP</span>
+          <div
+            style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(245, 158, 11, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fbbf24'
+            }}
+          >
+            <Upload size={18} />
+          </div>
+          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#fbbf24' }}>
+            {isTa ? '+ படத்தை பதிவேற்றவும்' : '+ Upload Photo'}
+          </span>
+          <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
+            JPG, PNG, WEBP (Devotional Wallpaper)
+          </span>
         </button>
       </div>
 
       {/* Uploaded Photos Library */}
       {uploadedPhotos.length > 0 && (
         <div className="studio-section">
-          <span className="studio-section-label">
+          <label className="studio-section-label">
             {isTa ? 'பதிவேற்றிய படங்கள்' : 'Your Uploads'}
-          </span>
-          <div className="space-y-2">
+          </label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
             {uploadedPhotos.map((src, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2 p-2 rounded-lg bg-slate-900 border border-slate-700/60"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.45rem',
+                  borderRadius: '10px',
+                  backgroundColor: '#111827',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}
               >
                 <img
                   src={src}
                   alt="Upload"
-                  className="w-12 h-12 rounded object-cover border border-slate-700 shrink-0"
+                  style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '6px',
+                    objectFit: 'cover',
+                    flexShrink: 0
+                  }}
                 />
-                <div className="flex-1 min-w-0 flex flex-col gap-1">
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => addImageToCanvas(src, `Photo ${i + 1}`)}
-                      className="flex-1 py-1 px-1.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[10px] font-semibold text-center"
-                    >
-                      + Layer
-                    </button>
-                    <button
-                      onClick={() => onSetBackgroundWallpaper(src)}
-                      className="flex-1 py-1 px-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-semibold text-center border border-slate-700"
-                    >
-                      Set BG
-                    </button>
-                  </div>
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', gap: '0.35rem' }}>
+                  <button
+                    onClick={() => addImageToCanvas(src, `Photo ${i + 1}`)}
+                    className="studio-btn-card"
+                    style={{
+                      flex: 1,
+                      padding: '4px 6px',
+                      fontSize: '0.68rem',
+                      fontWeight: 600,
+                      textAlign: 'center',
+                      color: '#fbbf24'
+                    }}
+                  >
+                    + Layer
+                  </button>
+                  <button
+                    onClick={() => onSetBackgroundWallpaper(src)}
+                    className="studio-btn-card"
+                    style={{
+                      flex: 1,
+                      padding: '4px 6px',
+                      fontSize: '0.68rem',
+                      fontWeight: 600,
+                      textAlign: 'center'
+                    }}
+                  >
+                    Set BG
+                  </button>
                 </div>
                 <button
                   onClick={() => setUploadedPhotos((prev) => prev.filter((_, idx) => idx !== i))}
-                  className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-rose-950/30"
+                  className="studio-btn-icon"
+                  style={{ color: '#fb7185' }}
                   title="Delete upload"
                 >
                   <Trash2 size={13} />
@@ -164,28 +209,69 @@ export const PhotosPanel: React.FC<PhotosPanelProps> = ({
         </div>
       )}
 
-      {/* Curated Background Textures */}
+      {/* Curated Background Textures Grid */}
       <div className="studio-section">
-        <span className="studio-section-label">
-          {isTa ? 'தியானப் பின்னணிகள்' : 'Devotional Inspiration'}
-        </span>
-        <div className="grid grid-cols-2 gap-2">
+        <label className="studio-section-label">
+          {isTa ? 'தியானப் பின்னணிகள் (Presets)' : 'Devotional Inspiration'}
+        </label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
           {CURATED_TEXTURES.map((photo, i) => (
             <div
               key={i}
               onClick={() => onSetBackgroundWallpaper(photo.url)}
-              className="group relative rounded-lg overflow-hidden aspect-[4/3] border border-slate-700/60 cursor-pointer bg-slate-900"
+              style={{
+                position: 'relative',
+                borderRadius: '10px',
+                overflow: 'hidden',
+                height: '95px',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                cursor: 'pointer',
+                backgroundColor: '#111827',
+                transition: 'transform 140ms ease, border-color 140ms ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#fbbf24';
+                e.currentTarget.style.transform = 'scale(1.02)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
             >
               <img
                 src={photo.url}
                 alt={photo.name}
                 loading="lazy"
-                className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  display: 'block'
+                }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-70 group-hover:opacity-100" />
-              <span className="absolute bottom-1.5 left-2 right-2 text-[10px] font-semibold text-white truncate drop-shadow">
-                {photo.name}
-              </span>
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 60%)',
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  padding: '6px 8px'
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    color: '#ffffff',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {isTa ? photo.nameTa : photo.name}
+                </span>
+              </div>
             </div>
           ))}
         </div>

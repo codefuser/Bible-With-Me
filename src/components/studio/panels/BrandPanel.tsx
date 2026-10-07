@@ -28,89 +28,98 @@ export const BrandPanel: React.FC<BrandPanelProps> = ({
       <div className="studio-panel-header">
         <h3 className="studio-panel-title">
           <Award size={16} className="text-amber-400" />
-          <span>{isTa ? 'முத்திரை' : 'Watermark'}</span>
+          <span>{isTa ? 'முத்திரை (Branding)' : 'Watermark & Brand'}</span>
         </h3>
       </div>
 
-      {/* Enable Toggle */}
-      <div className="studio-section">
-        <div className="flex items-center justify-between mb-2">
-          <span className="studio-section-label mb-0">
+      {/* Enable Toggle Card */}
+      <div
+        style={{
+          padding: '0.75rem',
+          borderRadius: '10px',
+          backgroundColor: '#111827',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.6rem'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#f8fafc' }}>
             {isTa ? 'முத்திரையைக் காட்டு' : 'Show Watermark'}
           </span>
           <input
             type="checkbox"
             checked={watermark.enabled}
-            onChange={e => onUpdateWatermark({ enabled: e.target.checked })}
-            className="w-4 h-4 accent-amber-500 cursor-pointer"
+            onChange={(e) => onUpdateWatermark({ enabled: e.target.checked })}
           />
         </div>
 
         {watermark.enabled && (
-          <div className="space-y-3 pt-2">
+          <div
+            style={{
+              paddingTop: '0.5rem',
+              borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.5rem'
+            }}
+          >
             <div>
-              <span className="text-[11px] text-slate-400 block mb-1">
-                {isTa ? 'முத்திரை உரை' : 'Watermark Text'}
-              </span>
+              <label className="studio-section-label">
+                {isTa ? 'முத்திரை உரை (Watermark Text)' : 'Watermark Text'}
+              </label>
               <input
                 type="text"
                 value={watermark.text}
-                onChange={e => onUpdateWatermark({ text: e.target.value })}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+                onChange={(e) => onUpdateWatermark({ text: e.target.value })}
               />
             </div>
 
-            {/* Quick Presets */}
-            <div className="flex flex-wrap gap-1.5">
-              {BRAND_PRESETS.map((preset, i) => (
-                <button
-                  key={i}
-                  onClick={() => onUpdateWatermark({ text: preset })}
-                  className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[10px] text-slate-300 border border-slate-700"
-                >
-                  {preset}
-                </button>
-              ))}
-            </div>
-
             <div>
-              <div className="flex justify-between text-[11px] text-slate-400 mb-1">
-                <span>{isTa ? 'தெளிவுத்திறன் (Opacity)' : 'Opacity'}</span>
-                <span>{Math.round(watermark.opacity * 100)}%</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#94a3b8' }}>
+                <span>{isTa ? 'தெளிவுத்திறன்' : 'Opacity'}</span>
+                <span style={{ color: '#fbbf24', fontWeight: 700 }}>{Math.round(watermark.opacity * 100)}%</span>
               </div>
               <input
                 type="range"
-                min={0.1}
-                max={1}
-                step={0.05}
-                value={watermark.opacity}
-                onChange={e => onUpdateWatermark({ opacity: Number(e.target.value) })}
-                className="w-full accent-amber-500"
+                min={10}
+                max={100}
+                value={Math.round(watermark.opacity * 100)}
+                onChange={(e) => onUpdateWatermark({ opacity: Number(e.target.value) / 100 })}
               />
-            </div>
-
-            <div>
-              <span className="text-[11px] text-slate-400 block mb-1">
-                {isTa ? 'நிறம்' : 'Color'}
-              </span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={watermark.color.startsWith('#') ? watermark.color : '#ffffff'}
-                  onChange={e => onUpdateWatermark({ color: e.target.value })}
-                  className="w-8 h-8 rounded border border-slate-700 bg-transparent cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={watermark.color}
-                  onChange={e => onUpdateWatermark({ color: e.target.value })}
-                  className="flex-1 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200"
-                />
-              </div>
             </div>
           </div>
         )}
       </div>
+
+      {/* Brand Presets */}
+      {watermark.enabled && (
+        <div className="studio-section">
+          <label className="studio-section-label">
+            {isTa ? 'பரிந்துரைக்கப்பட்ட பெயர்கள்' : 'Brand Presets'}
+          </label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            {BRAND_PRESETS.map((name, i) => (
+              <button
+                key={i}
+                onClick={() => onUpdateWatermark({ text: name })}
+                className="studio-btn-card"
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.55rem 0.75rem',
+                  fontSize: '0.75rem'
+                }}
+              >
+                <span>{name}</span>
+                {watermark.text === name && <Check size={14} color="#fbbf24" />}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

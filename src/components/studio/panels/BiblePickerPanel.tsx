@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Sparkles, Check, ChevronDown, Search } from 'lucide-react';
+import { BookOpen, Sparkles, Check, ChevronDown } from 'lucide-react';
 import { fetchBibleBooks, fetchChapterVerses } from '../../../services/bibleService';
 import { BibleBook, BibleVerse } from '../../../types/bible';
 import { StudioProject } from '../types';
@@ -31,6 +31,7 @@ export const BiblePickerPanel: React.FC<BiblePickerPanelProps> = ({
   const [verses, setVerses] = useState<BibleVerse[]>([]);
   const [selectedVerseNum, setSelectedVerseNum] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
+  const [appliedFeedback, setAppliedFeedback] = useState<boolean>(false);
 
   useEffect(() => {
     let mounted = true;
@@ -75,6 +76,8 @@ export const BiblePickerPanel: React.FC<BiblePickerPanelProps> = ({
     if (!activeBook || !activeVerse) return;
     const ref = `${isTa ? activeBook.name_ta : activeBook.name_en} ${selectedChapter}:${activeVerse.verse}`;
     onSelectVerse(activeVerse.text_ta, activeVerse.text_en, ref);
+    setAppliedFeedback(true);
+    setTimeout(() => setAppliedFeedback(false), 2200);
   };
 
   const handleSelectPopular = async (pop: typeof POPULAR_VERSES[0]) => {
@@ -92,10 +95,10 @@ export const BiblePickerPanel: React.FC<BiblePickerPanelProps> = ({
         </h3>
       </div>
 
-      {/* Quick Scripture Selection Dropdowns */}
-      <div className="space-y-2">
+      {/* Book, Chapter, Verse Dropdown Selectors */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
         <div>
-          <span className="studio-section-label">{isTa ? 'புத்தகம்' : 'Book'}</span>
+          <label className="studio-section-label">{isTa ? 'புத்தகம் (Book)' : 'Book'}</label>
           <select
             value={selectedBookId}
             onChange={(e) => {
@@ -103,7 +106,6 @@ export const BiblePickerPanel: React.FC<BiblePickerPanelProps> = ({
               setSelectedChapter(1);
               setSelectedVerseNum(1);
             }}
-            className="w-full bg-slate-900 border border-slate-700/80 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
           >
             {books.map((b) => (
               <option key={b.id} value={b.id}>
@@ -113,16 +115,15 @@ export const BiblePickerPanel: React.FC<BiblePickerPanelProps> = ({
           </select>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
           <div>
-            <span className="studio-section-label">{isTa ? 'அதிகாரம்' : 'Chapter'}</span>
+            <label className="studio-section-label">{isTa ? 'அதிகாரம் (Chapter)' : 'Chapter'}</label>
             <select
               value={selectedChapter}
               onChange={(e) => {
                 setSelectedChapter(Number(e.target.value));
                 setSelectedVerseNum(1);
               }}
-              className="w-full bg-slate-900 border border-slate-700/80 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
             >
               {Array.from({ length: activeBook?.total_chapters || 1 }, (_, i) => i + 1).map((ch) => (
                 <option key={ch} value={ch}>
@@ -133,11 +134,10 @@ export const BiblePickerPanel: React.FC<BiblePickerPanelProps> = ({
           </div>
 
           <div>
-            <span className="studio-section-label">{isTa ? 'வசனம்' : 'Verse'}</span>
+            <label className="studio-section-label">{isTa ? 'வசனம் (Verse)' : 'Verse'}</label>
             <select
               value={selectedVerseNum}
               onChange={(e) => setSelectedVerseNum(Number(e.target.value))}
-              className="w-full bg-slate-900 border border-slate-700/80 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
             >
               {verses.map((v) => (
                 <option key={v.verse} value={v.verse}>
@@ -150,43 +150,105 @@ export const BiblePickerPanel: React.FC<BiblePickerPanelProps> = ({
       </div>
 
       {/* Selected Scripture Preview & Insert Button */}
-      {activeVerse && (
-        <div className="p-3 rounded-xl bg-slate-900 border border-amber-500/30">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-bold text-amber-300">
+      {activeVerse ? (
+        <div
+          style={{
+            padding: '0.85rem',
+            borderRadius: '12px',
+            backgroundColor: '#111827',
+            border: '1.5px solid rgba(245, 158, 11, 0.35)',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.5rem'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#fbbf24' }}>
               {isTa ? activeBook?.name_ta : activeBook?.name_en} {selectedChapter}:{activeVerse.verse}
             </span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-200">
+            <span
+              style={{
+                fontSize: '0.68rem',
+                padding: '2px 8px',
+                borderRadius: '999px',
+                backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                color: '#fde68a',
+                border: '1px solid rgba(245, 158, 11, 0.3)'
+              }}
+            >
               Selected
             </span>
           </div>
 
-          <p className="text-xs text-slate-200 leading-relaxed font-serif line-clamp-3 mb-1">
+          <p
+            style={{
+              fontSize: '0.78rem',
+              color: '#f8fafc',
+              lineHeight: 1.6,
+              margin: '0.2rem 0',
+              fontFamily: `'Noto Serif Tamil', Georgia, serif`
+            }}
+          >
             {activeVerse.text_ta}
           </p>
-          <p className="text-[11px] text-slate-400 italic line-clamp-2 mb-3">
-            {activeVerse.text_en}
+          <p
+            style={{
+              fontSize: '0.72rem',
+              color: '#94a3b8',
+              fontStyle: 'italic',
+              lineHeight: 1.5,
+              margin: '0 0 0.5rem 0'
+            }}
+          >
+            "{activeVerse.text_en}"
           </p>
 
           <button
             onClick={handleApply}
-            className="w-full py-2 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-amber-950/40 transition-all active:scale-95"
+            className="studio-btn-primary"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.45rem',
+              padding: '0.65rem',
+              fontSize: '0.82rem'
+            }}
           >
-            <Sparkles size={14} />
-            <span>{isTa ? 'வடிவமைப்பில் சேர்க்க' : 'Apply to Canvas'}</span>
+            {appliedFeedback ? <Check size={16} /> : <Sparkles size={16} />}
+            <span>
+              {appliedFeedback
+                ? (isTa ? 'சேர்க்கப்பட்டது!' : 'Applied to Canvas!')
+                : (isTa ? 'வடிவமைப்பில் சேர்க்க' : 'Apply to Canvas')}
+            </span>
           </button>
+        </div>
+      ) : (
+        <div style={{ textAlign: 'center', padding: '1rem', color: '#64748b', fontSize: '0.75rem' }}>
+          {loading ? (isTa ? 'ஏற்றுகிறது...' : 'Loading verses...') : (isTa ? 'வசனம் தேர்ந்தெடுக்கவும்' : 'Select a verse')}
         </div>
       )}
 
       {/* Popular Scripture Quick Chips */}
       <div className="studio-section">
-        <span className="studio-section-label">{isTa ? 'பிரபலமான வசனங்கள்' : 'Quick Scripture'}</span>
-        <div className="grid grid-cols-2 gap-1.5">
+        <label className="studio-section-label">
+          {isTa ? 'பிரபலமான வசனங்கள் (Popular)' : 'Quick Scripture'}
+        </label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.45rem' }}>
           {POPULAR_VERSES.map((pop, i) => (
             <button
               key={i}
               onClick={() => handleSelectPopular(pop)}
-              className="py-1.5 px-2 rounded-lg bg-slate-800/70 hover:bg-slate-700/80 border border-slate-700/50 text-[11px] text-slate-200 text-center transition-all truncate"
+              className="studio-btn-card"
+              style={{
+                padding: '0.5rem 0.6rem',
+                textAlign: 'center',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.75rem',
+                fontWeight: 600
+              }}
             >
               {isTa ? pop.refTa : pop.ref}
             </button>
