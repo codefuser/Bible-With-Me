@@ -154,13 +154,13 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
       enabled: notifGranted,
       goalMinutes: effectiveGoal,
       slots: {
-        morning: { ...existing.slots.morning, enabled: morningSlot, time: '06:00' },
-        afternoon: { ...existing.slots.afternoon, enabled: afternoonSlot, time: '12:30' },
-        night: { ...existing.slots.night, enabled: nightSlot, time: '21:00' },
-        custom: { ...existing.slots.custom, enabled: notifGranted, time: reminderTime }
+        ...existing.slots,
+        ...(existing.slots.morning ? { morning: { ...existing.slots.morning, enabled: morningSlot } } : {}),
+        ...(existing.slots.night ? { night: { ...existing.slots.night, enabled: nightSlot } } : {})
       },
       customTimes: mappedCustoms
     }, appLang);
+
 
     onComplete({
       goalMinutes: effectiveGoal,

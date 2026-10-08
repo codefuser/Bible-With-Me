@@ -1,70 +1,11 @@
-import fs from 'fs';
-import path from 'path';
-import { execSync } from 'child_process';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const rootDir = path.resolve(__dirname, '..');
-
-// 1. Read current version from package.json
-const pkgJsonPath = path.join(rootDir, 'package.json');
-const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
-const version = pkg.version || '1.1.0';
-const versionTag = `v${version}`;
-
-console.log(`\n========================================`);
-console.log(`📦 Bible With Me - Building Release ${versionTag}`);
-console.log(`========================================\n`);
-
-// 2. Build Web Assets
-console.log('⚡ Step 1: Building web distribution (tsc && vite build)...');
-execSync('npm run build', { cwd: rootDir, stdio: 'inherit' });
-
-// 3. Sync with Capacitor Android
-console.log('\n📲 Step 2: Syncing Capacitor Android assets...');
-execSync('npx cap sync android', { cwd: rootDir, stdio: 'inherit' });
-
-// 4. Build Android APK via Gradle
-console.log('\n🔨 Step 3: Compiling Android APK with Gradle...');
-const androidDir = path.join(rootDir, 'android');
-const gradlewCmd = process.platform === 'win32' ? '.\\gradlew.bat assembleDebug' : './gradlew assembleDebug';
-execSync(gradlewCmd, { cwd: androidDir, stdio: 'inherit' });
-
-// 5. Destination Release Directory
-const releasesDir = path.join(rootDir, 'releases', versionTag);
-if (!fs.existsSync(releasesDir)) {
-  fs.mkdirSync(releasesDir, { recursive: true });
-}
-
-// 6. Copy Output APK
-const apkSrc = path.join(androidDir, 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk');
-const apkDest = path.join(releasesDir, `Bible_With_Me_${versionTag}.apk`);
-
-if (fs.existsSync(apkSrc)) {
-  fs.copyFileSync(apkSrc, apkDest);
-  const stats = fs.statSync(apkDest);
-  const sizeMb = (stats.size / (1024 * 1024)).toFixed(2);
-  console.log(`\n✅ APK Copied Successfully:`);
-  console.log(`   📁 Destination: releases/${versionTag}/Bible_With_Me_${versionTag}.apk`);
-  console.log(`   📊 Size: ${sizeMb} MB`);
-} else {
-  console.error(`\n❌ Error: Output APK not found at ${apkSrc}`);
-  process.exit(1);
-}
-
-// 7. Generate or Update Release Notes
-const releaseNotesPath = path.join(releasesDir, 'RELEASE_NOTES.md');
-if (!fs.existsSync(releaseNotesPath)) {
-  const dateStr = new Date().toISOString().split('T')[0];
-  const notesContent = `# Bible With Me — Release ${versionTag} (${dateStr})
+# Bible With Me — Release v1.5.0 (2026-10-08)
 
 ## 📱 பதிப்பு விவரங்கள் (Version Details)
 - **App Name**: Bible With Me (வேதாகமம்)
-- **Version Name**: ${version}
+- **Version Name**: 1.5.0
 - **Version Code**: 6
-- **Release Date**: ${dateStr}
-- **Package File**: \`Bible_With_Me_${versionTag}.apk\`
+- **Release Date**: 2026-10-08
+- **Package File**: `Bible_With_Me_v1.5.0.apk`
 
 ---
 
@@ -92,13 +33,5 @@ if (!fs.existsSync(releaseNotesPath)) {
 ---
 
 ## 🛠️ நிறுவுதல் முறை (How to Install)
-1. \`Bible_With_Me_${versionTag}.apk\` கோப்பை உங்கள் ஆண்ட்ராய்டு மொபைலுக்கு அனுப்பவும்.
+1. `Bible_With_Me_v1.5.0.apk` கோப்பை உங்கள் ஆண்ட்ராய்டு மொபைலுக்கு அனுப்பவும்.
 2. கோப்பைத் திறந்து **Install** கொடுக்கவும்.
-`;
-
-
-  fs.writeFileSync(releaseNotesPath, notesContent, 'utf8');
-  console.log(`📝 Release Notes generated at: releases/${versionTag}/RELEASE_NOTES.md`);
-}
-
-console.log(`\n🎉 Release ${versionTag} build complete!\n`);

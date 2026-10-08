@@ -57,7 +57,7 @@ export const updateReadingHistory = async (
   book: BibleBook,
   chapter: number,
   verse: number = 1,
-  language: Language = 'en',
+  language: Language = 'ta',
   userId?: string | null
 ): Promise<ReadingHistoryItem> => {
   const item: ReadingHistoryItem = {

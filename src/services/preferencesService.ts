@@ -25,7 +25,13 @@ export const getStoredPreferences = (): ReadingPreferences => {
     const raw = localStorage.getItem(PREFERENCES_KEY);
     if (!raw) return defaultPreferences;
     const parsed = JSON.parse(raw);
-    return { ...defaultPreferences, ...parsed };
+    const bibleLang = parsed.bibleLanguage || parsed.language || defaultPreferences.bibleLanguage || 'ta';
+    return {
+      ...defaultPreferences,
+      ...parsed,
+      bibleLanguage: bibleLang,
+      language: bibleLang
+    };
   } catch (err) {
     console.error('Error reading preferences from storage:', err);
     return defaultPreferences;
@@ -35,6 +41,11 @@ export const getStoredPreferences = (): ReadingPreferences => {
 let syncTimer: any = null;
 
 export const savePreferences = (prefs: ReadingPreferences, userId?: string | null): void => {
+  // Guarantee bibleLanguage and language always match exactly
+  const bibleLang = prefs.bibleLanguage || prefs.language || 'ta';
+  prefs.bibleLanguage = bibleLang;
+  prefs.language = bibleLang;
+
   try {
     localStorage.setItem(PREFERENCES_KEY, JSON.stringify(prefs));
   } catch (err) {
@@ -49,3 +60,4 @@ export const savePreferences = (prefs: ReadingPreferences, userId?: string | nul
     }, 1000);
   }
 };
+

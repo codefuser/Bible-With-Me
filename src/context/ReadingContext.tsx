@@ -237,16 +237,20 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // 2. Load Settings from cloud
       const loadSettings = fetchCloudSettings(uid).then((cloudPrefs) => {
         if (cloudPrefs) {
+          const resolvedBibleLang = (cloudPrefs.bibleLanguage || cloudPrefs.language || 'ta') as BibleLanguage;
           setPreferencesState((prev) => {
-            const updated = { ...prev, ...cloudPrefs };
+            const updated = { ...prev, ...cloudPrefs, bibleLanguage: resolvedBibleLang, language: resolvedBibleLang };
             savePreferences(updated);
             return updated;
           });
-          if (cloudPrefs.language) {
-            setLanguageState(cloudPrefs.language as Language);
+          setBibleLanguageState(resolvedBibleLang);
+          setLanguageState(resolvedBibleLang);
+          if (cloudPrefs.appLanguage) {
+            setAppLanguageState(cloudPrefs.appLanguage);
           }
         }
       });
+
 
       // 3. Load Highlights from cloud
       const loadHighlights = fetchCloudHighlights(uid).then((cloudHighlights) => {
@@ -411,6 +415,24 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (data && data.length > 0) {
           setBooks(data);
 
+          // 0. Check for notification click pending verse on startup
+          try {
+            const rawPending = sessionStorage.getItem('pending_notification_verse');
+            if (rawPending) {
+              sessionStorage.removeItem('pending_notification_verse');
+              const parsed = JSON.parse(rawPending);
+              const matched = data.find((b) => b.id === parsed.bookId || b.code.toUpperCase() === String(parsed.bookId).toUpperCase());
+              if (matched) {
+                setCurrentBook(matched);
+                setCurrentChapter(parsed.chapter);
+                setSelectedVerse(parsed.verse || 1);
+                setTargetPulseVerse(parsed.verse || 1);
+                setIsBibleDataLoading(false);
+                return;
+              }
+            }
+          } catch {}
+
           // 1. Check for Route Deep-Link (e.g. /JOHN/3/16 or /GEN/1)
           const routeState = parseRoute(data);
           if (routeState) {
@@ -435,7 +457,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
               setCurrentBook(foundBook);
               setCurrentChapter(stored.chapter);
               if (stored.verse) setSelectedVerse(stored.verse);
-              if (stored.language) setLanguageState(stored.language);
+              // Active Bible language is strictly preserved from user preferences
             }
           }
         }
@@ -444,7 +466,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       .catch(() => setIsBibleDataLoading(false));
   }, []);
 
-  // Listen for browser forward/back buttons and app-route-change to sync reading location
+  // Listen for browser forward/back buttons, hashchange, and app-route-change to sync reading location
   useEffect(() => {
     const handlePopState = () => {
       if (isAdminRoute()) return;
@@ -466,11 +488,39 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     window.addEventListener('popstate', handlePopState);
     window.addEventListener('app-route-change', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
     return () => {
       window.removeEventListener('popstate', handlePopState);
       window.removeEventListener('app-route-change', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
     };
   }, [books]);
+
+  // Listen for direct notification open events to immediately navigate, scroll, and blink verse
+  useEffect(() => {
+    const handleNotificationOpen = (event: Event) => {
+      const customEv = event as CustomEvent;
+      const { bookId, chapter, verse } = customEv.detail || {};
+      if (!bookId || !chapter || !books || books.length === 0) return;
+      const matched = books.find((b) => b.id === bookId || b.code.toUpperCase() === String(bookId).toUpperCase());
+      if (matched) {
+        setBookAndChapter(matched, chapter, verse || 1, true);
+        setIsPreferencesOpen(false);
+        setIsSearchOpen(false);
+        setIsBookSelectorOpen(false);
+        setIsBookmarksOpen(false);
+        setIsLanguageModalOpen(false);
+        setIsDailyHistoryOpen(false);
+        setIsReadingHistoryOpen(false);
+      }
+    };
+
+    window.addEventListener('bible-notification-open', handleNotificationOpen);
+    return () => {
+      window.removeEventListener('bible-notification-open', handleNotificationOpen);
+    };
+  }, [books]);
+
 
   // Listen for Capacitor Native Deep Links (cold launch & warm appUrlOpen)
   useEffect(() => {
@@ -566,7 +616,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const recordChapterRead = useCallback(
     (book: BibleBook, chapter: number, verse: number = 1) => {
-      updateReadingHistory(book, chapter, verse, language, userId).then((item) => {
+      updateReadingHistory(book, chapter, verse, bibleLanguage as Language, userId).then((item) => {
         setHistoryItem(item);
         setHistoryList((prev) => {
           const filtered = prev.filter(
@@ -580,7 +630,7 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         const updatedStreak = recordChapterCompletion(userId);
         setStreakData(updatedStreak);
     },
-    [language, userId]
+    [bibleLanguage, userId]
   );
 
   const setBookAndChapter = (book: BibleBook, chapter: number, verse: number = 1, shouldPulse: boolean = false) => {
@@ -593,9 +643,17 @@ export const ReadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setTargetPulseVerse(null);
     }
     setIsBookSelectorOpen(false);
+    setIsPreferencesOpen(false);
+    setIsSearchOpen(false);
+    setIsBookmarksOpen(false);
+    setIsLanguageModalOpen(false);
+    setIsDailyHistoryOpen(false);
+    setIsReadingHistoryOpen(false);
+    setIsStreakModalOpen(false);
 
     recordChapterRead(book, chapter, verse);
   };
+
 
   const setChapter = (chapter: number) => {
     if (chapter >= 1 && chapter <= currentBook.total_chapters) {

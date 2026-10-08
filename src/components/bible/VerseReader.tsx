@@ -24,6 +24,7 @@ export const VerseReader: React.FC = () => {
     targetPulseVerse,
     setTargetPulseVerse,
     language,
+    bibleLanguage,
     appLanguage,
     preferences,
     bookmarks,
@@ -38,6 +39,8 @@ export const VerseReader: React.FC = () => {
     openFullscreenReader,
     recordChapterRead
   } = useReading();
+
+  const activeBibleLang = bibleLanguage || language || 'ta';
 
   const [adminConfig, setAdminConfig] = useState(() => getAdminConfig());
 
@@ -270,13 +273,13 @@ export const VerseReader: React.FC = () => {
     return isBookmarked ? '1.85rem' : '0.25rem';
   };
 
-  const bookName = language === 'en' ? currentBook.name_en : currentBook.name_ta;
+  const bookName = activeBibleLang === 'en' ? currentBook.name_en : currentBook.name_ta;
 
   const handleCopyVerse = (v: BibleVerse) => {
     let formatted = '';
-    if (language === 'ta') {
+    if (activeBibleLang === 'ta') {
       formatted = `${bookName} ${currentChapter}:${v.verse}\n\n"${v.text_ta}"`;
-    } else if (language === 'en') {
+    } else if (activeBibleLang === 'en') {
       formatted = `${bookName} ${currentChapter}:${v.verse}\n\n"${v.text_en}"`;
     } else {
       formatted = `${bookName} ${currentChapter}:${v.verse}\n\n"${v.text_ta}"\n\n"${v.text_en}"`;
@@ -284,7 +287,7 @@ export const VerseReader: React.FC = () => {
 
     if (navigator.clipboard) {
       navigator.clipboard.writeText(formatted);
-      showToast(language === 'en' ? 'Verse copied to clipboard!' : 'வசனம் நகலெடுக்கப்பட்டது!');
+      showToast(activeBibleLang === 'en' ? 'Verse copied to clipboard!' : 'வசனம் நகலெடுக்கப்பட்டது!');
     }
   };
 
@@ -297,7 +300,8 @@ export const VerseReader: React.FC = () => {
   };
 
   const handleShareVerse = async (v: BibleVerse) => {
-    const text = language === 'en' ? v.text_en : language === 'ta' ? v.text_ta : `${v.text_ta}\n${v.text_en}`;
+    const text = activeBibleLang === 'en' ? v.text_en : activeBibleLang === 'ta' ? v.text_ta : `${v.text_ta}\n${v.text_en}`;
+
     const formattedTitle = `${bookName} ${currentChapter}:${v.verse}`;
     const baseUrl = getBaseShareUrl();
     const shareUrl = `${baseUrl}/${currentBook.code}/${currentChapter}/${v.verse}`;
@@ -463,7 +467,7 @@ export const VerseReader: React.FC = () => {
           <button
             className="quick-chapter-scroll-btn right"
             onClick={() => handleScrollChapterBar('right')}
-            title={language === 'ta' ? 'வலதுபுறம் நகர்த்து' : 'Scroll Right'}
+            title={activeBibleLang === 'ta' ? 'வலதுபுறம் நகர்த்து' : 'Scroll Right'}
             aria-label="Scroll Right"
           >
             <ChevronRight size={16} />
@@ -471,7 +475,7 @@ export const VerseReader: React.FC = () => {
         </div>
 
         {/* Verses Container */}
-        {language === 'parallel' ? (
+        {activeBibleLang === 'parallel' ? (
           /* ── Enhanced Dual-Language Parallel View ──────────────────────────── */
           <div className="verse-list parallel-view">
             {/* Parallel view column headers (Desktop only) */}
@@ -908,7 +912,7 @@ export const VerseReader: React.FC = () => {
                 {isTodayDailyVerse && (
                   <div className="today-daily-verse-badge">
                     <Sparkles size={11} />
-                    <span>{language === 'en' ? "Today's Revival Word" : 'இன்றைய எழுப்புதல் வார்த்தை'}</span>
+                    <span>{activeBibleLang === 'en' ? "Today's Revival Word" : 'இன்றைய எழுப்புதல் வார்த்தை'}</span>
                   </div>
                 )}
 
@@ -917,14 +921,14 @@ export const VerseReader: React.FC = () => {
 
                   <div className="verse-text-container" style={{ flex: 1, paddingRight: getVersePaddingRight(isBookmarked, isDropdownMode) }}>
                     {/* Tamil Verse Text */}
-                    {language !== 'en' && (
+                    {activeBibleLang !== 'en' && (
                       <p className="verse-text lang-ta" style={{ margin: 0 }}>
                         {verseObj.text_ta}
                       </p>
                     )}
 
                     {/* English Verse Text */}
-                    {language !== 'ta' && (
+                    {activeBibleLang !== 'ta' && (
                       <p className="verse-text lang-en" style={{ margin: 0 }}>
                         {verseObj.text_en}
                       </p>

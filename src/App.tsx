@@ -316,8 +316,10 @@ const AppGate: React.FC = () => {
     return <MainLayout />;
   }
 
-  // Deep-link verse route requested (e.g. /JOHN/3/16 or /GEN/1) → directly show MainLayout so verse is displayed immediately!
-  if (typeof window !== 'undefined' && parseRoute(ALL_BIBLE_BOOKS)) {
+  // Deep-link verse route requested (e.g. /JOHN/3/16 or /GEN/1) or notification clicked → directly show MainLayout so verse is displayed immediately!
+  const hasPendingNotification =
+    typeof window !== 'undefined' && sessionStorage.getItem('pending_notification_verse') !== null;
+  if (typeof window !== 'undefined' && (parseRoute(ALL_BIBLE_BOOKS) || hasPendingNotification)) {
     return <MainLayout />;
   }
 
@@ -361,12 +363,21 @@ const AppGate: React.FC = () => {
 export function App() {
   useEffect(() => {
     const cleanup = initAdminRealtimeSync();
-    const cleanupNotifs = initNotificationScheduler();
+    let initialLang: AppLanguage = 'ta';
+    try {
+      const raw = localStorage.getItem('bible_app_preferences');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.appLanguage) initialLang = parsed.appLanguage;
+      }
+    } catch {}
+    const cleanupNotifs = initNotificationScheduler(initialLang);
     return () => {
       cleanup();
       cleanupNotifs();
     };
   }, []);
+
 
   return (
     <AuthProvider>

@@ -10,7 +10,7 @@ import { getAdminConfig, onAdminConfigChange } from '../../services/adminService
 const COLLAPSE_STORAGE_KEY = 'bible_daily_verse_collapsed';
 
 export const DailyVerseCard: React.FC = () => {
-  const { books, setBookAndChapter, language, setIsDailyHistoryOpen, openVerseCard, openVerseStudy } = useReading();
+  const { books, setBookAndChapter, language, bibleLanguage, setIsDailyHistoryOpen, openVerseCard, openVerseStudy } = useReading();
   const { user } = useAuth();
   const userId = user?.id || null;
 
@@ -68,7 +68,14 @@ export const DailyVerseCard: React.FC = () => {
   const { verse, book_name_ta, book_name_en } = dailyData;
   const refTa = `${book_name_ta} ${verse.chapter}:${verse.verse}`;
   const refEn = `${book_name_en} ${verse.chapter}:${verse.verse}`;
-  const verseText = language === 'ta' ? verse.text_ta : verse.text_en;
+  const activeBibleLang = bibleLanguage || language || 'ta';
+  const verseText =
+    activeBibleLang === 'en'
+      ? verse.text_en
+      : activeBibleLang === 'parallel'
+      ? `${verse.text_ta}\n\n${verse.text_en}`
+      : verse.text_ta;
+
 
   const handleGoToChapter = (e: React.MouseEvent) => {
     e.stopPropagation();

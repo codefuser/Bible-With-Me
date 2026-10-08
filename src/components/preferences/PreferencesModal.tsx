@@ -11,8 +11,7 @@ import {
   getNotificationPermission,
   NotificationScheduleConfig,
   addCustomReminderTime,
-  removeCustomReminderTime,
-  testNotificationNow
+  removeCustomReminderTime
 } from '../../services/notificationService';
 
 interface FontItem<T> {
@@ -399,7 +398,7 @@ export const PreferencesModal: React.FC = () => {
     updatePreferences({ notificationsEnabled: enabled });
   };
 
-  const handleToggleSlot = (key: 'morning' | 'afternoon' | 'night' | 'custom', enabled: boolean) => {
+  const handleToggleSlot = (key: string, enabled: boolean) => {
     const updated: NotificationScheduleConfig = {
       ...notifConfig,
       slots: {
@@ -408,10 +407,10 @@ export const PreferencesModal: React.FC = () => {
       }
     };
     setNotifConfig(updated);
-    saveNotificationSchedule(updated);
+    saveNotificationSchedule(updated, appLanguage);
   };
 
-  const handleChangeSlotTime = (key: 'morning' | 'afternoon' | 'night' | 'custom', time: string) => {
+  const handleChangeSlotTime = (key: string, time: string) => {
     const updated: NotificationScheduleConfig = {
       ...notifConfig,
       slots: {
@@ -420,7 +419,7 @@ export const PreferencesModal: React.FC = () => {
       }
     };
     setNotifConfig(updated);
-    saveNotificationSchedule(updated);
+    saveNotificationSchedule(updated, appLanguage);
   };
 
   const [newPrefTime, setNewPrefTime] = useState('15:00');
@@ -446,16 +445,6 @@ export const PreferencesModal: React.FC = () => {
     saveNotificationSchedule(updated, appLanguage);
   };
 
-  const [isTestingNotif, setIsTestingNotif] = useState(false);
-
-  const handleTestNotification = async () => {
-    setIsTestingNotif(true);
-    try {
-      await testNotificationNow(appLanguage);
-    } finally {
-      setTimeout(() => setIsTestingNotif(false), 2500);
-    }
-  };
 
   if (!isPreferencesOpen) return null;
 
@@ -1538,37 +1527,8 @@ export const PreferencesModal: React.FC = () => {
             </div>
           )}
 
-          {/* Test Notification Button */}
-          {notifConfig.enabled && (
-            <div style={{ marginTop: '0.85rem', display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                type="button"
-                onClick={handleTestNotification}
-                disabled={isTestingNotif}
-                style={{
-                  padding: '0.45rem 0.85rem',
-                  borderRadius: '0.5rem',
-                  border: '1px solid var(--accent-color)',
-                  backgroundColor: 'var(--accent-soft)',
-                  color: 'var(--accent-color)',
-                  fontSize: '0.8125rem',
-                  fontWeight: 700,
-                  cursor: isTestingNotif ? 'default' : 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.35rem'
-                }}
-              >
-                <Sparkles size={14} />
-                <span>
-                  {isTestingNotif
-                    ? (isEn ? 'Notification Sent!' : 'அனுப்பப்பட்டது!')
-                    : (isEn ? 'Test Notification' : 'மாதிரி நினைவூட்டல் அனுப்பு')}
-                </span>
-              </button>
-            </div>
-          )}
         </div>
+
 
         {/* Group 5: Account */}
         <div
