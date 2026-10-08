@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Bookmark as BookmarkIcon, Copy, Share2, BookOpen, Highlighter, Check, Trash2, Sparkles, Image as ImageIcon, ChevronLeft, ChevronRight, Expand, SlidersHorizontal } from 'lucide-react';
+import { Bookmark as BookmarkIcon, Copy, Share2, BookOpen, Highlighter, Check, Trash2, Sparkles, Image as ImageIcon, ChevronLeft, ChevronRight, Expand, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { QuickSettingsModal } from './QuickSettingsModal';
 import { useReading } from '../../context/ReadingContext';
 import { useAuth } from '../../context/AuthContext';
@@ -24,10 +24,12 @@ export const VerseReader: React.FC = () => {
     targetPulseVerse,
     setTargetPulseVerse,
     language,
+    appLanguage,
     preferences,
     bookmarks,
     highlights,
     setChapter,
+    setIsBookSelectorOpen,
     handleToggleBookmark,
     handleSetHighlight: contextHandleSetHighlight,
     openVerseStudy,
@@ -359,10 +361,19 @@ export const VerseReader: React.FC = () => {
       >
         {/* Chapter Title Header */}
         <div className="chapter-header">
-          <div>
-            <h1 className={`chapter-title ${language === 'ta' ? 'lang-ta' : ''}`}>
-              <span>{bookName}&nbsp;{currentChapter}</span>
-            </h1>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <button
+              type="button"
+              className="chapter-title-trigger-btn"
+              onClick={() => setIsBookSelectorOpen(true)}
+              title={appLanguage === 'ta' ? 'புத்தகம் & அதிகாரத்தைத் தேர்ந்தெடுக்கவும்' : 'Click to select Book and Chapter'}
+              aria-label={appLanguage === 'ta' ? 'புத்தகம் மற்றும் அதிகாரம் மாற்று' : 'Select Book & Chapter'}
+            >
+              <h1 className={`chapter-title ${language === 'ta' ? 'lang-ta' : ''}`} style={{ margin: 0 }}>
+                <span>{bookName}&nbsp;{currentChapter}</span>
+              </h1>
+              <ChevronDown size={22} className="chapter-title-chevron" />
+            </button>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             {/* Chapter Study Button */}
